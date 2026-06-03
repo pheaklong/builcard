@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>បង្កើតកាតសិស្សច្រើននាក់ - Generate Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-4">
+            <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
+            <a href="search.html" class="text-green-600 hover:text-green-800 ml-4">← ត្រឡប់ទៅស្វែងរក</a>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-center mb-8 text-purple-600">📇 បង្កើតកាតសិស្សច្រើននាក់</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <h2 class="text-xl font-bold text-gray-700">👥 បញ្ជីសិស្សដែលបានជ្រើសរើស <span id="selectedCount" class="text-blue-600">(0 នាក់)</span></h2>
+                <div class="space-x-2">
+                    <button id="clearAllBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🗑️ លុបទាំងអស់</button>
+                    <button id="generateCardsBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50" disabled>🖨️ បង្កើតកាតសិស្ស (0)</button>
+                </div>
+            </div>
+            <div id="selectedStudentsList" class="min-h-[200px]">
+                <!-- Selected students will be displayed here -->
+            </div>
+        </div>
+        
+        <div class="mt-8 bg-blue-50 rounded-lg p-4 text-center">
+            <p class="text-gray-700">💡 ណែនាំ៖ សូមចូលទៅកាន់ទំព័រ <a href="search.html" class="text-blue-600 font-semibold">ស្វែងរកសិស្ស</a> ដើម្បីបន្ថែមសិស្សមុនពេលបង្កើតកាត</p>
+        </div>
+    </div>
+    
+    <!-- Modal for displaying all cards -->
+    <div id="cardsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center flex-wrap gap-2">
+                    <h3 class="text-xl font-bold text-gray-800">🪪 កាតសិស្សទាំងអស់</h3>
+                    <div class="space-x-2">
+                        <button id="printAllCards" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">🖨️ បោះពុម្ពទាំងអស់</button>
+                        <button id="closeModalBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">✖ បិទ</button>
+                    </div>
+                </div>
+                <div id="cardsContainer" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="../js/config.js"></script>
+    <script src="../js/generate-card.js"></script>
+</body>
+</html>
