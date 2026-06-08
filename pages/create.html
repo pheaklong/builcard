@@ -7,44 +7,45 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <style>
+        * { font-family: 'Khmer', 'Moul', 'Arial', sans-serif; }
         .card-preview { transition: all 0.3s ease; }
         @media print { .no-print { display: none; } }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gradient-to-br from-amber-100 to-yellow-100">
     <div class="container mx-auto px-4 py-8">
         <div class="mb-4 no-print">
-            <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
+            <a href="../index.html" class="text-amber-800 hover:text-amber-600">← ត្រឡប់ទៅមេនុយ</a>
         </div>
         
-        <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">🪪 បង្កើតកាតសិស្ស</h1>
+        <h1 class="text-3xl font-bold text-center mb-8 text-amber-900">🪪 បង្កើតកាតសិស្ស</h1>
         
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Form Section -->
-            <div class="bg-white rounded-lg shadow-lg p-6 no-print">
-                <h2 class="text-xl font-bold mb-4 text-gray-700">📝 បញ្ចូលព័ត៌មានសិស្ស</h2>
+            <div class="bg-white rounded-lg shadow-lg p-6 no-print border-2 border-amber-300">
+                <h2 class="text-xl font-bold mb-4 text-amber-800">📝 បញ្ចូលព័ត៌មានសិស្ស</h2>
                 
                 <form id="studentForm" class="space-y-4">
-                    <!-- Photo Upload -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">រូបថតសិស្ស</label>
                         <div class="flex items-center space-x-4">
-                            <div class="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center" id="photoPreviewContainer">
+                            <div class="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center border-2 border-amber-600" id="photoPreviewContainer">
                                 <img id="photoPreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
                                 <svg id="defaultPhotoIcon" class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
                             <div class="flex-1">
-                                <input type="file" id="photo" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <input type="file" id="photo" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
                             </div>
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-medium text-gray-700">Student ID</label><input type="text" id="studentID" required class="mt-1 block w-full rounded-md border p-2"></div>
-                        <div><label class="block text-sm font-medium text-gray-700">ឈ្មោះសិស្ស</label><input type="text" id="name" required class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">អត្តលេខសម្គាល់ (ID)</label><input type="text" id="studentID" required class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">គោត្តនាម នាម</label><input type="text" id="name" required class="mt-1 block w-full rounded-md border p-2"></div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
@@ -57,33 +58,33 @@
                         <div><label class="block text-sm font-medium text-gray-700">ថ្នាក់</label><input type="text" id="class" class="mt-1 block w-full rounded-md border p-2"></div>
                     </div>
                     
-                    <div><label class="block text-sm font-medium text-gray-700">អាសយដ្ឋាន</label><input type="text" id="address" class="mt-1 block w-full rounded-md border p-2"></div>
+                    <div><label class="block text-sm font-medium text-gray-700">ទីកន្លែងកំណើត / អាសយដ្ឋាន</label><input type="text" id="address" class="mt-1 block w-full rounded-md border p-2"></div>
                     
-                    <hr class="my-4">
-                    <h3 class="font-bold text-gray-700">👨‍👩 ព័ត៌មានមាតាបិតា</h3>
+                    <hr class="my-4 border-amber-300">
+                    <h3 class="font-bold text-amber-800">👨‍👩 ព័ត៌មានមាតាបិតា</h3>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-medium text-gray-700">ឈ្មោះឪពុក</label><input type="text" id="fathername" class="mt-1 block w-full rounded-md border p-2"></div>
-                        <div><label class="block text-sm font-medium text-gray-700">លេខទូរស័ព្ទឪពុក</label><input type="tel" id="fatherphone" class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">ព្រះបិតា (ឪពុក)</label><input type="text" id="fathername" class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">លេខទូរស័ព្ទ</label><input type="tel" id="fatherphone" class="mt-1 block w-full rounded-md border p-2"></div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-medium text-gray-700">មុខរបរឪពុក</label><input type="text" id="fatherjob" class="mt-1 block w-full rounded-md border p-2"></div>
-                        <div><label class="block text-sm font-medium text-gray-700">ឈ្មោះម្តាយ</label><input type="text" id="mothername" class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">មុខរបរ</label><input type="text" id="fatherjob" class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">ព្រះមាតា (ម្តាយ)</label><input type="text" id="mothername" class="mt-1 block w-full rounded-md border p-2"></div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-sm font-medium text-gray-700">លេខទូរស័ព្ទម្តាយ</label><input type="tel" id="motherphone" class="mt-1 block w-full rounded-md border p-2"></div>
-                        <div><label class="block text-sm font-medium text-gray-700">មុខរបរម្តាយ</label><input type="text" id="motherjob" class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">លេខទូរស័ព្ទ</label><input type="tel" id="motherphone" class="mt-1 block w-full rounded-md border p-2"></div>
+                        <div><label class="block text-sm font-medium text-gray-700">មុខរបរ</label><input type="text" id="motherjob" class="mt-1 block w-full rounded-md border p-2"></div>
                     </div>
                     
                     <div class="flex space-x-4 mt-6">
-                        <button type="button" id="saveBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">💾 រក្សាទុក និងបង្កើតកាត</button>
+                        <button type="button" id="saveBtn" class="bg-amber-700 text-white px-6 py-2 rounded-lg hover:bg-amber-800">💾 រក្សាទុក និងបង្កើតកាត</button>
                     </div>
                 </form>
                 
                 <div class="mt-6">
-                    <label class="block text-sm font-medium text-gray-700">ស្វែងរកតាម Student ID</label>
+                    <label class="block text-sm font-medium text-gray-700">ស្វែងរកតាមអត្តលេខ (ID)</label>
                     <div class="flex space-x-2">
                         <input type="text" id="searchStudentID" class="flex-1 rounded-md border p-2" placeholder="បញ្ចូល Student ID...">
                         <button id="fetchStudentBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">🔍 ស្វែងរក</button>
@@ -92,8 +93,8 @@
             </div>
             
             <!-- Card Preview Section -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-700">🪪 កាតសិស្ស</h2>
+            <div class="bg-white rounded-lg shadow-lg p-6 border-2 border-amber-300">
+                <h2 class="text-xl font-bold mb-4 text-amber-800">🪪 កាតសិស្ស</h2>
                 <div id="studentCard" class="card-preview flex justify-center">
                     <div class="text-gray-400 text-center py-10">
                         <svg class="w-16 h-16 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"/></svg>
@@ -108,384 +109,126 @@
         </div>
     </div>
     
+    <script src="../js/card-template.js"></script>
     <script>
         // ============================================
-        // SUPABASE CONFIGURATION - កែតម្រូវតាមតម្លៃថ្មី!!!
+        // SUPABASE CONFIGURATION
         // ============================================
-        // ប្រើ URL និង ANON KEY ថ្មីដែលអ្នកផ្តល់
         const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
         
-        console.log('Supabase URL:', SUPABASE_URL);
-        console.log('Supabase Key (first 20 chars):', SUPABASE_ANON_KEY.substring(0, 20) + '...');
-        
-        // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'table_student';
-        
-        console.log('Supabase client created successfully');
-        
-        // Global variables
         let currentPhotoBase64 = null;
         
-        // ============================================
-        // PHOTO HANDLING
-        // ============================================
-        const photoInput = document.getElementById('photo');
-        if (photoInput) {
-            photoInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        currentPhotoBase64 = event.target.result;
-                        const preview = document.getElementById('photoPreview');
-                        const defaultIcon = document.getElementById('defaultPhotoIcon');
-                        if (preview) {
-                            preview.src = currentPhotoBase64;
-                            preview.classList.remove('hidden');
-                        }
-                        if (defaultIcon) {
-                            defaultIcon.classList.add('hidden');
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    resetPhotoPreview();
-                }
-            });
-        }
-        
-        function resetPhotoPreview() {
-            currentPhotoBase64 = null;
-            const preview = document.getElementById('photoPreview');
-            const defaultIcon = document.getElementById('defaultPhotoIcon');
-            if (preview) {
-                preview.src = '';
-                preview.classList.add('hidden');
+        // Photo handling
+        document.getElementById('photo')?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentPhotoBase64 = event.target.result;
+                    document.getElementById('photoPreview').src = currentPhotoBase64;
+                    document.getElementById('photoPreview').classList.remove('hidden');
+                    document.getElementById('defaultPhotoIcon').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                currentPhotoBase64 = null;
+                document.getElementById('photoPreview').src = '';
+                document.getElementById('photoPreview').classList.add('hidden');
+                document.getElementById('defaultPhotoIcon').classList.remove('hidden');
             }
-            if (defaultIcon) {
-                defaultIcon.classList.remove('hidden');
-            }
-        }
-        
-        // ============================================
-        // CARD GENERATION
-        // ============================================
-        function getPhotoHTML(photoData) {
-            if (photoData && photoData !== 'null' && photoData !== '') {
-                return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
-            }
-            return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
-                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>`;
-        }
-        
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-        
-        function generateCardHTML(data) {
-            const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-            const photoHTML = getPhotoHTML(data.photo);
-            
-            return `
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-2xl overflow-hidden" style="width: 380px; font-family: 'Khmer', Arial, sans-serif;">
-                    <div class="bg-white p-4 text-center border-b-4 border-yellow-400">
-                        <h3 class="text-xl font-bold text-blue-800">កាតសម្គាល់សិស្ស</h3>
-                        <p class="text-sm text-gray-600">សាលារៀន​ ឌីជីថល</p>
-                    </div>
-                    <div class="p-4 text-white">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="flex-1">
-                                <p class="text-sm opacity-90">លេខសម្គាល់៖</p>
-                                <p class="font-bold text-lg">${escapeHtml(data.studentID) || 'N/A'}</p>
-                            </div>
-                            ${photoHTML}
-                        </div>
-                        <div class="space-y-2 text-sm">
-                            <div><p class="opacity-90">ឈ្មោះ៖</p><p class="font-semibold text-base">${escapeHtml(data.name) || 'N/A'}</p></div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div><p class="opacity-90">ភេទ៖</p><p>${escapeHtml(data.sex) || 'N/A'}</p></div>
-                                <div><p class="opacity-90">ថ្ងៃខែកំណើត៖</p><p>${birthDate}</p></div>
-                            </div>
-                            <div><p class="opacity-90">ថ្នាក់៖</p><p class="font-medium">${escapeHtml(data.class) || 'N/A'}</p></div>
-                            <div><p class="opacity-90">ទូរស័ព្ទ៖</p><p>${escapeHtml(data.phonenumber) || 'N/A'}</p></div>
-                            <div><p class="opacity-90">អាសយដ្ឋាន៖</p><p class="text-xs">${escapeHtml(data.address) || 'N/A'}</p></div>
-                        </div>
-                        <hr class="my-3 border-white/30">
-                        <div class="text-xs space-y-1">
-                            <p><span class="opacity-90">ឪពុក៖</span> ${escapeHtml(data.fathername) || 'N/A'} (${escapeHtml(data.fatherjob) || ''})</p>
-                            <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.fatherphone) || 'N/A'}</p>
-                            <p><span class="opacity-90">ម្តាយ៖</span> ${escapeHtml(data.mothername) || 'N/A'} (${escapeHtml(data.motherjob) || ''})</p>
-                            <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.motherphone) || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div class="bg-yellow-400 p-2 text-center text-xs font-bold text-blue-900">
-                        ចេញថ្ងៃទី: ${new Date().toLocaleDateString('km-KH')}
-                    </div>
-                </div>
-            `;
-        }
+        });
         
         function displayCard(data) {
-            const cardContainer = document.getElementById('studentCard');
-            if (cardContainer) {
-                cardContainer.innerHTML = generateCardHTML(data);
-            }
+            document.getElementById('studentCard').innerHTML = generateCardHTML(data);
         }
         
-        // ============================================
-        // SAVE STUDENT
-        // ============================================
         async function saveStudent() {
-            try {
-                const studentData = {
-                    studentID: document.getElementById('studentID').value.trim(),
-                    name: document.getElementById('name').value.trim(),
-                    sex: document.getElementById('sex').value,
-                    date_of_birth: document.getElementById('date_of_birth').value || null,
-                    phonenumber: document.getElementById('phonenumber').value.trim(),
-                    address: document.getElementById('address').value.trim(),
-                    fathername: document.getElementById('fathername').value.trim(),
-                    fatherphone: document.getElementById('fatherphone').value.trim(),
-                    fatherjob: document.getElementById('fatherjob').value.trim(),
-                    mothername: document.getElementById('mothername').value.trim(),
-                    motherphone: document.getElementById('motherphone').value.trim(),
-                    motherjob: document.getElementById('motherjob').value.trim(),
-                    class: document.getElementById('class').value.trim(),
-                    photo: currentPhotoBase64 || null
-                };
-                
-                if (!studentData.studentID) {
-                    alert('សូមបញ្ចូល Student ID');
-                    return;
-                }
-                if (!studentData.name) {
-                    alert('សូមបញ្ចូលឈ្មោះសិស្ស');
-                    return;
-                }
-                
-                console.log('Saving student:', studentData.studentID);
-                
-                // Check if student exists
-                const { data: existing, error: findError } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .eq('studentID', studentData.studentID)
-                    .maybeSingle();
-                
-                if (findError && findError.code !== 'PGRST116') {
-                    // PGRST116 means no rows returned - this is OK
-                    if (findError.code !== 'PGRST116') {
-                        throw new Error(findError.message);
-                    }
-                }
-                
-                let result;
-                if (existing) {
-                    // Update
-                    result = await supabaseClient
-                        .from(TABLE_NAME)
-                        .update(studentData)
-                        .eq('studentID', studentData.studentID);
-                    if (!result.error) {
-                        alert('✅ បានកែប្រែព័ត៌មានសិស្សដោយជោគជ័យ!');
-                        displayCard(studentData);
-                    } else {
-                        throw new Error(result.error.message);
-                    }
-                } else {
-                    // Insert
-                    result = await supabaseClient
-                        .from(TABLE_NAME)
-                        .insert([studentData]);
-                    if (!result.error) {
-                        alert('✅ បានរក្សាទុកព័ត៌មានសិស្សដោយជោគជ័យ!');
-                        displayCard(studentData);
-                    } else {
-                        throw new Error(result.error.message);
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Save error:', error);
-                if (error.message.includes('relation') && error.message.includes('does not exist')) {
-                    alert('⚠️ តារាងមិនទាន់មានទេ! សូមបង្កើតតារាងក្នុង Supabase SQL Editor សិន។\n\nប្រើ SQL ខាងក្រោម៖\n\nCREATE TABLE table_student (\n    id SERIAL PRIMARY KEY,\n    "studentID" TEXT UNIQUE NOT NULL,\n    name TEXT NOT NULL,\n    sex TEXT,\n    date_of_birth DATE,\n    phonenumber TEXT,\n    address TEXT,\n    fathername TEXT,\n    fatherphone TEXT,\n    fatherjob TEXT,\n    mothername TEXT,\n    motherphone TEXT,\n    motherjob TEXT,\n    class TEXT,\n    photo TEXT,\n    created_at TIMESTAMP DEFAULT NOW()\n);\n\nALTER TABLE table_student ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Enable all" ON table_student FOR ALL USING (true) WITH CHECK (true);');
-                } else {
-                    alert('❌ កំហុស: ' + error.message);
-                }
+            const studentData = {
+                studentID: document.getElementById('studentID').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                sex: document.getElementById('sex').value,
+                date_of_birth: document.getElementById('date_of_birth').value || null,
+                phonenumber: document.getElementById('phonenumber').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                fathername: document.getElementById('fathername').value.trim(),
+                fatherphone: document.getElementById('fatherphone').value.trim(),
+                fatherjob: document.getElementById('fatherjob').value.trim(),
+                mothername: document.getElementById('mothername').value.trim(),
+                motherphone: document.getElementById('motherphone').value.trim(),
+                motherjob: document.getElementById('motherjob').value.trim(),
+                class: document.getElementById('class').value.trim(),
+                photo: currentPhotoBase64 || null
+            };
+            
+            if (!studentData.studentID) { alert('សូមបញ្ចូល Student ID'); return; }
+            if (!studentData.name) { alert('សូមបញ្ចូលឈ្មោះសិស្ស'); return; }
+            
+            const { data: existing } = await supabaseClient.from(TABLE_NAME).select('*').eq('studentID', studentData.studentID).maybeSingle();
+            let result;
+            if (existing) {
+                result = await supabaseClient.from(TABLE_NAME).update(studentData).eq('studentID', studentData.studentID);
+                if (!result.error) alert('✅ បានកែប្រែដោយជោគជ័យ!');
+            } else {
+                result = await supabaseClient.from(TABLE_NAME).insert([studentData]);
+                if (!result.error) alert('✅ បានរក្សាទុកដោយជោគជ័យ!');
             }
+            if (!result.error) displayCard(studentData);
+            else alert('❌ កំហុស: ' + result.error.message);
         }
         
-        // ============================================
-        // SEARCH STUDENT
-        // ============================================
         async function searchStudent() {
             const studentID = document.getElementById('searchStudentID').value.trim();
-            if (!studentID) {
-                alert('សូមបញ្ចូល Student ID');
-                return;
-            }
+            if (!studentID) { alert('សូមបញ្ចូល Student ID'); return; }
+            const { data } = await supabaseClient.from(TABLE_NAME).select('*').eq('studentID', studentID).maybeSingle();
+            if (!data) { alert('❌ រកមិនឃើញសិស្សទេ!'); return; }
             
-            try {
-                console.log('Searching for student:', studentID);
-                
-                const { data, error } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .eq('studentID', studentID)
-                    .maybeSingle();
-                
-                if (error) {
-                    console.error('Search error:', error);
-                    alert('❌ កំហុស: ' + error.message);
-                    return;
-                }
-                
-                if (!data) {
-                    alert('❌ រកមិនឃើញសិស្សទេ!');
-                    return;
-                }
-                
-                console.log('Found student:', data.name);
-                
-                // Fill form
-                document.getElementById('studentID').value = data.studentID || '';
-                document.getElementById('name').value = data.name || '';
-                document.getElementById('sex').value = data.sex || 'ប្រុស';
-                document.getElementById('date_of_birth').value = data.date_of_birth || '';
-                document.getElementById('phonenumber').value = data.phonenumber || '';
-                document.getElementById('address').value = data.address || '';
-                document.getElementById('fathername').value = data.fathername || '';
-                document.getElementById('fatherphone').value = data.fatherphone || '';
-                document.getElementById('fatherjob').value = data.fatherjob || '';
-                document.getElementById('mothername').value = data.mothername || '';
-                document.getElementById('motherphone').value = data.motherphone || '';
-                document.getElementById('motherjob').value = data.motherjob || '';
-                document.getElementById('class').value = data.class || '';
-                
-                if (data.photo && data.photo !== 'null') {
-                    currentPhotoBase64 = data.photo;
-                    const preview = document.getElementById('photoPreview');
-                    const defaultIcon = document.getElementById('defaultPhotoIcon');
-                    preview.src = currentPhotoBase64;
-                    preview.classList.remove('hidden');
-                    defaultIcon.classList.add('hidden');
-                } else {
-                    resetPhotoPreview();
-                }
-                
-                displayCard(data);
-            } catch (error) {
-                console.error('Search error:', error);
-                alert('❌ កំហុស: ' + error.message);
+            document.getElementById('studentID').value = data.studentID || '';
+            document.getElementById('name').value = data.name || '';
+            document.getElementById('sex').value = data.sex || 'ប្រុស';
+            document.getElementById('date_of_birth').value = data.date_of_birth || '';
+            document.getElementById('phonenumber').value = data.phonenumber || '';
+            document.getElementById('address').value = data.address || '';
+            document.getElementById('fathername').value = data.fathername || '';
+            document.getElementById('fatherphone').value = data.fatherphone || '';
+            document.getElementById('fatherjob').value = data.fatherjob || '';
+            document.getElementById('mothername').value = data.mothername || '';
+            document.getElementById('motherphone').value = data.motherphone || '';
+            document.getElementById('motherjob').value = data.motherjob || '';
+            document.getElementById('class').value = data.class || '';
+            
+            if (data.photo && data.photo !== 'null') {
+                currentPhotoBase64 = data.photo;
+                document.getElementById('photoPreview').src = currentPhotoBase64;
+                document.getElementById('photoPreview').classList.remove('hidden');
+                document.getElementById('defaultPhotoIcon').classList.add('hidden');
             }
+            displayCard(data);
         }
         
-        // ============================================
-        // PRINT CARD
-        // ============================================
         function printCard() {
             const cardContent = document.getElementById('studentCard').innerHTML;
-            if (!cardContent || cardContent.includes('បំពេញព័ត៌មានសិស្ស')) {
-                alert('មិនមានកាតដើម្បីបោះពុម្ពទេ');
-                return;
-            }
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>បោះពុម្ពកាតសិស្ស</title>
-                        <meta charset="UTF-8">
-                        <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style>
-                    </head>
-                    <body>${cardContent}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
+            if (!cardContent || cardContent.includes('បំពេញព័ត៌មាន')) { alert('មិនមានកាត'); return; }
+            const w = window.open('', '_blank');
+            w.document.write(`<html><head><title>បោះពុម្ពកាត</title><meta charset="UTF-8"><style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style></head><body>${cardContent}</body></html>`);
+            w.document.close(); w.print();
         }
         
-        // ============================================
-        // DOWNLOAD CARD
-        // ============================================
         async function downloadCard() {
             const cardElement = document.querySelector('#studentCard > div');
-            if (!cardElement || (cardElement.innerHTML && cardElement.innerHTML.includes('បំពេញព័ត៌មានសិស្ស'))) {
-                alert('មិនមានកាតដើម្បីទាញយកទេ');
-                return;
-            }
-            try {
-                const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: null });
-                const link = document.createElement('a');
-                const studentID = document.getElementById('studentID').value || 'card';
-                link.download = `student_card_${studentID}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                alert('✅ បានទាញយកដោយជោគជ័យ!');
-            } catch (error) {
-                alert('កើតមានបញ្ហា: ' + error.message);
-            }
+            if (!cardElement) { alert('មិនមានកាត'); return; }
+            const canvas = await html2canvas(cardElement, { scale: 2 });
+            const link = document.createElement('a');
+            link.download = `student_card_${document.getElementById('studentID').value || 'card'}.png`;
+            link.href = canvas.toDataURL(); link.click();
         }
         
-        // ============================================
-        // CHECK CONNECTION
-        // ============================================
-        async function checkConnection() {
-            try {
-                console.log('Checking connection to Supabase...');
-                // Try a simple query to check if table exists
-                const { error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
-                if (error) {
-                    console.warn('Connection warning:', error);
-                    if (error.message && error.message.includes('relation') && error.message.includes('does not exist')) {
-                        console.log('Table does not exist. Please create it in Supabase SQL Editor.');
-                        console.log('Use SQL: CREATE TABLE table_student (id SERIAL PRIMARY KEY, "studentID" TEXT UNIQUE NOT NULL, name TEXT NOT NULL, sex TEXT, date_of_birth DATE, phonenumber TEXT, address TEXT, fathername TEXT, fatherphone TEXT, fatherjob TEXT, mothername TEXT, motherphone TEXT, motherjob TEXT, class TEXT, photo TEXT, created_at TIMESTAMP DEFAULT NOW());');
-                    } else if (error.message && error.message.includes('JWT')) {
-                        console.error('Invalid API key! Please check your SUPABASE_ANON_KEY');
-                    }
-                } else {
-                    console.log('✅ Supabase connected successfully! Table exists.');
-                }
-            } catch (error) {
-                console.error('Connection error:', error);
-            }
-        }
-        
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-        document.getElementById('saveBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            saveStudent();
-        });
-        
-        document.getElementById('fetchStudentBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            searchStudent();
-        });
-        
-        document.getElementById('printCard')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            printCard();
-        });
-        
-        document.getElementById('downloadCard')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            downloadCard();
-        });
-        
-        // Run connection check
-        checkConnection();
+        document.getElementById('saveBtn')?.addEventListener('click', (e) => { e.preventDefault(); saveStudent(); });
+        document.getElementById('fetchStudentBtn')?.addEventListener('click', (e) => { e.preventDefault(); searchStudent(); });
+        document.getElementById('printCard')?.addEventListener('click', (e) => { e.preventDefault(); printCard(); });
+        document.getElementById('downloadCard')?.addEventListener('click', (e) => { e.preventDefault(); downloadCard(); });
     </script>
 </body>
 </html>
