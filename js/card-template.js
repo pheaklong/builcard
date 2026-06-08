@@ -71,10 +71,14 @@ function getWatermarkLogo() {
 // STAMP FUNCTIONS - stamp placed outside photo, fully visible
 // ============================================
 
-// Stamp Image - placed to the right of the photo (fully visible)
+// ============================================
+// STAMP FUNCTIONS - stamp fully visible outside photo frame
+// ============================================
+
+// Stamp Image - placed to the right of the photo, fully visible
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 50%; left: 100%; transform: translateY(-50%); margin-left: 8px; width: 50px; height: 100px; z-index: 5; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; top: 50%; left: 100%; transform: translateY(-50%); margin-left: 5px; width: 45px; height: 45px; z-index: 10; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
                  style="width: 100%; height: 100%; object-fit: contain; opacity: 0.9;">
@@ -82,7 +86,7 @@ function getStampImage() {
     `;
 }
 
-// Student Photo with Stamp placed to the right (fully visible outside photo)
+// Student Photo with Stamp placed to the right (fully visible outside photo frame)
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
