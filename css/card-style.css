@@ -163,7 +163,7 @@
     position: relative;
 }
 
-/* ========== CRITICAL FIX FOR STAMP OVERLAP ========== */
+/* ========== CRITICAL FIX FOR STAMP OVERLAP 1cm ========== */
 .photo-frame-card {
     width: 75px;
     height: 95px;
@@ -171,7 +171,7 @@
     border-radius: 3px;
     background: white;
     position: relative;
-    overflow: visible !important;  /* ← KEY: allows stamp to overlap from outside */
+    overflow: visible !important;  /* ← KEY: allows stamp to overlap */
 }
 
 /* Container for photo + stamp - MUST have overflow visible */
@@ -257,15 +257,15 @@
         overflow: visible !important;
     }
     
-    /* Ensure stamp prints correctly */
     .photo-frame-card div,
     .photo-frame-card [style*="position: absolute"] {
         overflow: visible !important;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
+}
 
-   /* Emergency fix - force all containers to allow overflow */
+/* Emergency fix - force all containers to allow overflow */
 .photo-section,
 .photo-section * {
     overflow: visible !important;
@@ -277,5 +277,4 @@
     width: 100% !important;
     height: 100% !important;
     overflow: visible !important;
-}
 }
