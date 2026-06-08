@@ -1,7 +1,5 @@
 /* ============================================
    Student ID Card - 6.5cm x 8.5cm (portrait)
-   Convert to pixels: 6.5cm ≈ 246px, 8.5cm ≈ 321px
-   Using exact mm/cm scaling with viewport
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap');
@@ -12,16 +10,16 @@
     box-sizing: border-box;
 }
 
-/* Main Card Container - Exact size 6.5cm x 8.5cm */
+/* Main Card Container */
 .student-id-card {
     position: relative;
-    width: 246px;  /* 6.5cm converted to pixels (6.5 * 37.8 ≈ 246px) */
-    height: 321px; /* 8.5cm converted to pixels (8.5 * 37.8 ≈ 321px) */
+    width: 246px;
+    height: 321px;
     background: #f5f5f0;
     border: 1px solid #4A86E8;
     border-radius: 4px;
     padding: 8px 10px;
-    font-family: 'Khmer', 'Khmer OS Moul Light', 'Moul', 'Khmer OS Battambang', sans-serif;
+    font-family: 'Khmer', 'Khmer OS Moul Light', 'Moul', sans-serif;
     box-sizing: border-box;
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -35,19 +33,11 @@
     transform: translate(-50%, -50%);
     width: 160px;
     height: 160px;
-    color: rgba(35, 61, 46, 0.08);
     z-index: 0;
     pointer-events: none;
 }
 
-.watermark-bg svg {
-    width: 100%;
-    height: 100%;
-}
-
-/* ============================================
-   HEADER SECTION
-   ============================================ */
+/* Header Section */
 .card-header {
     display: flex;
     justify-content: space-between;
@@ -57,9 +47,10 @@
     z-index: 1;
 }
 
-.logo-area svg {
+.logo-area img {
     width: 35px;
     height: 35px;
+    object-fit: contain;
 }
 
 .royal-text {
@@ -70,19 +61,15 @@
     font-size: 8px;
     font-weight: normal;
     color: #233D2E;
-    font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
 }
 
 .royal-line-2 {
     font-size: 8px;
     font-weight: normal;
     color: #233D2E;
-    font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
 }
 
-/* ============================================
-   MINISTRY & SCHOOL SECTION
-   ============================================ */
+/* Ministry & School Section */
 .ministry-section {
     display: flex;
     justify-content: space-between;
@@ -100,7 +87,6 @@
     font-size: 7px;
     color: #233D2E;
     line-height: 1.3;
-    font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
 }
 
 .school-name-card {
@@ -115,9 +101,7 @@
     height: 45px;
 }
 
-/* ============================================
-   TITLE SECTION
-   ============================================ */
+/* Title Section */
 .title-section-card {
     text-align: center;
     margin-bottom: 10px;
@@ -129,7 +113,6 @@
     font-size: 11px;
     font-weight: bold;
     color: #D28A17;
-    font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
     letter-spacing: 1px;
 }
 
@@ -139,9 +122,7 @@
     margin-top: 2px;
 }
 
-/* ============================================
-   INFORMATION GRID
-   ============================================ */
+/* Information Grid */
 .info-grid {
     position: relative;
     z-index: 1;
@@ -167,9 +148,7 @@
     font-weight: bold;
 }
 
-/* ============================================
-   BOTTOM SECTION
-   ============================================ */
+/* Bottom Section */
 .bottom-section-card {
     display: flex;
     gap: 10px;
@@ -184,31 +163,18 @@
 }
 
 .photo-frame-card {
-    width: 65px;  /* ~2.3cm */
-    height: 70px; /* ~2.5cm */
+    width: 65px;
+    height: 70px;
     border: 1px solid #4A86E8;
     border-radius: 3px;
     background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
 }
 
-.student-photo-img {
+.photo-placeholder-content {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-}
-
-.photo-placeholder-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #aaa;
-    font-size: 8px;
-    text-align: center;
+    background: #e5e7eb;
 }
 
 /* Info Section Card */
@@ -230,7 +196,7 @@
 }
 
 .principal-section {
-    text-align: center;
+    text-align: right;
 }
 
 .principal-title {
@@ -238,110 +204,17 @@
     font-weight: bold;
     color: #233D2E;
     margin-bottom: 2px;
-    font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
 }
 
-.signature-image svg {
-    width: 70px;
-    height: 25px;
+.signature-image img {
+    width: 100px;
+    height: auto;
+    max-height: 40px;
+    object-fit: contain;
+    margin-left: 38px;
 }
 
-/* ============================================
-   SMALL CARD STYLES (for batch generate)
-   ============================================ */
-.student-id-card-small {
-    width: 246px;
-    background: #f5f5f0;
-    border: 1px solid #4A86E8;
-    border-radius: 4px;
-    padding: 8px;
-    font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
-}
-
-.small-card-inner {
-    width: 100%;
-}
-
-.small-header-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #ddd;
-}
-
-.small-logo-card svg {
-    width: 25px;
-    height: 25px;
-}
-
-.small-title-card {
-    font-size: 8px;
-    font-weight: bold;
-    color: #D28A17;
-    text-align: center;
-}
-
-.small-qr-card svg {
-    width: 30px;
-    height: 30px;
-}
-
-.small-body-card {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.small-photo-card {
-    width: 50px;
-}
-
-.small-photo-card .student-photo-img {
-    width: 50px;
-    height: 55px;
-    object-fit: cover;
-}
-
-.small-photo-card .photo-placeholder-content {
-    width: 50px;
-    height: 55px;
-    background: #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: 7px;
-}
-
-.small-info-card {
-    flex: 1;
-    font-size: 7px;
-}
-
-.small-info-card div {
-    margin-bottom: 3px;
-}
-
-.small-footer-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 5px;
-    border-top: 1px solid #ddd;
-    font-size: 6px;
-    color: #666;
-}
-
-.small-signature-card {
-    font-family: 'Courier New', monospace;
-    color: #304FFE;
-}
-
-/* ============================================
-   PRINT STYLES
-   ============================================ */
+/* Print Styles */
 @media print {
     .student-id-card {
         box-shadow: none;
@@ -351,14 +224,6 @@
     }
     
     .watermark-bg {
-        opacity: 0.1;
-    }
-}
-
-/* Responsive scaling for screen viewing */
-@media (max-width: 300px) {
-    .student-id-card {
-        transform: scale(0.9);
-        transform-origin: top left;
+        opacity: 0.12;
     }
 }
