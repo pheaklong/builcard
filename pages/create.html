@@ -110,15 +110,15 @@
     
     <script>
         // ============================================
-        // SUPABASE CONFIGURATION
+        // SUPABASE CONFIGURATION - កែតម្រូវ URL អោយត្រឹមត្រូវ!!!
         // ============================================
-        // សូមប្តូរតម្លៃខាងក្រោមតាមគណនី Supabase របស់អ្នក
-       const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';  // ឬ URL Project ទីពីរ
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';  // Key ដែលត្រូវគ្នា
+        // ប្រើ URL ដូចគ្នានឹងក្នុងរូបភាព (xmowdtwldnwnxrkrrysj)
+        const SUPABASE_URL = 'https://xmowdtwldnwnxrkrrysj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
         
         console.log('Supabase URL:', SUPABASE_URL);
         
-        // Initialize Supabase client - ប្រើតែ URL មិនបន្ថែម /rest/v1 ទេ
+        // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'table_student';
         
@@ -243,7 +243,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         }
         
         // ============================================
-        // SAVE STUDENT
+        // SAVE STUDENT (with better error handling)
         // ============================================
         async function saveStudent() {
             try {
@@ -275,6 +275,17 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 
                 console.log('Saving student:', studentData.studentID);
                 
+                // Check if table exists first
+                const { error: tableCheck } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('count', { count: 'exact', head: true });
+                
+                if (tableCheck) {
+                    console.error('Table error:', tableCheck);
+                    alert('⚠️ តារាងមិនទាន់មានទេ! សូមបង្កើតតារាងក្នុង Supabase សិន។\n\nដំណើរការ SQL ខាងក្រោមក្នុង SQL Editor:\n\nCREATE TABLE table_student (\n    id SERIAL PRIMARY KEY,\n    "studentID" TEXT UNIQUE NOT NULL,\n    name TEXT NOT NULL,\n    sex TEXT,\n    date_of_birth DATE,\n    phonenumber TEXT,\n    address TEXT,\n    fathername TEXT,\n    fatherphone TEXT,\n    fatherjob TEXT,\n    mothername TEXT,\n    motherphone TEXT,\n    motherjob TEXT,\n    class TEXT,\n    photo TEXT,\n    created_at TIMESTAMP DEFAULT NOW()\n);\n\nALTER TABLE table_student ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Enable all" ON table_student FOR ALL USING (true) WITH CHECK (true);');
+                    return;
+                }
+                
                 // Check if student exists
                 const { data: existing, error: findError } = await supabaseClient
                     .from(TABLE_NAME)
@@ -283,14 +294,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     .maybeSingle();
                 
                 if (findError && findError.code !== 'PGRST116') {
-                    console.error('Find error:', findError);
-                    alert('❌ កំហុស: ' + findError.message);
-                    return;
+                    throw new Error(findError.message);
                 }
                 
                 let result;
                 if (existing) {
-                    // Update
                     result = await supabaseClient
                         .from(TABLE_NAME)
                         .update(studentData)
@@ -299,10 +307,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                         alert('✅ បានកែប្រែព័ត៌មានសិស្សដោយជោគជ័យ!');
                         displayCard(studentData);
                     } else {
-                        alert('❌ កំហុស: ' + result.error.message);
+                        throw new Error(result.error.message);
                     }
                 } else {
-                    // Insert
                     result = await supabaseClient
                         .from(TABLE_NAME)
                         .insert([studentData]);
@@ -310,12 +317,13 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                         alert('✅ បានរក្សាទុកព័ត៌មានសិស្សដោយជោគជ័យ!');
                         displayCard(studentData);
                     } else {
-                        alert('❌ កំហុស: ' + result.error.message);
+                        throw new Error(result.error.message);
                     }
                 }
+                
             } catch (error) {
                 console.error('Save error:', error);
-                alert('❌ កំហុសប្រព័ន្ធ: ' + error.message);
+                alert('❌ កំហុស: ' + error.message);
             }
         }
         
@@ -431,6 +439,43 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         }
         
         // ============================================
+        // CREATE TABLE FUNCTION
+        // ============================================
+        async function createTable() {
+            // បង្ហាញ SQL សម្រាប់អ្នកប្រើ
+            const sql = `
+-- ចម្លង SQL នេះទៅកាន់ Supabase SQL Editor
+CREATE TABLE IF NOT EXISTS table_student (
+    id SERIAL PRIMARY KEY,
+    "studentID" TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    sex TEXT,
+    date_of_birth DATE,
+    phonenumber TEXT,
+    address TEXT,
+    fathername TEXT,
+    fatherphone TEXT,
+    fatherjob TEXT,
+    mothername TEXT,
+    motherphone TEXT,
+    motherjob TEXT,
+    class TEXT,
+    photo TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE table_student ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable all" ON table_student
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+`;
+            console.log('SQL to create table:', sql);
+            alert('សូមចូលទៅកាន់ Supabase Dashboard → SQL Editor ហើយដំណើរការ SQL ខាងក្រោម៖\n\n' + sql);
+        }
+        
+        // ============================================
         // EVENT LISTENERS
         // ============================================
         document.getElementById('saveBtn')?.addEventListener('click', (e) => {
@@ -453,12 +498,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             downloadCard();
         });
         
-        // Test connection
-        async function testConnection() {
+        // Check connection and table
+        async function checkConnection() {
             try {
-                const { data, error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
+                const { error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
                 if (error) {
                     console.warn('Connection warning:', error);
+                    if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                        console.log('Table does not exist. Please create it.');
+                        createTable();
+                    }
                 } else {
                     console.log('✅ Supabase connected successfully!');
                 }
@@ -467,7 +516,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             }
         }
         
-        testConnection();
+        checkConnection();
     </script>
 </body>
 </html>
