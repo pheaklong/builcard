@@ -68,15 +68,16 @@ function getWatermarkLogo() {
 }
 
 // ============================================
-// STAMP FUNCTIONS - stamp overlaps photo by 0.5cm
+// ============================================
+// STAMP FUNCTIONS - stamp overlaps photo by 1cm
 // ============================================
 
 function getStampImage() {
     return `
         <div style="
             position: absolute;
-            bottom: -14px;      /* Overlap 0.5cm (14px ≈ 0.5cm at 96dpi) */
-            right: -14px;       /* Overlap 0.5cm from right edge */
+            bottom: -28px;      /* Overlap 1cm (28px ≈ 1cm at 96dpi) */
+            right: -28px;       /* Overlap 1cm from right edge */
             width: 70px;
             height: 70px;
             z-index: 20;
