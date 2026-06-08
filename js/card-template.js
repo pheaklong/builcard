@@ -58,40 +58,46 @@ function getSignatureImage() {
     `;
 }
 
-// Stamp Image - for overlaying on student photo
-function getStampImage() {
-    return `
-        <img src="../tra.png" 
-             alt="ត្រា" 
-             style="position: absolute; bottom: 5px; right: 5px; width: 40px; height: 40px; opacity: 0.8; z-index: 5;">
-    `;
-}
-
 // Watermark Logo - using same logo image as watermark
 function getWatermarkLogo() {
     return `
         <img src="../logomoeys.png" 
              alt="Watermark" 
-             style="width: 100%; height: 100%; object-fit: contain; opacity: 0.15;">
+             style="width: 100%; height: 100%; object-fit: contain; opacity: 0.12;">
     `;
 }
 
-// Student Photo with Stamp Overlay
+// ============================================
+// STAMP FUNCTIONS - covers right 1/3 of photo
+// ============================================
+
+// Stamp Image - covers exactly right 1/3 of the photo
+function getStampImage() {
+    return `
+        <div style="position: absolute; top: 0; right: 0; width: 33.33%; height: 100%; z-index: 5; display: flex; align-items: center; justify-content: center; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 100%);">
+            <img src="../tra.png" 
+                 alt="ត្រា" 
+                 style="width: 95%; height: auto; max-height: 85%; object-fit: contain; opacity: 0.85;">
+        </div>
+    `;
+}
+
+// Student Photo with Stamp Overlay (stamp covers right 1/3 of photo)
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
-            <div style="position: relative; width: 100%; height: 100%;">
+            <div style="position: relative; width: 100%; height: 100%; overflow: hidden;">
                 <img src="${photoData}" alt="Student Photo" style="width: 100%; height: 100%; object-fit: cover;">
                 ${getStampImage()}
             </div>
         `;
     }
     return `
-        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%;">
+        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
-            <span>រូបថត</span>
+            <span style="font-size: 10px; margin-top: 5px;">រូបថត</span>
             ${getStampImage()}
         </div>
     `;
@@ -205,6 +211,5 @@ function generateCardHTML(data) {
 
 function generateSmallCardHTML(student) {
     // Use EXACTLY the same function as generateCardHTML
-    // Just pass the student data directly
     return generateCardHTML(student);
 }
