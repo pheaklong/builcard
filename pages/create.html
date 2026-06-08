@@ -110,13 +110,14 @@
     
     <script>
         // ============================================
-        // SUPABASE CONFIGURATION - កែតម្រូវ URL អោយត្រឹមត្រូវ!!!
+        // SUPABASE CONFIGURATION - កែតម្រូវតាមតម្លៃថ្មី!!!
         // ============================================
-        // ប្រើ URL ដូចគ្នានឹងក្នុងរូបភាព (xmowdtwldnwnxrkrrysj)
+        // ប្រើ URL និង ANON KEY ថ្មីដែលអ្នកផ្តល់
         const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
         
         console.log('Supabase URL:', SUPABASE_URL);
+        console.log('Supabase Key (first 20 chars):', SUPABASE_ANON_KEY.substring(0, 20) + '...');
         
         // Initialize Supabase client
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -243,7 +244,7 @@
         }
         
         // ============================================
-        // SAVE STUDENT (with better error handling)
+        // SAVE STUDENT
         // ============================================
         async function saveStudent() {
             try {
@@ -275,17 +276,6 @@
                 
                 console.log('Saving student:', studentData.studentID);
                 
-                // Check if table exists first
-                const { error: tableCheck } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('count', { count: 'exact', head: true });
-                
-                if (tableCheck) {
-                    console.error('Table error:', tableCheck);
-                    alert('⚠️ តារាងមិនទាន់មានទេ! សូមបង្កើតតារាងក្នុង Supabase សិន។\n\nដំណើរការ SQL ខាងក្រោមក្នុង SQL Editor:\n\nCREATE TABLE table_student (\n    id SERIAL PRIMARY KEY,\n    "studentID" TEXT UNIQUE NOT NULL,\n    name TEXT NOT NULL,\n    sex TEXT,\n    date_of_birth DATE,\n    phonenumber TEXT,\n    address TEXT,\n    fathername TEXT,\n    fatherphone TEXT,\n    fatherjob TEXT,\n    mothername TEXT,\n    motherphone TEXT,\n    motherjob TEXT,\n    class TEXT,\n    photo TEXT,\n    created_at TIMESTAMP DEFAULT NOW()\n);\n\nALTER TABLE table_student ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Enable all" ON table_student FOR ALL USING (true) WITH CHECK (true);');
-                    return;
-                }
-                
                 // Check if student exists
                 const { data: existing, error: findError } = await supabaseClient
                     .from(TABLE_NAME)
@@ -294,11 +284,15 @@
                     .maybeSingle();
                 
                 if (findError && findError.code !== 'PGRST116') {
-                    throw new Error(findError.message);
+                    // PGRST116 means no rows returned - this is OK
+                    if (findError.code !== 'PGRST116') {
+                        throw new Error(findError.message);
+                    }
                 }
                 
                 let result;
                 if (existing) {
+                    // Update
                     result = await supabaseClient
                         .from(TABLE_NAME)
                         .update(studentData)
@@ -310,6 +304,7 @@
                         throw new Error(result.error.message);
                     }
                 } else {
+                    // Insert
                     result = await supabaseClient
                         .from(TABLE_NAME)
                         .insert([studentData]);
@@ -323,7 +318,11 @@
                 
             } catch (error) {
                 console.error('Save error:', error);
-                alert('❌ កំហុស: ' + error.message);
+                if (error.message.includes('relation') && error.message.includes('does not exist')) {
+                    alert('⚠️ តារាងមិនទាន់មានទេ! សូមបង្កើតតារាងក្នុង Supabase SQL Editor សិន។\n\nប្រើ SQL ខាងក្រោម៖\n\nCREATE TABLE table_student (\n    id SERIAL PRIMARY KEY,\n    "studentID" TEXT UNIQUE NOT NULL,\n    name TEXT NOT NULL,\n    sex TEXT,\n    date_of_birth DATE,\n    phonenumber TEXT,\n    address TEXT,\n    fathername TEXT,\n    fatherphone TEXT,\n    fatherjob TEXT,\n    mothername TEXT,\n    motherphone TEXT,\n    motherjob TEXT,\n    class TEXT,\n    photo TEXT,\n    created_at TIMESTAMP DEFAULT NOW()\n);\n\nALTER TABLE table_student ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Enable all" ON table_student FOR ALL USING (true) WITH CHECK (true);');
+                } else {
+                    alert('❌ កំហុស: ' + error.message);
+                }
             }
         }
         
@@ -439,40 +438,27 @@
         }
         
         // ============================================
-        // CREATE TABLE FUNCTION
+        // CHECK CONNECTION
         // ============================================
-        async function createTable() {
-            // បង្ហាញ SQL សម្រាប់អ្នកប្រើ
-            const sql = `
--- ចម្លង SQL នេះទៅកាន់ Supabase SQL Editor
-CREATE TABLE IF NOT EXISTS table_student (
-    id SERIAL PRIMARY KEY,
-    "studentID" TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    sex TEXT,
-    date_of_birth DATE,
-    phonenumber TEXT,
-    address TEXT,
-    fathername TEXT,
-    fatherphone TEXT,
-    fatherjob TEXT,
-    mothername TEXT,
-    motherphone TEXT,
-    motherjob TEXT,
-    class TEXT,
-    photo TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE table_student ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Enable all" ON table_student
-    FOR ALL
-    USING (true)
-    WITH CHECK (true);
-`;
-            console.log('SQL to create table:', sql);
-            alert('សូមចូលទៅកាន់ Supabase Dashboard → SQL Editor ហើយដំណើរការ SQL ខាងក្រោម៖\n\n' + sql);
+        async function checkConnection() {
+            try {
+                console.log('Checking connection to Supabase...');
+                // Try a simple query to check if table exists
+                const { error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
+                if (error) {
+                    console.warn('Connection warning:', error);
+                    if (error.message && error.message.includes('relation') && error.message.includes('does not exist')) {
+                        console.log('Table does not exist. Please create it in Supabase SQL Editor.');
+                        console.log('Use SQL: CREATE TABLE table_student (id SERIAL PRIMARY KEY, "studentID" TEXT UNIQUE NOT NULL, name TEXT NOT NULL, sex TEXT, date_of_birth DATE, phonenumber TEXT, address TEXT, fathername TEXT, fatherphone TEXT, fatherjob TEXT, mothername TEXT, motherphone TEXT, motherjob TEXT, class TEXT, photo TEXT, created_at TIMESTAMP DEFAULT NOW());');
+                    } else if (error.message && error.message.includes('JWT')) {
+                        console.error('Invalid API key! Please check your SUPABASE_ANON_KEY');
+                    }
+                } else {
+                    console.log('✅ Supabase connected successfully! Table exists.');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+            }
         }
         
         // ============================================
@@ -498,24 +484,7 @@ CREATE POLICY "Enable all" ON table_student
             downloadCard();
         });
         
-        // Check connection and table
-        async function checkConnection() {
-            try {
-                const { error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
-                if (error) {
-                    console.warn('Connection warning:', error);
-                    if (error.message.includes('relation') && error.message.includes('does not exist')) {
-                        console.log('Table does not exist. Please create it.');
-                        createTable();
-                    }
-                } else {
-                    console.log('✅ Supabase connected successfully!');
-                }
-            } catch (error) {
-                console.error('Connection error:', error);
-            }
-        }
-        
+        // Run connection check
         checkConnection();
     </script>
 </body>
