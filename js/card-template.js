@@ -78,7 +78,7 @@ function getWatermarkLogo() {
 // Stamp Image - placed overlapping the photo by 1cm (38px)
 function getStampImage() {
     return `
-        <div style="position: absolute; top: -5px; right: -19px; width: 95px; height: 115px; z-index: 10; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; top: -5px; right: -10px; width: 95px; height: 115px; z-index: 10; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
                  style="width: 100%; height: 100%; object-fit: contain; opacity: 0.85;">
