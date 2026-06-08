@@ -41,10 +41,10 @@ function generateQRCode(studentID) {
 }
 
 // School Logo
-// School Logo - using image from GitHub
+// School Logo - using local image file
 function getSchoolLogo() {
     return `
-        <img src="https://raw.githubusercontent.com/pheaklong/builcard/main/path/to/logomoeys.png" 
+        <img src="../logomoeys.png" 
              alt="School Logo" 
              style="width: 35px; height: 35px; object-fit: contain;">
     `;
