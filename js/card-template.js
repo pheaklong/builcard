@@ -41,13 +41,12 @@ function generateQRCode(studentID) {
 }
 
 // School Logo
+// School Logo - using image from GitHub
 function getSchoolLogo() {
     return `
-        <svg width="35" height="35" viewBox="0 0 100 100" fill="#233D2E">
-            <circle cx="50" cy="50" r="45" stroke="#233D2E" stroke-width="2" fill="none"/>
-            <path d="M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z" stroke="#233D2E" stroke-width="2" fill="none"/>
-            <text x="50" y="55" text-anchor="middle" font-size="20" fill="#233D2E" font-weight="bold">សា</text>
-        </svg>
+        <img src="https://raw.githubusercontent.com/pheaklong/builcard/main/path/to/logomoeys.png" 
+             alt="School Logo" 
+             style="width: 35px; height: 35px; object-fit: contain;">
     `;
 }
 
