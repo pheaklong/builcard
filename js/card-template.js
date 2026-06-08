@@ -1,8 +1,7 @@
 // ============================================
-// CARD TEMPLATE - Professional Cambodian Student ID Card
+// UTILITY FUNCTIONS
 // ============================================
 
-// អនុគមន៍សម្រាប់ការពារ XSS
 function escapeHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>]/g, function(m) {
@@ -13,197 +12,198 @@ function escapeHtml(str) {
     });
 }
 
-// អនុគមន៍សម្រាប់បង្កើត QR Code (placeholder)
+// QR Code Generator (simple SVG placeholder)
 function generateQRCode(studentID) {
-    // នេះជា QR Code សាមញ្ញ (ប្រើ canvas)
-    // សម្រាប់ QR Code ពិតប្រាកដ អ្នកអាចប្រើ library ដូចជា qrcode.js
     return `
-        <div class="qr-placeholder" style="width: 60px; height: 60px; background: #1a1a2e; display: flex; align-items: center; justify-content: center; border-radius: 4px;">
-            <svg width="50" height="50" viewBox="0 0 100 100" fill="white">
-                <rect x="10" y="10" width="10" height="10" fill="white"/>
-                <rect x="30" y="10" width="10" height="10" fill="white"/>
-                <rect x="50" y="10" width="10" height="10" fill="white"/>
-                <rect x="70" y="10" width="10" height="10" fill="white"/>
-                <rect x="10" y="30" width="10" height="10" fill="white"/>
-                <rect x="50" y="30" width="10" height="10" fill="white"/>
-                <rect x="70" y="30" width="10" height="10" fill="white"/>
-                <rect x="10" y="50" width="10" height="10" fill="white"/>
-                <rect x="30" y="50" width="10" height="10" fill="white"/>
-                <rect x="50" y="50" width="10" height="10" fill="white"/>
-                <rect x="30" y="70" width="10" height="10" fill="white"/>
-                <rect x="50" y="70" width="10" height="10" fill="white"/>
-                <rect x="70" y="70" width="10" height="10" fill="white"/>
+        <svg width="95" height="95" viewBox="0 0 100 100" fill="#233D2E">
+            <rect x="10" y="10" width="8" height="8" fill="#233D2E"/>
+            <rect x="26" y="10" width="8" height="8" fill="#233D2E"/>
+            <rect x="42" y="10" width="8" height="8" fill="#233D2E"/>
+            <rect x="58" y="10" width="8" height="8" fill="#233D2E"/>
+            <rect x="74" y="10" width="8" height="8" fill="#233D2E"/>
+            <rect x="10" y="26" width="8" height="8" fill="#233D2E"/>
+            <rect x="42" y="26" width="8" height="8" fill="#233D2E"/>
+            <rect x="74" y="26" width="8" height="8" fill="#233D2E"/>
+            <rect x="10" y="42" width="8" height="8" fill="#233D2E"/>
+            <rect x="26" y="42" width="8" height="8" fill="#233D2E"/>
+            <rect x="42" y="42" width="8" height="8" fill="#233D2E"/>
+            <rect x="58" y="42" width="8" height="8" fill="#233D2E"/>
+            <rect x="74" y="42" width="8" height="8" fill="#233D2E"/>
+            <rect x="26" y="58" width="8" height="8" fill="#233D2E"/>
+            <rect x="42" y="58" width="8" height="8" fill="#233D2E"/>
+            <rect x="74" y="58" width="8" height="8" fill="#233D2E"/>
+            <rect x="10" y="74" width="8" height="8" fill="#233D2E"/>
+            <rect x="42" y="74" width="8" height="8" fill="#233D2E"/>
+            <rect x="58" y="74" width="8" height="8" fill="#233D2E"/>
+            <rect x="74" y="74" width="8" height="8" fill="#233D2E"/>
+        </svg>
+    `;
+}
+
+// School Logo
+function getSchoolLogo() {
+    return `
+        <svg width="80" height="80" viewBox="0 0 100 100" fill="#233D2E">
+            <circle cx="50" cy="50" r="45" stroke="#233D2E" stroke-width="2.5" fill="none"/>
+            <path d="M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z" stroke="#233D2E" stroke-width="2" fill="none"/>
+            <text x="50" y="55" text-anchor="middle" font-size="20" fill="#233D2E" font-weight="bold">សា</text>
+            <circle cx="50" cy="35" r="5" fill="#233D2E"/>
+        </svg>
+    `;
+}
+
+// Photo Placeholder / Student Photo
+function getPhotoHTML(photoData) {
+    if (photoData && photoData !== 'null' && photoData !== '') {
+        return `<img src="${photoData}" alt="Student Photo" class="student-photo-img">`;
+    }
+    return `
+        <div class="photo-placeholder-content">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="#aaa">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
+            <span>3X4</span>
         </div>
     `;
 }
 
-// អនុគមន៍សម្រាប់បង្ហាញរូបថត
-function getPhotoHTML(photoData) {
-    if (photoData && photoData !== 'null' && photoData !== '') {
-        return `<img src="${photoData}" alt="Student Photo" class="student-photo">`;
-    }
-    return `<div class="photo-placeholder">
-                <svg fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                </svg>
-                <span>រូបថត</span>
-            </div>`;
-}
+// ============================================
+// MAIN CARD GENERATOR
+// ============================================
 
-// ទម្រង់កាតធំ (សម្រាប់ create.html)
 function generateCardHTML(data) {
-    const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
+    const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : '_____ / _____ / _____';
     const currentYear = new Date().getFullYear();
-    const academicYear = `${currentYear}-${currentYear + 1}`;
-    const studentID = data.studentID || 'N/A';
+    const academicYear = `២០២៥-២០២៦`;
+    const studentID = data.studentID || '5906';
     
     return `
         <div class="student-id-card">
             <!-- Watermark Emblem -->
-            <div class="watermark">
-                <svg viewBox="0 0 100 100" fill="currentColor">
-                    <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M50 20 L65 45 L60 45 L55 35 L55 80 L45 80 L45 35 L40 45 L35 45 Z" fill="currentColor"/>
-                    <circle cx="50" cy="50" r="15" stroke="currentColor" stroke-width="1.5" fill="none"/>
+            <div class="watermark-emblem">
+                <svg viewBox="0 0 200 200" fill="currentColor">
+                    <circle cx="100" cy="100" r="90" stroke="currentColor" stroke-width="3" fill="none"/>
+                    <path d="M100 30 L140 70 L140 130 L100 170 L60 130 L60 70 Z" stroke="currentColor" stroke-width="3" fill="none"/>
+                    <circle cx="100" cy="100" r="30" stroke="currentColor" stroke-width="2.5" fill="none"/>
+                    <text x="100" y="108" text-anchor="middle" font-size="28" fill="currentColor" font-weight="bold">ក</text>
                 </svg>
             </div>
             
             <!-- Header Section -->
             <div class="card-header">
-                <div class="school-logo">
-                    <svg viewBox="0 0 50 50" fill="currentColor">
-                        <path d="M25 5 L45 15 L45 35 L25 45 L5 35 L5 15 Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                        <text x="25" y="30" text-anchor="middle" font-size="12" fill="currentColor">សា</text>
-                    </svg>
+                <div class="logo-section">
+                    ${getSchoolLogo()}
+                    <div class="school-name-block">
+                        <div class="school-line-1">ព្រះរាជាណាចក្រកម្ពុជា</div>
+                        <div class="school-line-2">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+                        <div class="school-line-3">វិទ្យាល័យ កែវរៀវ</div>
+                    </div>
                 </div>
-                <div class="school-title">
-                    <div class="ministry-text">ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                    <div class="school-name">វិទ្យាល័យ កែវរៀវ</div>
-                    <div class="school-name-english">KEOV RIEV HIGH SCHOOL</div>
-                </div>
-                <div class="qr-code">
-                    ${generateQRCode(studentID)}
+                <div class="header-right">
+                    <div class="header-text-right">
+                        <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
+                        <div>ដេប៉ាតឺម៉ង់ផែនការ និងហិរញ្ញវត្ថុ</div>
+                        <div>កម្មវិធីសាលារៀនឌីជីថល</div>
+                    </div>
+                    <div class="decorative-divider"></div>
+                    <div class="qr-code-container">
+                        ${generateQRCode(studentID)}
+                    </div>
                 </div>
             </div>
             
-            <!-- Main Title -->
-            <div class="card-title">
-                <h1>អត្តសញ្ញាណប័ណ្ណសិស្ស</h1>
-                <div class="academic-year">ឆ្នាំសិក្សា ${academicYear}</div>
+            <!-- Main Title Section -->
+            <div class="title-section">
+                <h1 class="card-main-title">អត្តសញ្ញាណប័ណ្ណសិស្ស</h1>
+                <div class="academic-year-text">ឆ្នាំសិក្សា ${academicYear}</div>
             </div>
             
-            <!-- Body Content - Two Columns -->
-            <div class="card-body">
+            <!-- Information Section - Two Columns -->
+            <div class="info-section">
                 <!-- Left Column -->
-                <div class="left-column">
-                    <div class="info-group">
-                        <div class="info-row">
-                            <span class="info-label">គោត្តនាម នាម៖</span>
-                            <span class="info-value">${escapeHtml(data.name) || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ភេទ៖</span>
-                            <span class="info-value">${escapeHtml(data.sex) || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ថ្ងៃខែឆ្នាំកំណើត៖</span>
-                            <span class="info-value">${birthDate}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ថ្នាក់៖</span>
-                            <span class="info-value">${escapeHtml(data.class) || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ទីកន្លែងកំណើត៖</span>
-                            <span class="info-value">${escapeHtml(data.address) || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">លេខទូរស័ព្ទ៖</span>
-                            <span class="info-value">${escapeHtml(data.phonenumber) || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">អាសយដ្ឋាន៖</span>
-                            <span class="info-value">${escapeHtml(data.address) || 'N/A'}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">ព្រះបិតា/ព្រះមាតា៖</span>
-                            <span class="info-value">${escapeHtml(data.fathername) || 'N/A'} / ${escapeHtml(data.mothername) || 'N/A'}</span>
-                        </div>
+                <div class="info-column left-col">
+                    <div class="info-row">
+                        <span class="info-label">គោត្តនាម និងនាម</span>
+                        <span class="info-value">${escapeHtml(data.name) || '_________________________'}</span>
                     </div>
-                    
-                    <!-- Student ID Box -->
-                    <div class="student-id-box">
-                        <span class="id-label">អត្តលេខសម្គាល់</span>
-                        <span class="id-number">ID-${studentID}</span>
+                    <div class="info-row">
+                        <span class="info-label">ភេទ</span>
+                        <span class="info-value">${escapeHtml(data.sex) || '_____'}</span>
                     </div>
-                    
-                    <!-- Photo Placeholder -->
-                    <div class="photo-container">
-                        ${getPhotoHTML(data.photo)}
+                    <div class="info-row">
+                        <span class="info-label">ថ្ងៃខែឆ្នាំកំណើត</span>
+                        <span class="info-value">${birthDate}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">ទីកន្លែងកំណើត</span>
+                        <span class="info-value">${escapeHtml(data.address) || '_________________________'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">មុខរបរ</span>
+                        <span class="info-value">${escapeHtml(data.fatherjob) || '_________________________'}</span>
                     </div>
                 </div>
                 
                 <!-- Right Column -->
-                <div class="right-column">
-                    <!-- Issue Information -->
-                    <div class="issue-info">
-                        <div class="issue-title">ព័ត៌មានចេញប័ណ្ណ</div>
-                        <div class="issue-row">
-                            <span class="issue-label">ចេញថ្ងៃទី៖</span>
-                            <span class="issue-value">${new Date().toLocaleDateString('km-KH')}</span>
-                        </div>
-                        <div class="issue-row">
-                            <span class="issue-label">សុពលភាព៖</span>
-                            <span class="issue-value">ដល់ថ្ងៃទី 31 ធ្នូ ${academicYear}</span>
-                        </div>
+                <div class="info-column right-col">
+                    <div class="info-row">
+                        <span class="info-label">សញ្ជាតិ</span>
+                        <span class="info-value">ខ្មែរ</span>
                     </div>
-                    
-                    <!-- School Details -->
-                    <div class="school-details">
-                        <div class="detail-row">
-                            <span class="detail-label">អាសយដ្ឋានសាលា៖</span>
-                            <span class="detail-value">ភូមិ កែវរៀវ, ឃុំ កែវរៀវ, ស្រុក កែវរៀវ, ខេត្ត កែវរៀវ</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">ទូរស័ព្ទ៖</span>
-                            <span class="detail-value">095 858 545</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">អ៊ីមែល៖</span>
-                            <span class="detail-value">info@keovriev.edu.kh</span>
-                        </div>
+                    <div class="info-row">
+                        <span class="info-label">ថ្នាក់</span>
+                        <span class="info-value">${escapeHtml(data.class) || '_____'}</span>
                     </div>
-                    
-                    <!-- Official Certification -->
-                    <div class="certification">
-                        <p>ប័ណ្ណនេះជាភស្តុតាងបញ្ជាក់ថា អ្នកកាន់ប័ណ្ណគឺជាសិស្សនៃវិទ្យាល័យ កែវរៀវ ក្រោមការគ្រប់គ្រងរបស់ក្រសួងអប់រំ យុវជន និងកីឡា។</p>
-                        <p>ប័ណ្ណនេះត្រូវតែយកតាមខ្លួនជានិច្ច ហើយត្រូវបង្ហាញតាមការស្នើសុំរបស់មន្ត្រីសាលា។</p>
+                    <div class="info-row">
+                        <span class="info-label">លេខទូរស័ព្ទ</span>
+                        <span class="info-value">${escapeHtml(data.phonenumber) || '_______________'}</span>
                     </div>
-                    
-                    <!-- Signature Section -->
-                    <div class="signature-section">
-                        <div class="signature-line">
-                            <div class="signature">_________________</div>
-                            <div class="signature-name">ព្រះគ្រូអធិការ</div>
-                        </div>
-                        <div class="signature-line">
-                            <div class="signature">_________________</div>
-                            <div class="signature-name red">ព្រះគ្រូប្រចាំថ្នាក់</div>
-                        </div>
+                    <div class="info-row">
+                        <span class="info-label">អាណាព្យាបាល</span>
+                        <span class="info-value">${escapeHtml(data.fathername) || '_________________'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">អាសយដ្ឋាន</span>
+                        <span class="info-value">${escapeHtml(data.address) || '_________________________________'}</span>
                     </div>
                 </div>
             </div>
             
-            <!-- Footer -->
-            <div class="card-footer">
-                <div class="footer-text">ប័ណ្ណនេះជាកម្មសិទ្ធិរបស់វិទ្យាល័យ កែវរៀវ</div>
+            <!-- Bottom Section -->
+            <div class="bottom-section">
+                <!-- Left Side: ID Box + Photo -->
+                <div class="bottom-left">
+                    <div class="student-id-box">
+                        <span class="id-number-text">ID-${studentID}</span>
+                    </div>
+                    <div class="photo-frame">
+                        ${getPhotoHTML(data.photo)}
+                    </div>
+                </div>
+                
+                <!-- Right Side: Certification + Signature -->
+                <div class="bottom-right">
+                    <div class="certification-text">
+                        <p>ប័ណ្ណនេះជាកម្មសិទ្ធិរបស់សិស្សខាងលើ</p>
+                        <p>ត្រូវតែយកតាមខ្លួនជានិច្ច</p>
+                        <p>ចេញថ្ងៃទី ${new Date().toLocaleDateString('km-KH')}</p>
+                        <p>សុពលភាពដល់ថ្ងៃទី 31 ធ្នូ ${currentYear + 1}</p>
+                    </div>
+                    <div class="signature-area">
+                        <div class="signature-title">នាយកវិទ្យាល័យ</div>
+                        <div class="signature-line">_________________</div>
+                        <div class="principal-name-red">ព្រះគ្រូ សុខ សុភក្ត្រា</div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
 }
 
-// ទម្រង់កាតតូច (សម្រាប់ generate.html)
+// ============================================
+// SMALL CARD FOR BATCH GENERATE
+// ============================================
+
 function generateSmallCardHTML(student) {
     const birthDate = student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
     const studentID = student.studentID || 'N/A';
@@ -211,32 +211,26 @@ function generateSmallCardHTML(student) {
     
     return `
         <div class="student-id-card-small">
-            <div class="small-card-header">
-                <div class="small-logo">
-                    <svg viewBox="0 0 30 30" fill="currentColor">
-                        <path d="M15 3 L27 11 L27 25 L15 31 L3 25 L3 11 Z" stroke="currentColor" stroke-width="1" fill="none"/>
-                    </svg>
+            <div class="small-card-inner">
+                <div class="small-header">
+                    <div class="small-logo">${getSchoolLogo()}</div>
+                    <div class="small-title">អត្តសញ្ញាណប័ណ្ណសិស្ស</div>
+                    <div class="small-qr">${generateQRCode(studentID)}</div>
                 </div>
-                <div class="small-title">
-                    <div>វិទ្យាល័យ កែវរៀវ</div>
-                    <div class="small-sub">អត្តសញ្ញាណប័ណ្ណសិស្ស</div>
+                <div class="small-body">
+                    <div class="small-photo">${photoHTML}</div>
+                    <div class="small-info">
+                        <div><strong>${escapeHtml(student.name)}</strong></div>
+                        <div>ID: ${studentID}</div>
+                        <div>ភេទ: ${escapeHtml(student.sex)}</div>
+                        <div>ថ្នាក់: ${escapeHtml(student.class)}</div>
+                        <div>កើតថ្ងៃ: ${birthDate}</div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="small-card-body">
-                <div class="small-photo">${photoHTML}</div>
-                <div class="small-info">
-                    <div class="small-name">${escapeHtml(student.name) || 'N/A'}</div>
-                    <div class="small-detail">ID: ${studentID}</div>
-                    <div class="small-detail">ថ្នាក់: ${escapeHtml(student.class) || 'N/A'}</div>
-                    <div class="small-detail">ភេទ: ${escapeHtml(student.sex) || 'N/A'}</div>
-                    <div class="small-detail">កើតថ្ងៃ: ${birthDate}</div>
+                <div class="small-footer">
+                    <div>${new Date().toLocaleDateString('km-KH')}</div>
+                    <div class="small-signature">នាយក</div>
                 </div>
-            </div>
-            
-            <div class="small-card-footer">
-                <div>${new Date().toLocaleDateString('km-KH')}</div>
-                <div class="small-signature">_________________</div>
             </div>
         </div>
     `;
