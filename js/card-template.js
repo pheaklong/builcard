@@ -85,7 +85,7 @@ function getStampImage() {
         <div style="
             position: absolute;
             bottom: 5px;
-            right: -19px; /* 0.5cm */
+            right: -11px; /* 0.5cm */
             width: 70px;
             height: 70px;
             z-index: 20;
