@@ -54,7 +54,7 @@ function getSignatureImage() {
     return `
         <img src="../Signature.png" 
              alt="នាយកវិទ្យាល័យ" 
-             style="width: 100px; height: auto; max-height: 100px; object-fit: contain; margin-left: 38px;">
+             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 38px;">
     `;
 }
 
@@ -68,17 +68,13 @@ function getWatermarkLogo() {
 }
 
 // ============================================
-// STAMP FUNCTIONS - stamp placed outside photo, fully visible
+// STAMP FUNCTIONS - stamp overlaps photo slightly
 // ============================================
 
-// ============================================
-// STAMP FUNCTIONS - stamp fully visible outside photo frame
-// ============================================
-
-// Stamp Image - placed to the right of the photo, fully visible
+// Stamp Image - placed overlapping the photo (from right side)
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 50%; left: 100%; transform: translateY(-50%); margin-left: 5px; width: 45px; height: 45px; z-index: 10; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; top: 50%; right: -15px; transform: translateY(-50%); width: 50px; height: 50px; z-index: 10; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
                  style="width: 100%; height: 100%; object-fit: contain; opacity: 0.9;">
@@ -86,7 +82,7 @@ function getStampImage() {
     `;
 }
 
-// Student Photo with Stamp placed to the right (fully visible outside photo frame)
+// Student Photo with Stamp overlapping
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
@@ -97,7 +93,7 @@ function getPhotoHTML(photoData) {
         `;
     }
     return `
-        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
