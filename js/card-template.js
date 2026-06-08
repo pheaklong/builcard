@@ -40,7 +40,6 @@ function generateQRCode(studentID) {
     `;
 }
 
-// School Logo
 // School Logo - using local image file
 function getSchoolLogo() {
     return `
@@ -50,12 +49,21 @@ function getSchoolLogo() {
     `;
 }
 
-// Signature Image - using signature.png
+// Signature Image - using signature.png (moved 1cm to the right)
 function getSignatureImage() {
     return `
         <img src="../Signature.png" 
              alt="នាយកវិទ្យាល័យ" 
-             style="width: 100px; height: auto; max-height: 40px; object-fit: contain;">
+             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 38px;">
+    `;
+}
+
+// Stamp Image - for overlaying on student photo
+function getStampImage() {
+    return `
+        <img src="../tra.png" 
+             alt="ត្រា" 
+             style="position: absolute; bottom: 5px; right: 5px; width: 40px; height: 40px; opacity: 0.8; z-index: 5;">
     `;
 }
 
@@ -68,17 +76,23 @@ function getWatermarkLogo() {
     `;
 }
 
-// Student Photo
+// Student Photo with Stamp Overlay
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
-        return `<img src="${photoData}" alt="Student Photo" class="student-photo-img">`;
+        return `
+            <div style="position: relative; width: 100%; height: 100%;">
+                <img src="${photoData}" alt="Student Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                ${getStampImage()}
+            </div>
+        `;
     }
     return `
-        <div class="photo-placeholder-content">
+        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
             <span>រូបថត</span>
+            ${getStampImage()}
         </div>
     `;
 }
