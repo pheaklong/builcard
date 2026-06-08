@@ -50,14 +50,12 @@ function getSchoolLogo() {
     `;
 }
 
-// Signature Image Placeholder
+// Signature Image - using signature.png
 function getSignatureImage() {
     return `
-        <svg width="80" height="30" viewBox="0 0 200 50" fill="#1a56db">
-            <path d="M10 25 Q30 15 50 25 Q70 35 90 25 Q110 15 130 25 Q150 35 170 25" stroke="#1a56db" stroke-width="2" fill="none"/>
-            <path d="M20 30 Q40 20 60 30 Q80 40 100 30 Q120 20 140 30 Q160 40 180 30" stroke="#1a56db" stroke-width="1.5" fill="none"/>
-            <text x="185" y="28" font-size="12" fill="#1a56db" font-style="italic">សុខ</text>
-        </svg>
+        <img src="../Signature.png" 
+             alt="នាយកវិទ្យាល័យ" 
+             style="width: 100px; height: auto; max-height: 40px; object-fit: contain;">
     `;
 }
 
