@@ -68,32 +68,32 @@ function getWatermarkLogo() {
 }
 
 // ============================================
-// STAMP FUNCTIONS - stamp placed outside photo, on the right side
+// STAMP FUNCTIONS - stamp placed outside photo, fully visible
 // ============================================
 
-// Stamp Image - placed to the right of the photo (outside photo frame)
+// Stamp Image - placed to the right of the photo (fully visible)
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 50%; right: -30px; transform: translateY(-50%); width: 50px; height: 50px; z-index: 5; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; top: 50%; left: 100%; transform: translateY(-50%); margin-left: 8px; width: 50px; height: 50px; z-index: 5; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
-                 style="width: 100%; height: auto; object-fit: contain; opacity: 0.9;">
+                 style="width: 100%; height: 100%; object-fit: contain; opacity: 0.9;">
         </div>
     `;
 }
 
-// Student Photo with Stamp placed to the right (outside photo)
+// Student Photo with Stamp placed to the right (fully visible outside photo)
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
-            <div style="position: relative; width: 100%; height: 100%; overflow: visible;">
+            <div style="position: relative; width: 100%; height: 100%;">
                 <img src="${photoData}" alt="Student Photo" style="width: 100%; height: 100%; object-fit: cover;">
                 ${getStampImage()}
             </div>
         `;
     }
     return `
-        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
