@@ -29,12 +29,14 @@
                 </div>
             </div>
             <div id="selectedStudentsList" class="min-h-[200px]">
-                <!-- Selected students will be displayed here -->
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
+                    <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
+                    <p class="text-sm mt-2">សូមចូលទៅកាន់ទំព័រ <a href="search.html" class="text-blue-600 font-semibold">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
+                </div>
             </div>
-        </div>
-        
-        <div class="mt-8 bg-blue-50 rounded-lg p-4 text-center no-print">
-            <p class="text-gray-700">💡 ណែនាំ៖ សូមចូលទៅកាន់ទំព័រ <a href="search.html" class="text-blue-600 font-semibold">ស្វែងរកសិស្ស</a> ដើម្បីបន្ថែមសិស្សមុនពេលបង្កើតកាត</p>
         </div>
     </div>
     
@@ -58,28 +60,36 @@
     
     <script>
         // ============================================
-        // SUPABASE CONFIGURATION
+        // GLOBAL VARIABLES
         // ============================================
-        const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
-        
-        // Global variables
         let selectedStudents = [];
         
         // ============================================
-        // LOAD SELECTED STUDENTS
+        // LOAD SELECTED STUDENTS FROM LOCALSTORAGE
         // ============================================
         function loadSelectedStudents() {
             const stored = localStorage.getItem('selectedStudents');
             if (stored) {
                 selectedStudents = JSON.parse(stored);
                 displaySelectedStudents();
+            } else {
+                displaySelectedStudents();
             }
         }
         
         // ============================================
-        // CARD GENERATION FUNCTIONS
+        // HELPER FUNCTIONS
         // ============================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
         function getPhotoHTML(photoData) {
             if (photoData && photoData !== 'null' && photoData !== '') {
                 return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
@@ -91,22 +101,15 @@
                     </div>`;
         }
         
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-        
+        // ============================================
+        // CARD GENERATION FUNCTION (កូដបង្កើតកាត)
+        // ============================================
         function generateCardHTML(student) {
             const birthDate = student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
             const photoHTML = getPhotoHTML(student.photo);
             
             return `
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow" style="font-family: 'Khmer', Arial, sans-serif;">
+                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow" style="width: 350px; font-family: 'Khmer', Arial, sans-serif;">
                     <div class="bg-white p-3 text-center border-b-2 border-yellow-400">
                         <h3 class="text-md font-bold text-blue-800">កាតសម្គាល់សិស្ស</h3>
                         <p class="text-xs text-gray-600">សាលារៀន​ ឌីជីថល</p>
@@ -150,7 +153,15 @@
             const generateBtn = document.getElementById('generateCardsBtn');
             
             if (!selectedStudents || selectedStudents.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-gray-500">មិនមានសិស្សដែលបានជ្រើសរើសទេ</div>';
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                        <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
+                        <p class="text-sm mt-2">សូមចូលទៅកាន់ទំព័រ <a href="search.html" class="text-blue-600 font-semibold">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
+                    </div>
+                `;
                 if (countSpan) countSpan.innerHTML = '(0 នាក់)';
                 if (generateBtn) {
                     generateBtn.innerHTML = '🖨️ បង្កើតកាតសិស្ស (0)';
@@ -195,7 +206,7 @@
         }
         
         // ============================================
-        // MANAGE SELECTED STUDENTS
+        // REMOVE STUDENT FUNCTION (Global for onclick)
         // ============================================
         window.removeStudent = (studentID) => {
             selectedStudents = selectedStudents.filter(s => s.studentID !== studentID);
@@ -203,6 +214,9 @@
             displaySelectedStudents();
         };
         
+        // ============================================
+        // CLEAR ALL STUDENTS
+        // ============================================
         document.getElementById('clearAllBtn')?.addEventListener('click', () => {
             if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
                 selectedStudents = [];
@@ -212,7 +226,7 @@
         });
         
         // ============================================
-        // GENERATE CARDS
+        // GENERATE ALL CARDS
         // ============================================
         document.getElementById('generateCardsBtn')?.addEventListener('click', () => {
             if (!selectedStudents || selectedStudents.length === 0) {
@@ -220,6 +234,7 @@
                 return;
             }
             
+            // Generate cards HTML
             const cardsHTML = selectedStudents.map(student => generateCardHTML(student)).join('');
             const modal = document.getElementById('cardsModal');
             const container = document.getElementById('cardsContainer');
@@ -228,10 +243,15 @@
         });
         
         // ============================================
-        // PRINT & MODAL CONTROLS
+        // PRINT ALL CARDS
         // ============================================
         document.getElementById('printAllCards')?.addEventListener('click', () => {
             const cardsHTML = document.getElementById('cardsContainer').innerHTML;
+            if (!cardsHTML || cardsHTML.trim() === '') {
+                alert('មិនមានកាតដើម្បីបោះពុម្ពទេ');
+                return;
+            }
+            
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <html>
@@ -246,6 +266,7 @@
                                 gap: 20px;
                                 padding: 20px;
                                 margin: 0;
+                                font-family: 'Khmer', Arial, sans-serif;
                             }
                             @media print {
                                 body {
@@ -266,6 +287,9 @@
             printWindow.print();
         });
         
+        // ============================================
+        // MODAL CONTROLS
+        // ============================================
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
             document.getElementById('cardsModal').classList.add('hidden');
         });
@@ -280,6 +304,9 @@
         // INITIALIZE
         // ============================================
         loadSelectedStudents();
+        
+        // Log to console
+        console.log('✅ Generate page loaded successfully');
     </script>
 </body>
 </html>
