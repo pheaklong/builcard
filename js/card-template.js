@@ -76,33 +76,70 @@ function getWatermarkLogo() {
 // STAMP FUNCTIONS - stamp placed NEXT to student photo (0.5cm gap)
 // ============================================
 
-// Stamp Image - placed to the right of student photo with 0.5cm gap
+// ============================================
+// STAMP FUNCTIONS - stamp overlaps photo by 0.5cm
+// ============================================
+
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 0; left: 100%; margin-left: -5px; width: 60px; height: 75px; z-index: 10; display: flex; align-items: center; justify-content: center;">
-            <img src="../tra.png" 
-                 alt="ត្រា" 
-                 style="width: 100%; height: 100%; object-fit: contain; opacity: 0.9;">
+        <div style="
+            position: absolute;
+            bottom: 5px;
+            right: -19px; /* 0.5cm */
+            width: 70px;
+            height: 70px;
+            z-index: 20;
+            pointer-events: none;
+        ">
+            <img src="../tra.png"
+                 alt="ត្រា"
+                 style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    opacity: 0.9;
+                 ">
         </div>
     `;
 }
 
-// Student Photo with Stamp placed to the right (0.5cm gap)
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
-            <div style="position: relative; width: 100%; height: 100%;">
-                <img src="${photoData}" alt="Student Photo" style="width: 100%; height: 100%; object-fit: cover;">
+            <div style="
+                position: relative;
+                width: 100%;
+                height: 100%;
+                overflow: visible;
+            ">
+                <img src="${photoData}"
+                     alt="Student Photo"
+                     style="
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        display: block;
+                     ">
                 ${getStampImage()}
             </div>
         `;
     }
+
     return `
-        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%;">
+        <div style="
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        ">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
-            <span style="font-size: 10px; margin-top: 5px;">រូបថត</span>
+            <span style="font-size:10px;margin-top:5px;">រូបថត</span>
             ${getStampImage()}
         </div>
     `;
