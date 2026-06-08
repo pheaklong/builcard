@@ -110,20 +110,22 @@
     
     <script>
         // ============================================
-        // SUPABASE CONFIGURATION - កែប្រែត្រង់នេះ!!!
+        // SUPABASE CONFIGURATION
         // ============================================
-        const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co/rest/v1/';  // ← ប្តូរជា URL របស់អ្នក
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';                // ← ប្តូរជា Anon Key របស់អ្នក
+        // សូមប្តូរតម្លៃខាងក្រោមតាមគណនី Supabase របស់អ្នក
+        const SUPABASE_URL = 'https://xmodtwlidnwnxrkrrysj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5'; // ប្តូរតាមគណនីអ្នក
         
-        // Initialize Supabase client - ប្រើ supabase (មិនមែន supabaseClient)
+        console.log('Supabase URL:', SUPABASE_URL);
+        
+        // Initialize Supabase client - ប្រើតែ URL មិនបន្ថែម /rest/v1 ទេ
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'table_student';
         
+        console.log('Supabase client created successfully');
+        
         // Global variables
         let currentPhotoBase64 = null;
-        
-        console.log('✅ Supabase initialized');
-        console.log('Table name:', TABLE_NAME);
         
         // ============================================
         // PHOTO HANDLING
@@ -271,6 +273,8 @@
                     return;
                 }
                 
+                console.log('Saving student:', studentData.studentID);
+                
                 // Check if student exists
                 const { data: existing, error: findError } = await supabaseClient
                     .from(TABLE_NAME)
@@ -279,6 +283,7 @@
                     .maybeSingle();
                 
                 if (findError && findError.code !== 'PGRST116') {
+                    console.error('Find error:', findError);
                     alert('❌ កំហុស: ' + findError.message);
                     return;
                 }
@@ -325,6 +330,8 @@
             }
             
             try {
+                console.log('Searching for student:', studentID);
+                
                 const { data, error } = await supabaseClient
                     .from(TABLE_NAME)
                     .select('*')
@@ -332,6 +339,7 @@
                     .maybeSingle();
                 
                 if (error) {
+                    console.error('Search error:', error);
                     alert('❌ កំហុស: ' + error.message);
                     return;
                 }
@@ -340,6 +348,8 @@
                     alert('❌ រកមិនឃើញសិស្សទេ!');
                     return;
                 }
+                
+                console.log('Found student:', data.name);
                 
                 // Fill form
                 document.getElementById('studentID').value = data.studentID || '';
@@ -446,7 +456,7 @@
         // Test connection
         async function testConnection() {
             try {
-                const { error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
+                const { data, error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
                 if (error) {
                     console.warn('Connection warning:', error);
                 } else {
