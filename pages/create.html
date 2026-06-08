@@ -121,114 +121,290 @@
         const TABLE_NAME = 'table_student';
         let currentPhotoBase64 = null;
         
-        // Photo handling
+        // ============================================
+        // GET URL PARAMETERS
+        // ============================================
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+        
+        // ============================================
+        // LOAD STUDENT FROM URL PARAMETER
+        // ============================================
+        async function loadStudentFromUrl() {
+            const studentID = getUrlParameter('studentID');
+            if (studentID) {
+                console.log('Loading student from URL:', studentID);
+                document.getElementById('searchStudentID').value = studentID;
+                await searchStudentById(studentID);
+            }
+        }
+        
+        // ============================================
+        // SEARCH STUDENT BY ID
+        // ============================================
+        async function searchStudentById(studentID) {
+            try {
+                console.log('Searching for student:', studentID);
+                
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .eq('studentID', studentID)
+                    .maybeSingle();
+                
+                if (error) {
+                    console.error('Search error:', error);
+                    alert('❌ កំហុស: ' + error.message);
+                    return false;
+                }
+                
+                if (!data) {
+                    alert('❌ រកមិនឃើញសិស្សទេ!');
+                    return false;
+                }
+                
+                console.log('Found student:', data.name);
+                
+                // Fill form
+                document.getElementById('studentID').value = data.studentID || '';
+                document.getElementById('name').value = data.name || '';
+                document.getElementById('sex').value = data.sex || 'ប្រុស';
+                document.getElementById('date_of_birth').value = data.date_of_birth || '';
+                document.getElementById('phonenumber').value = data.phonenumber || '';
+                document.getElementById('address').value = data.address || '';
+                document.getElementById('fathername').value = data.fathername || '';
+                document.getElementById('fatherphone').value = data.fatherphone || '';
+                document.getElementById('fatherjob').value = data.fatherjob || '';
+                document.getElementById('mothername').value = data.mothername || '';
+                document.getElementById('motherphone').value = data.motherphone || '';
+                document.getElementById('motherjob').value = data.motherjob || '';
+                document.getElementById('class').value = data.class || '';
+                
+                // Handle photo
+                if (data.photo && data.photo !== 'null') {
+                    currentPhotoBase64 = data.photo;
+                    const preview = document.getElementById('photoPreview');
+                    const defaultIcon = document.getElementById('defaultPhotoIcon');
+                    if (preview) {
+                        preview.src = currentPhotoBase64;
+                        preview.classList.remove('hidden');
+                    }
+                    if (defaultIcon) {
+                        defaultIcon.classList.add('hidden');
+                    }
+                } else {
+                    resetPhotoPreview();
+                }
+                
+                // Display card
+                displayCard(data);
+                return true;
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('❌ កំហុស: ' + error.message);
+                return false;
+            }
+        }
+        
+        // ============================================
+        // PHOTO HANDLING
+        // ============================================
+        function resetPhotoPreview() {
+            currentPhotoBase64 = null;
+            const preview = document.getElementById('photoPreview');
+            const defaultIcon = document.getElementById('defaultPhotoIcon');
+            if (preview) {
+                preview.src = '';
+                preview.classList.add('hidden');
+            }
+            if (defaultIcon) {
+                defaultIcon.classList.remove('hidden');
+            }
+        }
+        
         document.getElementById('photo')?.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     currentPhotoBase64 = event.target.result;
-                    document.getElementById('photoPreview').src = currentPhotoBase64;
-                    document.getElementById('photoPreview').classList.remove('hidden');
-                    document.getElementById('defaultPhotoIcon').classList.add('hidden');
+                    const preview = document.getElementById('photoPreview');
+                    const defaultIcon = document.getElementById('defaultPhotoIcon');
+                    preview.src = currentPhotoBase64;
+                    preview.classList.remove('hidden');
+                    defaultIcon.classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             } else {
-                currentPhotoBase64 = null;
-                document.getElementById('photoPreview').src = '';
-                document.getElementById('photoPreview').classList.add('hidden');
-                document.getElementById('defaultPhotoIcon').classList.remove('hidden');
+                resetPhotoPreview();
             }
         });
         
+        // ============================================
+        // CARD DISPLAY
+        // ============================================
         function displayCard(data) {
-            document.getElementById('studentCard').innerHTML = generateCardHTML(data);
+            const cardContainer = document.getElementById('studentCard');
+            if (cardContainer) {
+                cardContainer.innerHTML = generateCardHTML(data);
+            }
         }
         
+        // ============================================
+        // SAVE STUDENT
+        // ============================================
         async function saveStudent() {
-            const studentData = {
-                studentID: document.getElementById('studentID').value.trim(),
-                name: document.getElementById('name').value.trim(),
-                sex: document.getElementById('sex').value,
-                date_of_birth: document.getElementById('date_of_birth').value || null,
-                phonenumber: document.getElementById('phonenumber').value.trim(),
-                address: document.getElementById('address').value.trim(),
-                fathername: document.getElementById('fathername').value.trim(),
-                fatherphone: document.getElementById('fatherphone').value.trim(),
-                fatherjob: document.getElementById('fatherjob').value.trim(),
-                mothername: document.getElementById('mothername').value.trim(),
-                motherphone: document.getElementById('motherphone').value.trim(),
-                motherjob: document.getElementById('motherjob').value.trim(),
-                class: document.getElementById('class').value.trim(),
-                photo: currentPhotoBase64 || null
-            };
-            
-            if (!studentData.studentID) { alert('សូមបញ្ចូល Student ID'); return; }
-            if (!studentData.name) { alert('សូមបញ្ចូលឈ្មោះសិស្ស'); return; }
-            
-            const { data: existing } = await supabaseClient.from(TABLE_NAME).select('*').eq('studentID', studentData.studentID).maybeSingle();
-            let result;
-            if (existing) {
-                result = await supabaseClient.from(TABLE_NAME).update(studentData).eq('studentID', studentData.studentID);
-                if (!result.error) alert('✅ បានកែប្រែដោយជោគជ័យ!');
-            } else {
-                result = await supabaseClient.from(TABLE_NAME).insert([studentData]);
-                if (!result.error) alert('✅ បានរក្សាទុកដោយជោគជ័យ!');
+            try {
+                const studentData = {
+                    studentID: document.getElementById('studentID').value.trim(),
+                    name: document.getElementById('name').value.trim(),
+                    sex: document.getElementById('sex').value,
+                    date_of_birth: document.getElementById('date_of_birth').value || null,
+                    phonenumber: document.getElementById('phonenumber').value.trim(),
+                    address: document.getElementById('address').value.trim(),
+                    fathername: document.getElementById('fathername').value.trim(),
+                    fatherphone: document.getElementById('fatherphone').value.trim(),
+                    fatherjob: document.getElementById('fatherjob').value.trim(),
+                    mothername: document.getElementById('mothername').value.trim(),
+                    motherphone: document.getElementById('motherphone').value.trim(),
+                    motherjob: document.getElementById('motherjob').value.trim(),
+                    class: document.getElementById('class').value.trim(),
+                    photo: currentPhotoBase64 || null
+                };
+                
+                if (!studentData.studentID) {
+                    alert('សូមបញ្ចូល Student ID');
+                    return;
+                }
+                if (!studentData.name) {
+                    alert('សូមបញ្ចូលឈ្មោះសិស្ស');
+                    return;
+                }
+                
+                const { data: existing, error: findError } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .eq('studentID', studentData.studentID)
+                    .maybeSingle();
+                
+                let result;
+                if (existing) {
+                    result = await supabaseClient
+                        .from(TABLE_NAME)
+                        .update(studentData)
+                        .eq('studentID', studentData.studentID);
+                    if (!result.error) {
+                        alert('✅ បានកែប្រែព័ត៌មានសិស្សដោយជោគជ័យ!');
+                        displayCard(studentData);
+                    } else {
+                        alert('❌ កំហុស: ' + result.error.message);
+                    }
+                } else {
+                    result = await supabaseClient
+                        .from(TABLE_NAME)
+                        .insert([studentData]);
+                    if (!result.error) {
+                        alert('✅ បានរក្សាទុកព័ត៌មានសិស្សដោយជោគជ័យ!');
+                        displayCard(studentData);
+                    } else {
+                        alert('❌ កំហុស: ' + result.error.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('❌ កំហុសប្រព័ន្ធ: ' + error.message);
             }
-            if (!result.error) displayCard(studentData);
-            else alert('❌ កំហុស: ' + result.error.message);
         }
         
-        async function searchStudent() {
+        // ============================================
+        // SEARCH STUDENT FROM INPUT
+        // ============================================
+        async function searchStudentFromInput() {
             const studentID = document.getElementById('searchStudentID').value.trim();
-            if (!studentID) { alert('សូមបញ្ចូល Student ID'); return; }
-            const { data } = await supabaseClient.from(TABLE_NAME).select('*').eq('studentID', studentID).maybeSingle();
-            if (!data) { alert('❌ រកមិនឃើញសិស្សទេ!'); return; }
-            
-            document.getElementById('studentID').value = data.studentID || '';
-            document.getElementById('name').value = data.name || '';
-            document.getElementById('sex').value = data.sex || 'ប្រុស';
-            document.getElementById('date_of_birth').value = data.date_of_birth || '';
-            document.getElementById('phonenumber').value = data.phonenumber || '';
-            document.getElementById('address').value = data.address || '';
-            document.getElementById('fathername').value = data.fathername || '';
-            document.getElementById('fatherphone').value = data.fatherphone || '';
-            document.getElementById('fatherjob').value = data.fatherjob || '';
-            document.getElementById('mothername').value = data.mothername || '';
-            document.getElementById('motherphone').value = data.motherphone || '';
-            document.getElementById('motherjob').value = data.motherjob || '';
-            document.getElementById('class').value = data.class || '';
-            
-            if (data.photo && data.photo !== 'null') {
-                currentPhotoBase64 = data.photo;
-                document.getElementById('photoPreview').src = currentPhotoBase64;
-                document.getElementById('photoPreview').classList.remove('hidden');
-                document.getElementById('defaultPhotoIcon').classList.add('hidden');
+            if (!studentID) {
+                alert('សូមបញ្ចូល Student ID');
+                return;
             }
-            displayCard(data);
+            await searchStudentById(studentID);
         }
         
+        // ============================================
+        // PRINT CARD
+        // ============================================
         function printCard() {
             const cardContent = document.getElementById('studentCard').innerHTML;
-            if (!cardContent || cardContent.includes('បំពេញព័ត៌មាន')) { alert('មិនមានកាត'); return; }
-            const w = window.open('', '_blank');
-            w.document.write(`<html><head><title>បោះពុម្ពកាត</title><meta charset="UTF-8"><style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style></head><body>${cardContent}</body></html>`);
-            w.document.close(); w.print();
+            if (!cardContent || cardContent.includes('បំពេញព័ត៌មានសិស្ស')) {
+                alert('មិនមានកាតដើម្បីបោះពុម្ពទេ');
+                return;
+            }
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>បោះពុម្ពកាតសិស្ស</title>
+                        <meta charset="UTF-8">
+                        <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style>
+                    </head>
+                    <body>${cardContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
         }
         
+        // ============================================
+        // DOWNLOAD CARD
+        // ============================================
         async function downloadCard() {
             const cardElement = document.querySelector('#studentCard > div');
-            if (!cardElement) { alert('មិនមានកាត'); return; }
-            const canvas = await html2canvas(cardElement, { scale: 2 });
-            const link = document.createElement('a');
-            link.download = `student_card_${document.getElementById('studentID').value || 'card'}.png`;
-            link.href = canvas.toDataURL(); link.click();
+            if (!cardElement || (cardElement.innerHTML && cardElement.innerHTML.includes('បំពេញព័ត៌មានសិស្ស'))) {
+                alert('មិនមានកាតដើម្បីទាញយកទេ');
+                return;
+            }
+            try {
+                const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: null });
+                const link = document.createElement('a');
+                const studentID = document.getElementById('studentID').value || 'card';
+                link.download = `student_card_${studentID}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                alert('✅ បានទាញយកដោយជោគជ័យ!');
+            } catch (error) {
+                alert('កើតមានបញ្ហា: ' + error.message);
+            }
         }
         
-        document.getElementById('saveBtn')?.addEventListener('click', (e) => { e.preventDefault(); saveStudent(); });
-        document.getElementById('fetchStudentBtn')?.addEventListener('click', (e) => { e.preventDefault(); searchStudent(); });
-        document.getElementById('printCard')?.addEventListener('click', (e) => { e.preventDefault(); printCard(); });
-        document.getElementById('downloadCard')?.addEventListener('click', (e) => { e.preventDefault(); downloadCard(); });
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.getElementById('saveBtn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            saveStudent();
+        });
+        
+        document.getElementById('fetchStudentBtn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            searchStudentFromInput();
+        });
+        
+        document.getElementById('printCard')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            printCard();
+        });
+        
+        document.getElementById('downloadCard')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            downloadCard();
+        });
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        // Load student from URL parameter when page loads
+        loadStudentFromUrl();
     </script>
 </body>
 </html>
