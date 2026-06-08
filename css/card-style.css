@@ -264,4 +264,18 @@
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
     }
+
+   /* Emergency fix - force all containers to allow overflow */
+.photo-section,
+.photo-section * {
+    overflow: visible !important;
+}
+
+/* Make stamp container properly positioned */
+.photo-frame-card > div {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: visible !important;
+}
 }
