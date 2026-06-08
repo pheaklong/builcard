@@ -74,7 +74,7 @@ function getWatermarkLogo() {
 // Stamp Image - covers exactly right 1/3 of the photo
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 0; right: 0; width: 33.33%; height: 100%; z-index: 5; display: flex; align-items: center; justify-content: center; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 100%);">
+        <div style="position: absolute; top: 0; right: 0; width: 100%; height: 100%; z-index: 5; display: flex; align-items: center; justify-content: center; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 100%);">
             <img src="../tra.png" 
                  alt="ត្រា" 
                  style="width: 95%; height: auto; max-height: 85%; object-fit: contain; opacity: 0.85;">
