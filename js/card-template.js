@@ -64,12 +64,10 @@ function getSignatureImage() {
 // Watermark Logo
 function getWatermarkLogo() {
     return `
-        <svg viewBox="0 0 200 200" fill="currentColor">
-            <circle cx="100" cy="100" r="90" stroke="currentColor" stroke-width="3" fill="none"/>
-            <path d="M100 30 L140 70 L140 130 L100 170 L60 130 L60 70 Z" stroke="currentColor" stroke-width="3" fill="none"/>
-            <circle cx="100" cy="100" r="30" stroke="currentColor" stroke-width="2" fill="none"/>
-            <text x="100" y="108" text-anchor="middle" font-size="28" fill="currentColor" font-weight="bold">ក</text>
-        </svg>
+         <img src="../logomoeys.png" 
+             alt="School Logo" 
+             style="width: 35px; height: 35px; object-fit: contain;"
+             onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<span style=\"font-size:10px;color:#233D2E;\">សាលា</span>');">
     `;
 }
 
