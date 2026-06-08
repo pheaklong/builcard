@@ -72,18 +72,22 @@ function getWatermarkLogo() {
 // STAMP FUNCTIONS - stamp overlaps photo by 0.5cm
 // ============================================
 
-// Stamp Image - overlaps photo by 0.5cm (19px)
+// ============================================
+// STAMP FUNCTIONS - stamp placed NEXT to student photo (0.5cm gap)
+// ============================================
+
+// Stamp Image - placed to the right of student photo with 0.5cm gap
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 0; life: -19px; width: 75px; height: 95px; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.2); border-radius: 3px;">
+        <div style="position: absolute; top: 0; left: 100%; margin-left: 5px; width: 60px; height: 75px; z-index: 10; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
-                 style="width: 90%; height: 90%; object-fit: contain; opacity: 0.85;">
+                 style="width: 100%; height: 100%; object-fit: contain; opacity: 0.9;">
         </div>
     `;
 }
 
-// Student Photo with Stamp overlapping by 0.5cm
+// Student Photo with Stamp placed to the right (0.5cm gap)
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
