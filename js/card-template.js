@@ -49,12 +49,12 @@ function getSchoolLogo() {
     `;
 }
 
-// Signature Image - using signature.png (moved 1cm to the right)
+// Signature Image - using signature.png
 function getSignatureImage() {
     return `
         <img src="../Signature.png" 
              alt="នាយកវិទ្យាល័យ" 
-             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 28px;">
+             style="width: 100px; height: auto; max-height: 40px; object-fit: contain;">
     `;
 }
 
@@ -67,15 +67,6 @@ function getWatermarkLogo() {
     `;
 }
 
- 
-// ============================================
-// STAMP FUNCTIONS - stamp overlaps photo by 0.5cm
-// ============================================
-
-// ============================================
-// STAMP FUNCTIONS - stamp placed NEXT to student photo (0.5cm gap)
-// ============================================
-
 // ============================================
 // STAMP FUNCTIONS - stamp overlaps photo by 0.5cm
 // ============================================
@@ -84,8 +75,8 @@ function getStampImage() {
     return `
         <div style="
             position: absolute;
-            bottom: 5px;
-            right: 11px; /* 0.5cm */
+            bottom: -14px;      /* Overlap 0.5cm (14px ≈ 0.5cm at 96dpi) */
+            right: -14px;       /* Overlap 0.5cm from right edge */
             width: 70px;
             height: 70px;
             z-index: 20;
@@ -145,8 +136,6 @@ function getPhotoHTML(photoData) {
     `;
 }
 
- 
- 
 // ============================================
 // MAIN CARD GENERATOR (6.5cm x 8.5cm)
 // ============================================
