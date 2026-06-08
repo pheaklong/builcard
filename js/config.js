@@ -1,6 +1,6 @@
 // ============ SUPABASE CONFIGURATION ============
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co'; // ប្តូរនេះ
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY'; // ប្តូរនេះ
+const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co/rest/v1/'; // ប្តូរនេះ
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA'; // ប្តូរនេះ
 
 // Initialize Supabase client
 const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
