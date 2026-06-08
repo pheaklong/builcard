@@ -61,13 +61,12 @@ function getSignatureImage() {
     `;
 }
 
-// Watermark Logo
+// Watermark Logo - using same logo image as watermark
 function getWatermarkLogo() {
     return `
-         <img src="../logomoeys.png" 
-             alt="School Logo" 
-             style="width: 35px; height: 35px; object-fit: contain;"
-             onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<span style=\"font-size:10px;color:#233D2E;\">សាលា</span>');">
+        <img src="../logomoeys.png" 
+             alt="Watermark" 
+             style="width: 100%; height: 100%; object-fit: contain; opacity: 0.15;">
     `;
 }
 
