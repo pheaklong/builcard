@@ -68,32 +68,32 @@ function getWatermarkLogo() {
 }
 
 // ============================================
-// STAMP FUNCTIONS - covers right 1/3 of photo
+// STAMP FUNCTIONS - stamp placed outside photo, on the right side
 // ============================================
 
-// Stamp Image - covers exactly right 1/3 of the photo
+// Stamp Image - placed to the right of the photo (outside photo frame)
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 0; right: 0; width: 100%; height: 100%; z-index: 5; display: flex; align-items: center; justify-content: center; background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 100%);">
+        <div style="position: absolute; top: 50%; right: -30px; transform: translateY(-50%); width: 50px; height: 50px; z-index: 5; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
-                 style="width: 95%; height: auto; max-height: 85%; object-fit: contain; opacity: 0.85;">
+                 style="width: 100%; height: auto; object-fit: contain; opacity: 0.9;">
         </div>
     `;
 }
 
-// Student Photo with Stamp Overlay (stamp covers right 1/3 of photo)
+// Student Photo with Stamp placed to the right (outside photo)
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
-            <div style="position: relative; width: 100%; height: 100%; overflow: hidden;">
+            <div style="position: relative; width: 100%; height: 100%; overflow: visible;">
                 <img src="${photoData}" alt="Student Photo" style="width: 100%; height: 100%; object-fit: cover;">
                 ${getStampImage()}
             </div>
         `;
     }
     return `
-        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div class="photo-placeholder-content" style="position: relative; width: 100%; height: 100%; overflow: visible; display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
