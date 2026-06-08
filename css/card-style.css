@@ -13,15 +13,15 @@
 /* Main Card Container */
 .student-id-card {
     position: relative;
-    width: 246px;
-    height: 321px;
+    width: 246px;   /* 6.5cm ≈ 246px at 96dpi */
+    height: 321px;  /* 8.5cm ≈ 321px at 96dpi */
     background: #f5f5f0;
     border: 1px solid #4A86E8;
     border-radius: 4px;
     padding: 8px 10px;
     font-family: 'Khmer', 'Khmer OS Moul Light', 'Moul', sans-serif;
     box-sizing: border-box;
-    overflow: visible;
+    overflow: visible;  /* ← IMPORTANT: allows stamp to show outside */
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -163,6 +163,7 @@
     position: relative;
 }
 
+/* ========== CRITICAL FIX FOR STAMP OVERLAP ========== */
 .photo-frame-card {
     width: 75px;
     height: 95px;
@@ -170,6 +171,16 @@
     border-radius: 3px;
     background: white;
     position: relative;
+    overflow: visible !important;  /* ← KEY: allows stamp to overlap from outside */
+}
+
+/* Container for photo + stamp - MUST have overflow visible */
+.photo-frame-card > div {
+    overflow: visible !important;  /* ← KEY: inner container also visible */
+}
+
+/* Make sure the relative container for stamp works */
+.photo-frame-card [style*="position: relative"] {
     overflow: visible !important;
 }
 
@@ -182,6 +193,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    overflow: visible !important;
 }
 
 .student-photo-img {
@@ -242,6 +254,14 @@
     }
     
     .photo-frame-card {
-        overflow: visible;
+        overflow: visible !important;
+    }
+    
+    /* Ensure stamp prints correctly */
+    .photo-frame-card div,
+    .photo-frame-card [style*="position: absolute"] {
+        overflow: visible !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 }
