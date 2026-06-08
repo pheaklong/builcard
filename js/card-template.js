@@ -96,7 +96,6 @@ function getPhotoHTML(photoData) {
 function generateCardHTML(data) {
     const studentID = data.studentID || '_________';
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : '____/____/______';
-    const currentYear = new Date().getFullYear();
     
     return `
         <div class="student-id-card">
@@ -193,35 +192,11 @@ function generateCardHTML(data) {
 }
 
 // ============================================
-// SMALL CARD FOR BATCH GENERATE
+// SMALL CARD FOR BATCH GENERATE (100% SAME AS MAIN CARD)
 // ============================================
 
 function generateSmallCardHTML(student) {
-    const studentID = student.studentID || 'N/A';
-    const photoHTML = getPhotoHTML(student.photo);
-    
-    return `
-        <div class="student-id-card-small">
-            <div class="small-card-inner">
-                <div class="small-header-card">
-                    <div class="small-logo-card">${getSchoolLogo()}</div>
-                    <div class="small-title-card">បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
-                    <div class="small-qr-card">${generateQRCode(studentID)}</div>
-                </div>
-                <div class="small-body-card">
-                    <div class="small-photo-card">${photoHTML}</div>
-                    <div class="small-info-card">
-                        <div><strong>${escapeHtml(student.name)}</strong></div>
-                        <div>ID: ${studentID}</div>
-                        <div>ភេទ: ${escapeHtml(student.sex)}</div>
-                        <div>ថ្នាក់: ${escapeHtml(student.class)}</div>
-                    </div>
-                </div>
-                <div class="small-footer-card">
-                    <div>${new Date().toLocaleDateString('km-KH')}</div>
-                    <div class="small-signature-card">នាយក</div>
-                </div>
-            </div>
-        </div>
-    `;
+    // Use EXACTLY the same function as generateCardHTML
+    // Just pass the student data directly
+    return generateCardHTML(student);
 }
