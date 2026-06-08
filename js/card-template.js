@@ -54,7 +54,7 @@ function getSignatureImage() {
     return `
         <img src="../Signature.png" 
              alt="នាយកវិទ្យាល័យ" 
-             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 48px;">
+             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 38px;">
     `;
 }
 
@@ -67,26 +67,23 @@ function getWatermarkLogo() {
     `;
 }
 
+ 
 // ============================================
-// STAMP FUNCTIONS - stamp overlaps photo slightly
-// ============================================
-
-// ============================================
-// STAMP FUNCTIONS - stamp overlaps photo by 1cm
+// STAMP FUNCTIONS - stamp overlaps photo by 0.5cm
 // ============================================
 
-// Stamp Image - placed overlapping the photo by 1cm (38px)
+// Stamp Image - overlaps photo by 0.5cm (19px), same size as student photo
 function getStampImage() {
     return `
-        <div style="position: absolute; top: -5px; right: -10px; width: 95px; height: 115px; z-index: 10; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; top: 0; right: -19px; width: 75px; height: 95px; z-index: 10; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.2); border-radius: 3px;">
             <img src="../tra.png" 
                  alt="ត្រា" 
-                 style="width: 100%; height: 100%; object-fit: contain; opacity: 0.85;">
+                 style="width: 90%; height: 90%; object-fit: contain; opacity: 0.85;">
         </div>
     `;
 }
 
-// Student Photo with Stamp overlapping by 1cm
+// Student Photo with Stamp overlapping by 0.5cm
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `
@@ -107,6 +104,8 @@ function getPhotoHTML(photoData) {
     `;
 }
 
+ 
+ 
 // ============================================
 // MAIN CARD GENERATOR (6.5cm x 8.5cm)
 // ============================================
