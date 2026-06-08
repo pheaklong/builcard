@@ -169,8 +169,8 @@
     border: 1px solid #4A86E8;
     border-radius: 3px;
     background: white;
-    overflow: visible;
     position: relative;
+    overflow: visible !important;
 }
 
 .photo-placeholder-content {
