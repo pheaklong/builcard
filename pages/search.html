@@ -3,55 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>បង្កើតកាតសិស្សច្រើននាក់ - Generate Cards</title>
+    <title>ស្វែងរកសិស្ស - Search Students</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        .card-preview { transition: all 0.3s ease; }
-        @media print { .no-print { display: none; } }
+        .checkbox-custom {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .hover-bg:hover {
+            background-color: #f3f4f6;
+        }
+        @media print {
+            .no-print { display: none; }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
         <div class="mb-4 no-print">
             <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
-            <a href="search.html" class="text-green-600 hover:text-green-800 ml-4">← ត្រឡប់ទៅស្វែងរក</a>
         </div>
         
-        <h1 class="text-3xl font-bold text-center mb-8 text-purple-600">📇 បង្កើតកាតសិស្សច្រើននាក់</h1>
+        <h1 class="text-3xl font-bold text-center mb-8 text-green-600">🔍 ស្វែងរក និងជ្រើសរើសសិស្ស</h1>
         
+        <!-- Search Section -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8 no-print">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ស្វែងរកតាមថ្នាក់</label>
+                    <input type="text" id="searchClass" placeholder="ឧទាហរណ៍: ថ្នាក់ទី១២A" class="w-full rounded-md border p-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">ស្វែងរកតាមឈ្មោះ</label>
+                    <input type="text" id="searchName" placeholder="បញ្ចូលឈ្មោះសិស្ស..." class="w-full rounded-md border p-2">
+                </div>
+                <div class="flex space-x-2 items-end">
+                    <button id="searchBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex-1">🔍 ស្វែងរក</button>
+                    <button id="resetBtn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex-1">🔄 កំណត់ឡើងវិញ</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Results with Selection -->
         <div class="bg-white rounded-lg shadow-lg p-6">
             <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <h2 class="text-xl font-bold text-gray-700">👥 បញ្ជីសិស្សដែលបានជ្រើសរើស <span id="selectedCount" class="text-blue-600">(0 នាក់)</span></h2>
-                <div class="space-x-2">
-                    <button id="clearAllBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">🗑️ លុបទាំងអស់</button>
-                    <button id="generateCardsBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700" disabled>🖨️ បង្កើតកាតសិស្ស (0)</button>
+                <div class="flex items-center space-x-4">
+                    <h2 class="text-xl font-bold text-gray-700">📋 លទ្ធផលស្វែងរក</h2>
+                    <span id="resultCount" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="selectAllBtn" class="bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 text-sm">☑️ ជ្រើសទាំងអស់</button>
+                    <button id="deselectAllBtn" class="bg-gray-600 text-white px-3 py-1 rounded-lg hover:bg-gray-700 text-sm">☐ មិនជ្រើសទាំងអស់</button>
+                    <button id="addSelectedBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        ➕ បន្ថែមសិស្សដែលបានជ្រើស (<span id="selectedCount">0</span>)
+                    </button>
                 </div>
             </div>
-            <div id="selectedStudentsList" class="min-h-[200px]">
-                <!-- Selected students will be displayed here -->
+            <div id="searchResults" class="overflow-x-auto">
+                <!-- Results will be displayed here -->
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                    </svg>
+                    <p>សូមបញ្ចូលពាក្យស្វែងរក ឬចុចបង្ហាញទាំងអស់</p>
+                </div>
             </div>
         </div>
         
-        <div class="mt-8 bg-blue-50 rounded-lg p-4 text-center no-print">
-            <p class="text-gray-700">💡 ណែនាំ៖ សូមចូលទៅកាន់ទំព័រ <a href="search.html" class="text-blue-600 font-semibold">ស្វែងរកសិស្ស</a> ដើម្បីបន្ថែមសិស្សមុនពេលបង្កើតកាត</p>
-        </div>
-    </div>
-    
-    <!-- Modal for displaying all cards -->
-    <div id="cardsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto no-print">
-        <div class="min-h-screen flex items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-                <div class="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center flex-wrap gap-2">
-                    <h3 class="text-xl font-bold text-gray-800">🪪 កាតសិស្សទាំងអស់</h3>
-                    <div class="space-x-2">
-                        <button id="printAllCards" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">🖨️ បោះពុម្ពទាំងអស់</button>
-                        <button id="closeModalBtn" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">✖ បិទ</button>
-                    </div>
+        <!-- Selected Students Summary -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-6 no-print">
+            <h2 class="text-xl font-bold mb-4 text-gray-700">✅ សិស្សដែលបានជ្រើសរើស</h2>
+            <div id="selectedSummary" class="min-h-[100px]">
+                <div class="text-center py-8 text-gray-500">
+                    <p>មិនទាន់មានសិស្សដែលបានជ្រើសរើសទេ</p>
                 </div>
-                <div id="cardsContainer" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Cards will be generated here -->
-                </div>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <button id="goToGenerateBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
+                    🖨️ បន្តទៅបង្កើតកាត (<span id="finalSelectedCount">0</span>)
+                </button>
             </div>
         </div>
     </div>
@@ -63,34 +95,165 @@
         const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
         
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const TABLE_NAME = 'table_student';
+        
         // Global variables
-        let selectedStudents = [];
+        let currentStudents = [];
+        let selectedStudents = new Map(); // Use Map to store student data by ID
         
         // ============================================
-        // LOAD SELECTED STUDENTS
+        // LOAD STUDENTS
         // ============================================
-        function loadSelectedStudents() {
-            const stored = localStorage.getItem('selectedStudents');
-            if (stored) {
-                selectedStudents = JSON.parse(stored);
-                displaySelectedStudents();
+        async function loadAllStudents() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                currentStudents = data || [];
+                displaySearchResults(currentStudents);
+                updateSelectedSummary();
+                
+            } catch (error) {
+                console.error('Error loading students:', error);
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <p>❌ កំហុសក្នុងការផ្ទុកទិន្នន័យ: ${error.message}</p>
+                    </div>
+                `;
             }
         }
         
         // ============================================
-        // CARD GENERATION FUNCTIONS
+        // SEARCH STUDENTS
         // ============================================
-        function getPhotoHTML(photoData) {
-            if (photoData && photoData !== 'null' && photoData !== '') {
-                return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
+        async function searchStudents() {
+            const searchClass = document.getElementById('searchClass').value.trim();
+            const searchName = document.getElementById('searchName').value.trim();
+            
+            if (!searchClass && !searchName) {
+                loadAllStudents();
+                return;
             }
-            return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
-                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+            
+            try {
+                let query = supabaseClient.from(TABLE_NAME).select('*');
+                
+                if (searchClass) {
+                    query = query.ilike('class', `%${searchClass}%`);
+                }
+                if (searchName) {
+                    query = query.ilike('name', `%${searchName}%`);
+                }
+                
+                const { data, error } = await query.order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                currentStudents = data || [];
+                displaySearchResults(currentStudents);
+                
+                if (currentStudents.length === 0) {
+                    document.getElementById('searchResults').innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <p>❌ រកមិនឃើញសិស្សដែលត្រូវនឹងលក្ខខណ្ឌស្វែងរក</p>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Search error:', error);
+                alert('❌ កំហុស: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        // DISPLAY SEARCH RESULTS
+        // ============================================
+        function displaySearchResults(students) {
+            const container = document.getElementById('searchResults');
+            
+            if (!students || students.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
                         </svg>
-                    </div>`;
+                        <p>មិនមានទិន្នន័យសិស្សទេ</p>
+                    </div>
+                `;
+                document.getElementById('resultCount').innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('resultCount').innerHTML = `(ឃើញ ${students.length} នាក់)`;
+            
+            container.innerHTML = `
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-12">ជ្រើស</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ឈ្មោះ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ភេទ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ថ្នាក់</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ទូរស័ព្ទ</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">សកម្មភាព</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${students.map(student => `
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3">
+                                    <input type="checkbox" class="student-checkbox checkbox-custom" 
+                                           value="${student.studentID}" 
+                                           data-student='${JSON.stringify(student).replace(/'/g, "&#39;")}'
+                                           ${selectedStudents.has(student.studentID) ? 'checked' : ''}>
+                                </td>
+                                <td class="px-4 py-3 text-sm font-mono">${escapeHtml(student.studentID)}</td>
+                                <td class="px-4 py-3 text-sm font-medium">${escapeHtml(student.name)}</td>
+                                <td class="px-4 py-3 text-sm">${escapeHtml(student.sex) || 'N/A'}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${escapeHtml(student.class) || 'N/A'}</span>
+                                </td>
+                                <td class="px-4 py-3 text-sm">${escapeHtml(student.phonenumber) || 'N/A'}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    <button onclick="viewStudent('${student.studentID}')" class="text-blue-600 hover:text-blue-800 mr-2">👁️ មើល</button>
+                                    <button onclick="toggleSelectStudent('${student.studentID}')" class="text-green-600 hover:text-green-800">
+                                        ${selectedStudents.has(student.studentID) ? '✖ ដកចេញ' : '➕ ជ្រើស'}
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            // Add event listeners to checkboxes
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const studentID = e.target.value;
+                    if (e.target.checked) {
+                        const studentData = JSON.parse(e.target.getAttribute('data-student'));
+                        selectedStudents.set(studentID, studentData);
+                    } else {
+                        selectedStudents.delete(studentID);
+                    }
+                    updateSelectedCount();
+                    updateSelectedSummary();
+                });
+            });
+            
+            updateSelectedCount();
         }
         
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
         function escapeHtml(str) {
             if (!str) return '';
             return String(str).replace(/[&<>]/g, function(m) {
@@ -101,89 +264,44 @@
             });
         }
         
-        function generateCardHTML(student) {
-            const birthDate = student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-            const photoHTML = getPhotoHTML(student.photo);
-            
-            return `
-                <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow" style="font-family: 'Khmer', Arial, sans-serif;">
-                    <div class="bg-white p-3 text-center border-b-2 border-yellow-400">
-                        <h3 class="text-md font-bold text-blue-800">កាតសម្គាល់សិស្ស</h3>
-                        <p class="text-xs text-gray-600">សាលារៀន​ ឌីជីថល</p>
-                    </div>
-                    <div class="p-3 text-white">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex-1">
-                                <p class="text-xs opacity-90">លេខសម្គាល់៖</p>
-                                <p class="font-bold text-sm">${escapeHtml(student.studentID) || 'N/A'}</p>
-                            </div>
-                            ${photoHTML}
-                        </div>
-                        <div class="space-y-1 text-xs">
-                            <div><p class="opacity-90">ឈ្មោះ៖</p><p class="font-semibold">${escapeHtml(student.name) || 'N/A'}</p></div>
-                            <div class="grid grid-cols-2 gap-1">
-                                <div><p class="opacity-90">ភេទ៖</p><p>${escapeHtml(student.sex) || 'N/A'}</p></div>
-                                <div><p class="opacity-90">ថ្ងៃកំណើត៖</p><p>${birthDate}</p></div>
-                            </div>
-                            <div><p class="opacity-90">ថ្នាក់៖</p><p class="font-medium">${escapeHtml(student.class) || 'N/A'}</p></div>
-                            <div><p class="opacity-90">ទូរស័ព្ទ៖</p><p>${escapeHtml(student.phonenumber) || 'N/A'}</p></div>
-                        </div>
-                        <hr class="my-2 border-white/30">
-                        <div class="text-xs space-y-0.5">
-                            <p><span class="opacity-90">ឪពុក៖</span> ${escapeHtml(student.fathername) || 'N/A'}</p>
-                            <p><span class="opacity-90">ម្តាយ៖</span> ${escapeHtml(student.mothername) || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div class="bg-yellow-400 p-1.5 text-center text-[10px] font-bold text-blue-900">
-                        ចេញថ្ងៃទី: ${new Date().toLocaleDateString('km-KH')}
-                    </div>
-                </div>
-            `;
+        function updateSelectedCount() {
+            const count = selectedStudents.size;
+            document.getElementById('selectedCount').innerHTML = count;
+            document.getElementById('finalSelectedCount').innerHTML = count;
         }
         
-        // ============================================
-        // DISPLAY SELECTED STUDENTS
-        // ============================================
-        function displaySelectedStudents() {
-            const container = document.getElementById('selectedStudentsList');
-            const countSpan = document.getElementById('selectedCount');
-            const generateBtn = document.getElementById('generateCardsBtn');
+        function updateSelectedSummary() {
+            const container = document.getElementById('selectedSummary');
+            const students = Array.from(selectedStudents.values());
             
-            if (!selectedStudents || selectedStudents.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-gray-500">មិនមានសិស្សដែលបានជ្រើសរើសទេ</div>';
-                if (countSpan) countSpan.innerHTML = '(0 នាក់)';
-                if (generateBtn) {
-                    generateBtn.innerHTML = '🖨️ បង្កើតកាតសិស្ស (0)';
-                    generateBtn.disabled = true;
-                }
+            if (students.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <p>មិនទាន់មានសិស្សដែលបានជ្រើសរើសទេ</p>
+                    </div>
+                `;
                 return;
             }
             
-            if (countSpan) countSpan.innerHTML = `(${selectedStudents.length} នាក់)`;
-            if (generateBtn) {
-                generateBtn.innerHTML = `🖨️ បង្កើតកាតសិស្ស (${selectedStudents.length})`;
-                generateBtn.disabled = false;
-            }
-            
             container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    ${selectedStudents.map(student => `
-                        <div class="border rounded-lg p-3 flex justify-between items-center hover:bg-gray-50">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    ${students.map(student => `
+                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
                             <div class="flex items-center space-x-3">
                                 ${student.photo ? 
                                     `<img src="${student.photo}" class="w-10 h-10 rounded-full object-cover">` : 
-                                    `<div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                    `<div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                                         <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>`
                                 }
                                 <div>
-                                    <p class="font-semibold">${escapeHtml(student.name)}</p>
-                                    <p class="text-sm text-gray-600">${escapeHtml(student.studentID)} | ${escapeHtml(student.class) || 'N/A'}</p>
+                                    <p class="font-semibold text-sm">${escapeHtml(student.name)}</p>
+                                    <p class="text-xs text-gray-500">${escapeHtml(student.studentID)} | ${escapeHtml(student.class) || 'N/A'}</p>
                                 </div>
                             </div>
-                            <button onclick="removeStudent('${student.studentID}')" class="text-red-600 hover:text-red-800">
+                            <button onclick="removeSelectedStudent('${student.studentID}')" class="text-red-600 hover:text-red-800">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                                 </svg>
@@ -194,92 +312,105 @@
             `;
         }
         
-        // ============================================
-        // MANAGE SELECTED STUDENTS
-        // ============================================
-        window.removeStudent = (studentID) => {
-            selectedStudents = selectedStudents.filter(s => s.studentID !== studentID);
-            localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
-            displaySelectedStudents();
+        // Global functions for buttons
+        window.toggleSelectStudent = (studentID) => {
+            const student = currentStudents.find(s => s.studentID === studentID);
+            if (student) {
+                if (selectedStudents.has(studentID)) {
+                    selectedStudents.delete(studentID);
+                } else {
+                    selectedStudents.set(studentID, student);
+                }
+                updateSelectedCount();
+                updateSelectedSummary();
+                displaySearchResults(currentStudents);
+            }
         };
         
-        document.getElementById('clearAllBtn')?.addEventListener('click', () => {
-            if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
-                selectedStudents = [];
-                localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
-                displaySelectedStudents();
-            }
-        });
+        window.removeSelectedStudent = (studentID) => {
+            selectedStudents.delete(studentID);
+            updateSelectedCount();
+            updateSelectedSummary();
+            displaySearchResults(currentStudents);
+        };
+        
+        window.viewStudent = (studentID) => {
+            window.location.href = `create.html?studentID=${studentID}`;
+        };
         
         // ============================================
-        // GENERATE CARDS
+        // BUTTON HANDLERS
         // ============================================
-        document.getElementById('generateCardsBtn')?.addEventListener('click', () => {
-            if (!selectedStudents || selectedStudents.length === 0) {
-                alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ');
+        
+        // Select all in current results
+        document.getElementById('selectAllBtn')?.addEventListener('click', () => {
+            currentStudents.forEach(student => {
+                if (!selectedStudents.has(student.studentID)) {
+                    selectedStudents.set(student.studentID, student);
+                }
+            });
+            updateSelectedCount();
+            updateSelectedSummary();
+            displaySearchResults(currentStudents);
+        });
+        
+        // Deselect all in current results
+        document.getElementById('deselectAllBtn')?.addEventListener('click', () => {
+            currentStudents.forEach(student => {
+                selectedStudents.delete(student.studentID);
+            });
+            updateSelectedCount();
+            updateSelectedSummary();
+            displaySearchResults(currentStudents);
+        });
+        
+        // Add selected and go to generate
+        document.getElementById('addSelectedBtn')?.addEventListener('click', () => {
+            if (selectedStudents.size === 0) {
+                alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
                 return;
             }
             
-            const cardsHTML = selectedStudents.map(student => generateCardHTML(student)).join('');
-            const modal = document.getElementById('cardsModal');
-            const container = document.getElementById('cardsContainer');
-            container.innerHTML = cardsHTML;
-            modal.classList.remove('hidden');
+            // Save to localStorage
+            const selectedArray = Array.from(selectedStudents.values());
+            localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
+            alert(`✅ បានរក្សាទុកសិស្ស ${selectedStudents.size} នាក់!`);
         });
         
-        // ============================================
-        // PRINT & MODAL CONTROLS
-        // ============================================
-        document.getElementById('printAllCards')?.addEventListener('click', () => {
-            const cardsHTML = document.getElementById('cardsContainer').innerHTML;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>បោះពុម្ពកាតសិស្ស</title>
-                        <meta charset="UTF-8">
-                        <style>
-                            body {
-                                display: flex;
-                                flex-wrap: wrap;
-                                justify-content: center;
-                                gap: 20px;
-                                padding: 20px;
-                                margin: 0;
-                            }
-                            @media print {
-                                body {
-                                    padding: 0;
-                                    gap: 10px;
-                                }
-                                div {
-                                    break-inside: avoid;
-                                    page-break-inside: avoid;
-                                }
-                            }
-                        </style>
-                    </head>
-                    <body>${cardsHTML}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        });
-        
-        document.getElementById('closeModalBtn')?.addEventListener('click', () => {
-            document.getElementById('cardsModal').classList.add('hidden');
-        });
-        
-        document.getElementById('cardsModal')?.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('cardsModal')) {
-                document.getElementById('cardsModal').classList.add('hidden');
+        // Go to generate page
+        document.getElementById('goToGenerateBtn')?.addEventListener('click', () => {
+            if (selectedStudents.size === 0) {
+                alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
+                return;
             }
+            
+            const selectedArray = Array.from(selectedStudents.values());
+            localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
+            window.location.href = 'generate.html';
         });
         
-        // ============================================
-        // INITIALIZE
-        // ============================================
-        loadSelectedStudents();
+        // Search button
+        document.getElementById('searchBtn')?.addEventListener('click', () => {
+            searchStudents();
+        });
+        
+        // Reset button
+        document.getElementById('resetBtn')?.addEventListener('click', () => {
+            document.getElementById('searchClass').value = '';
+            document.getElementById('searchName').value = '';
+            loadAllStudents();
+        });
+        
+        // Enter key support
+        document.getElementById('searchClass')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchStudents();
+        });
+        document.getElementById('searchName')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchStudents();
+        });
+        
+        // Load data on page load
+        loadAllStudents();
     </script>
 </body>
 </html>
