@@ -157,15 +157,15 @@
     margin-top: 5px;
 }
 
-/* Photo Section - Remove overflow hidden */
+/* Photo Section */
 .photo-section {
     flex-shrink: 0;
     position: relative;
 }
 
 .photo-frame-card {
-    width: 65px;
-    height: 70px;
+    width: 75px;
+    height: 95px;
     border: 1px solid #4A86E8;
     border-radius: 3px;
     background: white;
@@ -178,6 +178,16 @@
     height: 100%;
     background: #e5e7eb;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.student-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 /* Info Section Card */
