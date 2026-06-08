@@ -79,7 +79,7 @@ function getWatermarkLogo() {
 // Stamp Image - placed to the right of student photo with 0.5cm gap
 function getStampImage() {
     return `
-        <div style="position: absolute; top: 0; left: 100%; margin-left: 5px; width: 60px; height: 75px; z-index: 10; display: flex; align-items: center; justify-content: center;">
+        <div style="position: absolute; top: 0; left: 100%; margin-left: -5px; width: 60px; height: 75px; z-index: 10; display: flex; align-items: center; justify-content: center;">
             <img src="../tra.png" 
                  alt="ត្រា" 
                  style="width: 100%; height: 100%; object-fit: contain; opacity: 0.9;">
