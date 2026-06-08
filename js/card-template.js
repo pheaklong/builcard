@@ -54,7 +54,7 @@ function getSignatureImage() {
     return `
         <img src="../Signature.png" 
              alt="នាយកវិទ្យាល័យ" 
-             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 38px;">
+             style="width: 100px; height: auto; max-height: 40px; object-fit: contain; margin-left: 48px;">
     `;
 }
 
