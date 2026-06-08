@@ -115,12 +115,15 @@
         const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co/rest/v1/';  // ← ប្តូរជា URL របស់អ្នក
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';                // ← ប្តូរជា Anon Key របស់អ្នក
         
-        // Initialize Supabase client
-        const _supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Initialize Supabase client - ប្រើ supabase (មិនមែន supabaseClient)
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'table_student';
         
         // Global variables
         let currentPhotoBase64 = null;
+        
+        console.log('✅ Supabase initialized');
+        console.log('Table name:', TABLE_NAME);
         
         // ============================================
         // PHOTO HANDLING
@@ -177,6 +180,16 @@
                     </div>`;
         }
         
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
         function generateCardHTML(data) {
             const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
             const photoHTML = getPhotoHTML(data.photo);
@@ -220,16 +233,6 @@
             `;
         }
         
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-        
         function displayCard(data) {
             const cardContainer = document.getElementById('studentCard');
             if (cardContainer) {
@@ -268,7 +271,8 @@
                     return;
                 }
                 
-                const { data: existing, error: findError } = await _supabase
+                // Check if student exists
+                const { data: existing, error: findError } = await supabaseClient
                     .from(TABLE_NAME)
                     .select('*')
                     .eq('studentID', studentData.studentID)
@@ -281,7 +285,8 @@
                 
                 let result;
                 if (existing) {
-                    result = await _supabase
+                    // Update
+                    result = await supabaseClient
                         .from(TABLE_NAME)
                         .update(studentData)
                         .eq('studentID', studentData.studentID);
@@ -292,7 +297,8 @@
                         alert('❌ កំហុស: ' + result.error.message);
                     }
                 } else {
-                    result = await _supabase
+                    // Insert
+                    result = await supabaseClient
                         .from(TABLE_NAME)
                         .insert([studentData]);
                     if (!result.error) {
@@ -319,7 +325,7 @@
             }
             
             try {
-                const { data, error } = await _supabase
+                const { data, error } = await supabaseClient
                     .from(TABLE_NAME)
                     .select('*')
                     .eq('studentID', studentID)
@@ -335,6 +341,7 @@
                     return;
                 }
                 
+                // Fill form
                 document.getElementById('studentID').value = data.studentID || '';
                 document.getElementById('name').value = data.name || '';
                 document.getElementById('sex').value = data.sex || 'ប្រុស';
@@ -378,10 +385,14 @@
             }
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
-                <html><head><title>បោះពុម្ពកាតសិស្ស</title>
-                <meta charset="UTF-8">
-                <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style>
-                </head><body>${cardContent}</body></html>
+                <html>
+                    <head>
+                        <title>បោះពុម្ពកាតសិស្ស</title>
+                        <meta charset="UTF-8">
+                        <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style>
+                    </head>
+                    <body>${cardContent}</body>
+                </html>
             `);
             printWindow.document.close();
             printWindow.print();
@@ -432,8 +443,21 @@
             downloadCard();
         });
         
-        console.log('✅ Page loaded successfully!');
-        console.log('Table name:', TABLE_NAME);
+        // Test connection
+        async function testConnection() {
+            try {
+                const { error } = await supabaseClient.from(TABLE_NAME).select('count', { count: 'exact', head: true });
+                if (error) {
+                    console.warn('Connection warning:', error);
+                } else {
+                    console.log('✅ Supabase connected successfully!');
+                }
+            } catch (error) {
+                console.error('Connection error:', error);
+            }
+        }
+        
+        testConnection();
     </script>
 </body>
 </html>
