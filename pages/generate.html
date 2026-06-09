@@ -2,511 +2,503 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>បង្កើតបណ្ណសម្គាល់សិស្ស</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>បង្កើតកាតសិស្សច្រើននាក់ - Generate Cards</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/card-style.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
+        
         body {
-            font-family: 'Khmer', 'Khmer OS Moul Light', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
             min-height: 100vh;
             padding: 20px;
         }
-
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
-
-        .header {
+        
+        /* Header Navigation */
+        .nav-bar {
             background: white;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 12px 24px;
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
-        .header h1 {
-            color: #333;
-            font-size: 24px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
+        
+        .nav-links a {
+            text-decoration: none;
+            padding: 8px 16px;
             border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
             transition: all 0.3s ease;
-            font-family: inherit;
+            font-family: 'Khmer', sans-serif;
         }
-
-        .btn-primary {
-            background: #4A86E8;
-            color: white;
+        
+        .nav-links a:hover {
+            background: #f0f0f0;
         }
-
-        .btn-primary:hover {
-            background: #3a6ec8;
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-        }
-
-        .controls {
+        
+        /* Main Panel */
+        .main-panel {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-
-        .search-box {
+        
+        /* Header Controls */
+        .controls-header {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
         }
-
-        .search-box input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+        
+        .title-section h2 {
+            font-size: 20px;
+            color: #233D2E;
+            font-family: 'Khmer', sans-serif;
+        }
+        
+        .title-section span {
             font-size: 14px;
-            font-family: inherit;
-        }
-
-        .filter-group {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 15px;
-        }
-
-        .filter-group select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-family: inherit;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .stat-item {
-            background: #f8f9fa;
-            padding: 8px 15px;
-            border-radius: 8px;
-        }
-
-        .stat-item span:first-child {
-            font-weight: bold;
-            color: #666;
-        }
-
-        .stat-item span:last-child {
-            color: #4A86E8;
-            font-weight: bold;
+            color: #304FFE;
             margin-left: 8px;
         }
-
-        .students-list {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            max-height: 400px;
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Khmer', sans-serif;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Cards Grid - Portrait Layout */
+        .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 24px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        /* Each card wrapper */
+        .card-wrapper {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .card-wrapper:hover {
+            transform: translateY(-4px);
+        }
+        
+        .remove-card-btn {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 28px;
+            height: 28px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .remove-card-btn:hover {
+            background: #b91c1c;
+            transform: scale(1.1);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+            width: 100%;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow-y: auto;
         }
-
-        .students-list h3 {
-            margin-bottom: 15px;
-            color: #333;
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 95%;
+            max-height: 90%;
+            overflow-y: auto;
+            padding: 20px;
         }
-
-        .student-item {
+        
+        .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            transition: background 0.2s;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-
-        .student-item:hover {
-            background: #f8f9fa;
+        
+        .modal-header h3 {
+            font-family: 'Khmer', sans-serif;
+            color: #233D2E;
         }
-
-        .student-info {
-            flex: 1;
-        }
-
-        .student-name {
-            font-weight: bold;
-            color: #333;
-        }
-
-        .student-details {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .student-checkbox {
-            margin-right: 15px;
-            transform: scale(1.2);
-            cursor: pointer;
-        }
-
-        .cards-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        
+        .modal-cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 20px;
-            margin-top: 20px;
         }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-            font-size: 18px;
+        
+        .hidden {
+            display: none;
         }
-
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
+        
+        /* Scrollbar */
+        .cards-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .cards-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .cards-grid::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        /* Info Box */
+        .info-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
             border-radius: 8px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .cards-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .search-box {
-                flex-direction: column;
-            }
+            padding: 12px 16px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #166534;
+            font-family: 'Khmer', sans-serif;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏫 បង្កើតបណ្ណសម្គាល់សិស្ស</h1>
-            <div class="button-group">
-                <button class="btn-secondary" onclick="window.location.href='index.html'">🏠 ទំព័រដើម</button>
-                <button class="btn-secondary" onclick="window.location.href='create.html'">➕ បន្ថែមសិស្ស</button>
-                <button class="btn-secondary" onclick="window.location.href='search.html'">🔍 ស្វែងរកសិស្ស</button>
+        <!-- Navigation -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="../index.html" style="color: #233D2E;">← ត្រឡប់ទៅមេនុយ</a>
+                <a href="search.html" style="color: #304FFE; margin-left: 16px;">← ត្រឡប់ទៅស្វែងរក</a>
+            </div>
+            <div>
+                <span style="color: #233D2E; font-size: 14px; font-family: 'Khmer', sans-serif;">ប្រព័ន្ធបង្កើតកាតសិស្ស</span>
             </div>
         </div>
-
-        <div class="controls">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="ស្វែងរកតាមឈ្មោះ ឬ អត្តលេខ..." onkeyup="filterStudents()">
+        
+        <!-- Main Panel -->
+        <div class="main-panel">
+            <div class="controls-header">
+                <div class="title-section">
+                    <h2>👥 បញ្ជីសិស្សដែលបានជ្រើសរើស <span id="selectedCount">(0 នាក់)</span></h2>
+                </div>
+                <div class="action-buttons">
+                    <button id="clearAllBtn" class="btn btn-danger">🗑️ លុបទាំងអស់</button>
+                    <button id="generateCardsBtn" class="btn btn-primary" disabled>🖨️ បង្កើតកាតសិស្ស (0)</button>
+                </div>
             </div>
-            <div class="filter-group">
-                <select id="classFilter" onchange="filterStudents()">
-                    <option value="">ទាំងអស់</option>
-                </select>
-                <select id="genderFilter" onchange="filterStudents()">
-                    <option value="">ទាំងអស់</option>
-                    <option value="ប្រុស">ប្រុស</option>
-                    <option value="ស្រី">ស្រី</option>
-                </select>
+            
+            <!-- Cards Grid - Portrait Cards (same as create.html) -->
+            <div id="selectedStudentsList" class="cards-grid">
+                <div class="empty-state">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                    </svg>
+                    <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
+                    <p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
+                </div>
             </div>
-            <div class="stats">
-                <div class="stat-item"><span>សរុបសិស្ស:</span><span id="totalCount">0</span></div>
-                <div class="stat-item"><span>បានជ្រើសរើស:</span><span id="selectedCount">0</span></div>
-            </div>
-            <div class="button-group" style="margin-top: 15px;">
-                <button class="btn-primary" onclick="selectAll()">✓ ជ្រើសរើសទាំងអស់</button>
-                <button class="btn-secondary" onclick="deselectAll()">✗ មិនជ្រើសរើសទាំងអស់</button>
-                <button class="btn-success" onclick="generateSelectedCards()">🃏 បង្កើតកាត</button>
-                <button class="btn-danger" onclick="clearSelected()">🗑 លុបដែលបានជ្រើស</button>
+            
+            <!-- Info Box -->
+            <div class="info-box">
+                <span>💡</span>
+                <span>កាតសិស្សមានទំហំ 6.5cm × 8.5cm (បញ្ឈរ)។ អ្នកអាចបោះពុម្ពកាតទាំងអស់បានដោយចុចប៊ូតុង "បង្កើតកាតសិស្ស" ។</span>
             </div>
         </div>
-
-        <div class="students-list">
-            <h3>📋 បញ្ជីសិស្ស</h3>
-            <div id="studentsList"></div>
-        </div>
-
-        <div id="cardsContainer" class="cards-container"></div>
     </div>
-
+    
+    <!-- Modal for displaying all cards -->
+    <div id="cardsModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="font-size: 20px;">🪪 កាតសិស្សទាំងអស់</h3>
+                <div style="display: flex; gap: 12px;">
+                    <button id="printAllCards" class="btn" style="background: #8b5cf6; color: white;">🖨️ បោះពុម្ពទាំងអស់</button>
+                    <button id="closeModalBtn" class="btn" style="background: #dc2626; color: white;">✖ បិទ</button>
+                </div>
+            </div>
+            <div id="cardsContainer" class="modal-cards-grid">
+                <!-- Cards will be generated here -->
+            </div>
+        </div>
+    </div>
+    
     <script src="../js/card-template.js"></script>
     <script>
-        let allStudents = [];
-        let selectedStudentIds = new Set();
-
-        // ផ្ទុកទិន្នន័យសិស្ស
-        function loadStudents() {
-            const saved = localStorage.getItem('students');
-            if (saved) {
-                allStudents = JSON.parse(saved);
-                console.log('Loaded students:', allStudents.length);
+        // ============================================
+        // GLOBAL VARIABLES
+        // ============================================
+        let selectedStudents = [];
+        
+        // ============================================
+        // LOAD SELECTED STUDENTS FROM LOCALSTORAGE
+        // ============================================
+        function loadSelectedStudents() {
+            const stored = localStorage.getItem('selectedStudents');
+            if (stored) {
+                selectedStudents = JSON.parse(stored);
+                displaySelectedStudents();
             } else {
-                allStudents = [];
-                console.log('No students found');
+                displaySelectedStudents();
             }
-            populateClassFilter();
-            filterStudents();
         }
-
-        // បំពេញតម្រងថ្នាក់
-        function populateClassFilter() {
-            const classes = [...new Set(allStudents.map(s => s.class).filter(c => c))];
-            const classFilter = document.getElementById('classFilter');
-            classes.forEach(className => {
-                const option = document.createElement('option');
-                option.value = className;
-                option.textContent = className;
-                classFilter.appendChild(option);
-            });
-        }
-
-        // ត្រងសិស្ស
-        function filterStudents() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const classFilter = document.getElementById('classFilter').value;
-            const genderFilter = document.getElementById('genderFilter').value;
-
-            const filtered = allStudents.filter(student => {
-                const matchSearch = student.name.toLowerCase().includes(searchTerm) || 
-                                  (student.studentID && student.studentID.toLowerCase().includes(searchTerm));
-                const matchClass = !classFilter || student.class === classFilter;
-                const matchGender = !genderFilter || student.sex === genderFilter;
-                return matchSearch && matchClass && matchGender;
-            });
-
-            displayStudents(filtered);
-            document.getElementById('totalCount').textContent = filtered.length;
-        }
-
-        // បង្ហាញបញ្ជីសិស្ស
-        function displayStudents(students) {
-            const container = document.getElementById('studentsList');
-            if (students.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#999;">មិនមានទិន្នន័យសិស្ស</div>';
+        
+        // ============================================
+        // DISPLAY SELECTED STUDENTS (EXACT SAME AS create.html)
+        // ============================================
+        function displaySelectedStudents() {
+            const container = document.getElementById('selectedStudentsList');
+            const countSpan = document.getElementById('selectedCount');
+            const generateBtn = document.getElementById('generateCardsBtn');
+            
+            if (!selectedStudents || selectedStudents.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                        </svg>
+                        <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
+                        <p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
+                    </div>
+                `;
+                if (countSpan) countSpan.innerHTML = '(0 នាក់)';
+                if (generateBtn) {
+                    generateBtn.innerHTML = '🖨️ បង្កើតកាតសិស្ស (0)';
+                    generateBtn.disabled = true;
+                }
                 return;
             }
-
-            container.innerHTML = students.map(student => `
-                <div class="student-item">
-                    <input type="checkbox" class="student-checkbox" 
-                           data-id="${student.studentID}"
-                           ${selectedStudentIds.has(student.studentID) ? 'checked' : ''}
-                           onchange="toggleStudent('${student.studentID}')">
-                    <div class="student-info">
-                        <div class="student-name">${escapeHtml(student.name) || 'មិនមានឈ្មោះ'}</div>
-                        <div class="student-details">
-                            អត្តលេខ: ${student.studentID || '_____'} | 
-                            ថ្នាក់: ${student.class || '_____'} | 
-                            ភេទ: ${student.sex || '_____'}
-                        </div>
-                    </div>
+            
+            if (countSpan) countSpan.innerHTML = `(${selectedStudents.length} នាក់)`;
+            if (generateBtn) {
+                generateBtn.innerHTML = `🖨️ បង្កើតកាតសិស្ស (${selectedStudents.length})`;
+                generateBtn.disabled = false;
+            }
+            
+            // Generate cards using generateSmallCardHTML (which now returns same as generateCardHTML)
+            container.innerHTML = selectedStudents.map(student => `
+                <div class="card-wrapper">
+                    <button class="remove-card-btn" onclick="removeStudent('${student.studentID}')">✖</button>
+                    ${generateSmallCardHTML(student)}
                 </div>
             `).join('');
         }
-
-        // ប្តូរស្ថានភាពជ្រើសរើសសិស្ស
-        function toggleStudent(studentId) {
-            if (selectedStudentIds.has(studentId)) {
-                selectedStudentIds.delete(studentId);
-            } else {
-                selectedStudentIds.add(studentId);
+        
+        // ============================================
+        // REMOVE STUDENT
+        // ============================================
+        window.removeStudent = (studentID) => {
+            selectedStudents = selectedStudents.filter(s => s.studentID !== studentID);
+            localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
+            displaySelectedStudents();
+        };
+        
+        // ============================================
+        // CLEAR ALL STUDENTS
+        // ============================================
+        document.getElementById('clearAllBtn')?.addEventListener('click', () => {
+            if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
+                selectedStudents = [];
+                localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
+                displaySelectedStudents();
             }
-            updateSelectedCount();
-        }
-
-        // ជ្រើសរើសទាំងអស់
-        function selectAll() {
-            const checkboxes = document.querySelectorAll('.student-checkbox');
-            checkboxes.forEach(cb => {
-                const id = cb.getAttribute('data-id');
-                selectedStudentIds.add(id);
-                cb.checked = true;
-            });
-            updateSelectedCount();
-        }
-
-        // មិនជ្រើសរើសទាំងអស់
-        function deselectAll() {
-            const checkboxes = document.querySelectorAll('.student-checkbox');
-            checkboxes.forEach(cb => {
-                const id = cb.getAttribute('data-id');
-                selectedStudentIds.delete(id);
-                cb.checked = false;
-            });
-            updateSelectedCount();
-        }
-
-        // លុបសិស្សដែលបានជ្រើសរើស
-        function clearSelected() {
-            if (selectedStudentIds.size === 0) {
-                alert('សូមជ្រើសរើសសិស្សជាមុនសិន');
+        });
+        
+        // ============================================
+        // GENERATE ALL CARDS
+        // ============================================
+        document.getElementById('generateCardsBtn')?.addEventListener('click', () => {
+            if (!selectedStudents || selectedStudents.length === 0) {
+                alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ');
                 return;
             }
             
-            if (confirm(`តើអ្នកចង់លុបសិស្សចំនួន ${selectedStudentIds.size} នាក់ទេ?`)) {
-                allStudents = allStudents.filter(s => !selectedStudentIds.has(s.studentID));
-                localStorage.setItem('students', JSON.stringify(allStudents));
-                selectedStudentIds.clear();
-                loadStudents();
-                updateSelectedCount();
-            }
-        }
-
-        // ធ្វើបច្ចុប្បន្នភាពចំនួនដែលបានជ្រើសរើស
-        function updateSelectedCount() {
-            document.getElementById('selectedCount').textContent = selectedStudentIds.size;
-        }
-
-        // បង្កើតកាតសម្រាប់សិស្សដែលបានជ្រើសរើស
-        function generateSelectedCards() {
-            const selectedStudents = allStudents.filter(s => selectedStudentIds.has(s.studentID));
-            
-            if (selectedStudents.length === 0) {
-                alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
-                return;
-            }
-
-            console.log('Generating cards for', selectedStudents.length, 'students');
-            
-            // ពិនិត្យមើលថា function generateSmallCardHTML មានឬអត់
-            let cardsHtml = '';
-            
-            if (typeof generateSmallCardHTML !== 'undefined' && generateSmallCardHTML) {
-                console.log('✅ Using generateSmallCardHTML function');
-                cardsHtml = selectedStudents.map(student => generateSmallCardHTML(student)).join('');
-            } else if (typeof generateCardHTML !== 'undefined' && generateCardHTML) {
-                console.log('⚠️ Using generateCardHTML as fallback');
-                cardsHtml = selectedStudents.map(student => generateCardHTML(student)).join('');
-            } else {
-                console.error('❌ No card generation function available!');
-                document.getElementById('cardsContainer').innerHTML = `
-                    <div class="error-message">
-                        <strong>កំហុស!</strong> មិនអាចផ្ទុក template កាតបានទេ។<br>
-                        សូម Refresh ទំព័រ ឬពិនិត្យមើលការតភ្ជាប់ឯកសារ card-template.js
-                    </div>
-                `;
-                return;
-            }
-            
-            document.getElementById('cardsContainer').innerHTML = cardsHtml;
-            console.log('Cards displayed successfully');
-            
-            // រំកិលទៅកាន់កន្លែងបង្ហាញកាត
-            document.getElementById('cardsContainer').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Escape HTML function
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        // បោះពុម្ពកាត
-        function printCards() {
-            const cardsContainer = document.getElementById('cardsContainer');
-            if (!cardsContainer.innerHTML.trim()) {
-                alert('មិនមានកាតសម្រាប់បោះពុម្ពទេ');
+            // Generate cards using the same template
+            const cardsHTML = selectedStudents.map(student => generateSmallCardHTML(student)).join('');
+            const modal = document.getElementById('cardsModal');
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = cardsHTML;
+            modal.classList.remove('hidden');
+        });
+        
+        // ============================================
+        // PRINT ALL CARDS
+        // ============================================
+        document.getElementById('printAllCards')?.addEventListener('click', () => {
+            const cardsHTML = document.getElementById('cardsContainer').innerHTML;
+            if (!cardsHTML || cardsHTML.trim() === '') {
+                alert('មិនមានកាតដើម្បីបោះពុម្ពទេ');
                 return;
             }
             
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
+                <!DOCTYPE html>
                 <html>
-                <head>
-                    <title>បោះពុម្ពបណ្ណសម្គាល់សិស្ស</title>
-                    <style>
-                        body { font-family: 'Khmer', sans-serif; padding: 20px; }
-                        @media print {
-                            body { margin: 0; padding: 0; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${cardsContainer.innerHTML}
-                </body>
+                    <head>
+                        <title>បោះពុម្ពកាតសិស្ស</title>
+                        <meta charset="UTF-8">
+                        <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+                        <link rel="stylesheet" href="../css/card-style.css">
+                        <style>
+                            * {
+                                margin: 0;
+                                padding: 0;
+                                box-sizing: border-box;
+                            }
+                            body {
+                                display: flex;
+                                flex-wrap: wrap;
+                                justify-content: center;
+                                gap: 20px;
+                                padding: 20px;
+                                margin: 0;
+                                background: white;
+                            }
+                            @media print {
+                                body {
+                                    padding: 10px;
+                                    gap: 15px;
+                                }
+                                .student-id-card {
+                                    break-inside: avoid;
+                                    page-break-inside: avoid;
+                                }
+                            }
+                        </style>
+                    </head>
+                    <body>${cardsHTML}</body>
                 </html>
             `);
             printWindow.document.close();
             printWindow.print();
-        }
-
-        // ផ្ទុកទិន្នន័យនៅពេលទំព័រផ្ទុក
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded, initializing...');
-            console.log('generateSmallCardHTML exists:', typeof generateSmallCardHTML !== 'undefined');
-            console.log('generateCardHTML exists:', typeof generateCardHTML !== 'undefined');
-            loadStudents();
         });
+        
+        // ============================================
+        // MODAL CONTROLS
+        // ============================================
+        document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+            document.getElementById('cardsModal').classList.add('hidden');
+        });
+        
+        document.getElementById('cardsModal')?.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('cardsModal')) {
+                document.getElementById('cardsModal').classList.add('hidden');
+            }
+        });
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        loadSelectedStudents();
+        console.log('✅ Generate page loaded successfully - Cards same as create.html');
     </script>
 </body>
 </html>
