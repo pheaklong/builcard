@@ -10,12 +10,13 @@
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
         .element-list-item {
-            padding: 10px;
-            margin: 5px 0;
+            padding: 8px 12px;
+            margin: 4px 0;
             background: #f3f4f6;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
+            font-size: 13px;
         }
         .element-list-item:hover {
             background: #e5e7eb;
@@ -44,11 +45,16 @@
             padding: 20px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
+        .property-group {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
-        <!-- Navigation -->
         <div class="mb-4">
             <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
         </div>
@@ -59,17 +65,21 @@
             <!-- Left Panel: Elements List -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-4">
                 <h3 class="font-bold text-gray-700 mb-3">📦 ធាតុក្នុងកាត</h3>
-                <div id="elementsList" class="space-y-2">
+                <div id="elementsList" class="space-y-1">
                     <div class="element-list-item" data-element="cardBg">🃏 ផ្ទៃកាត</div>
                     <div class="element-list-item" data-element="logo">🏫 Logo សាលា</div>
                     <div class="element-list-item" data-element="royalText">👑 អត្ថបទព្រះរាជា</div>
                     <div class="element-list-item" data-element="ministryText">📚 អត្ថបទក្រសួង</div>
                     <div class="element-list-item" data-element="qrCode">📱 QR Code</div>
                     <div class="element-list-item" data-element="titleText">📝 ចំណងជើង</div>
+                    <div class="element-list-item" data-element="subtitleText">📝 ចំណងជើងរង</div>
                     <div class="element-list-item" data-element="studentInfo">👤 ព័ត៌មានសិស្ស</div>
                     <div class="element-list-item" data-element="studentPhoto">🖼️ រូបថតសិស្ស</div>
                     <div class="element-list-item" data-element="stamp">🏷️ ត្រា</div>
+                    <div class="element-list-item" data-element="dateText">📅 អត្ថបទកាលបរិច្ឆេទ</div>
+                    <div class="element-list-item" data-element="schoolLocation">🏛️ អត្ថបទវិទ្យាល័យ</div>
                     <div class="element-list-item" data-element="signature">✍️ ហត្ថលេខា</div>
+                    <div class="element-list-item" data-element="principalText">👨‍🏫 អត្ថបទនាយកសាលា</div>
                     <div class="element-list-item" data-element="watermark">💧 Watermark</div>
                 </div>
                 
@@ -85,7 +95,7 @@
                 <div class="preview-card">
                     <h3 class="font-bold text-gray-700 mb-3 text-center">👁️ មើលជាមុន</h3>
                     <div id="cardPreviewContainer" class="flex justify-center">
-                        <!-- Card will be generated here -->
+                        <div id="renderCard" style="width:246px; height:321px; background:#f5f5f0; border:1px solid #4A86E8; border-radius:4px; display:flex; align-items:center; justify-content:center;">កំពុងផ្ទុក...</div>
                     </div>
                     <div class="mt-4 flex space-x-2">
                         <button id="downloadPreviewBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex-1">📥 ទាញយកជារូបភាព</button>
@@ -94,7 +104,7 @@
                 </div>
             </div>
             
-            //- Right Panel: Properties -->
+            <!-- Right Panel: Properties -->
             <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-4 property-panel">
                 <h3 class="font-bold text-gray-700 mb-3">⚙️ ការកំណត់ទូទៅ</h3>
                 
@@ -102,41 +112,27 @@
                 <div class="mb-4 pb-3 border-b">
                     <h4 class="font-semibold text-gray-600 mb-2">📏 ទំហំកាត</h4>
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs text-gray-500">ទទឹង (cm)</label>
-                            <input type="number" id="cardWidthCm" value="6.5" step="0.1" class="cm-input w-full">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-500">កម្ពស់ (cm)</label>
-                            <input type="number" id="cardHeightCm" value="8.5" step="0.1" class="cm-input w-full">
-                        </div>
+                        <div><label class="block text-xs text-gray-500">ទទឹង (cm)</label><input type="number" id="cardWidthCm" value="6.5" step="0.1" class="cm-input w-full"></div>
+                        <div><label class="block text-xs text-gray-500">កម្ពស់ (cm)</label><input type="number" id="cardHeightCm" value="8.5" step="0.1" class="cm-input w-full"></div>
                     </div>
                 </div>
                 
                 <!-- Font Settings -->
                 <div class="mb-4 pb-3 border-b">
                     <h4 class="font-semibold text-gray-600 mb-2">🔤 ពុម្ពអក្សរទូទៅ</h4>
-                    <div>
-                        <label class="block text-xs text-gray-500">ប្រភេទពុម្ពអក្សរ</label>
-                        <select id="globalFontFamily" class="w-full border rounded p-2 text-sm mt-1">
-                            <option value="'Khmer', 'Khmer OS Moul Light', sans-serif">Khmer OS Moul Light</option>
-                            <option value="'Khmer', 'Khmer OS Battambang', sans-serif">Khmer OS Battambang</option>
-                            <option value="'Khmer', 'Khmer OS Siemreap', sans-serif">Khmer OS Siemreap</option>
-                            <option value="'Khmer', 'Moul', sans-serif">Moul</option>
-                            <option value="'Khmer', 'Arial', sans-serif">Arial</option>
-                        </select>
-                    </div>
+                    <select id="globalFontFamily" class="w-full border rounded p-2 text-sm">
+                        <option value="'Khmer', 'Khmer OS Moul Light', sans-serif">Khmer OS Moul Light</option>
+                        <option value="'Khmer', 'Khmer OS Battambang', sans-serif">Khmer OS Battambang</option>
+                        <option value="'Khmer', 'Khmer OS Siemreap', sans-serif">Khmer OS Siemreap</option>
+                        <option value="'Khmer', 'Moul', sans-serif">Moul</option>
+                    </select>
                 </div>
                 
                 <!-- Selected Element Properties -->
                 <div id="elementProperties">
                     <h4 class="font-semibold text-gray-600 mb-2">🎯 កំណត់ធាតុដែលបានជ្រើស</h4>
-                    <div id="selectedElementInfo" class="text-sm text-gray-500 mb-3 p-2 bg-gray-50 rounded">
-                        សូមចុចជ្រើសរើសធាតុពីបញ្ជីខាងឆ្វេង
-                    </div>
-                    <div id="propertyForm" class="space-y-3">
-                        <!-- Dynamic properties will appear here -->
-                    </div>
+                    <div id="selectedElementInfo" class="text-sm text-gray-500 mb-3 p-2 bg-gray-50 rounded">សូមចុចជ្រើសរើសធាតុពីបញ្ជីខាងឆ្វេង</div>
+                    <div id="propertyForm" class="space-y-3"></div>
                 </div>
             </div>
         </div>
@@ -144,240 +140,160 @@
     
     <script>
         // ============================================
-        // CONFIGURATION (in cm for positioning)
+        // CONFIGURATION
         // ============================================
         function cmToPx(cm) { return cm * 37.8; }
-        function pxToCm(px) { return px / 37.8; }
         
         let cardConfig = {
             cardWidthCm: 6.5,
             cardHeightCm: 8.5,
             globalFontFamily: "'Khmer', 'Khmer OS Moul Light', sans-serif",
-            
             elements: {
                 cardBg: { bgColor: "#f5f5f0", borderColor: "#4A86E8", borderWidth: 1 },
-                logo: { x: 0.3, y: 0.3, width: 0.9, height: 0.9, src: null, visible: true },
+                logo: { x: 0.3, y: 0.3, width: 0.9, height: 0.9, visible: true },
                 royalText: { x: 4.2, y: 0.4, fontSize: 0.22, color: "#233D2E", visible: true },
                 ministryText: { x: 0.3, y: 1.5, fontSize: 0.2, color: "#233D2E", visible: true },
                 qrCode: { x: 5.5, y: 1.3, size: 1.1, visible: true },
                 titleText: { x: 3.25, y: 2.8, fontSize: 0.32, color: "#D28A17", visible: true },
                 subtitleText: { x: 3.25, y: 3.15, fontSize: 0.22, color: "#3D8BFF", visible: true },
-                studentInfo: { x: 0.3, y: 3.6, fontSize: 0.2, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
-                studentPhoto: { x: 0.3, y: 6.0, width: 2.0, height: 2.5, src: null, visible: true },
-                stamp: { x: 2.5, y: 6.5, width: 1.6, height: 1.6, src: null, opacity: 0.85, visible: true },
-                signature: { x: 4.5, y: 7.5, width: 2.5, height: 0.9, src: null, visible: true },
+                studentInfo: { x: 0.3, y: 3.6, fontSize: 0.19, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
+                studentPhoto: { x: 0.3, y: 5.8, width: 2.0, height: 2.5, visible: true },
+                stamp: { x: 2.5, y: 6.3, width: 1.6, height: 1.6, src: null, opacity: 0.85, visible: true },
+                dateText: { x: 2.5, y: 7.0, fontSize: 0.16, color: "#233D2E", text: "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩", visible: true },
+                schoolLocation: { x: 2.5, y: 7.35, fontSize: 0.16, color: "#233D2E", text: "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥", visible: true },
+                signature: { x: 4.5, y: 7.7, width: 2.2, height: 0.8, src: null, visible: true },
+                principalText: { x: 4.5, y: 7.5, fontSize: 0.18, color: "#D50000", text: "ព្រះគ្រូ សុខ សុភក្ត្រា", visible: true },
                 watermark: { x: 3.25, y: 4.25, width: 4.0, height: 4.0, src: null, opacity: 0.1, visible: true }
             }
         };
         
         let currentSelectedElement = null;
-        let customImages = {
-            logo: null,
-            stamp: null,
-            signature: null,
-            watermark: null
-        };
+        let customImages = { logo: null, stamp: null, signature: null, watermark: null };
         
-        // Preview student data
         let previewStudent = {
-            studentID: "STU-001",
-            name: "សុខ សុភក្ត្រា",
-            sex: "ប្រុស",
-            date_of_birth: "2007-06-12",
-            address: "ភ្នំពេញ",
-            phonenumber: "012345678",
-            fathername: "សុខ សារ៉ន",
-            mothername: "សុខ សុវណ្ណ",
-            class: "ថ្នាក់ទី១២A",
-            photo: null
+            studentID: "STU-001", name: "សុខ សុភក្ត្រា", sex: "ប្រុស",
+            date_of_birth: "2007-06-12", address: "ភ្នំពេញ", phonenumber: "012345678",
+            fathername: "សុខ សារ៉ន", mothername: "សុខ សុវណ្ណ", class: "ថ្នាក់ទី១២A", photo: null
         };
         
-        // ============================================
-        // QR CODE GENERATOR
-        // ============================================
         function generateQRCode(studentID, size, color) {
             return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" fill="${color}">
-                        <rect x="10" y="10" width="8" height="8" fill="${color}"/>
-                        <rect x="26" y="10" width="8" height="8" fill="${color}"/>
-                        <rect x="42" y="10" width="8" height="8" fill="${color}"/>
-                        <rect x="58" y="10" width="8" height="8" fill="${color}"/>
-                        <rect x="74" y="10" width="8" height="8" fill="${color}"/>
-                        <rect x="10" y="26" width="8" height="8" fill="${color}"/>
-                        <rect x="42" y="26" width="8" height="8" fill="${color}"/>
-                        <rect x="74" y="26" width="8" height="8" fill="${color}"/>
-                        <rect x="10" y="42" width="8" height="8" fill="${color}"/>
-                        <rect x="26" y="42" width="8" height="8" fill="${color}"/>
-                        <rect x="42" y="42" width="8" height="8" fill="${color}"/>
-                        <rect x="58" y="42" width="8" height="8" fill="${color}"/>
-                        <rect x="74" y="42" width="8" height="8" fill="${color}"/>
-                        <rect x="26" y="58" width="8" height="8" fill="${color}"/>
-                        <rect x="42" y="58" width="8" height="8" fill="${color}"/>
-                        <rect x="74" y="58" width="8" height="8" fill="${color}"/>
-                        <rect x="10" y="74" width="8" height="8" fill="${color}"/>
-                        <rect x="42" y="74" width="8" height="8" fill="${color}"/>
-                        <rect x="58" y="74" width="8" height="8" fill="${color}"/>
-                        <rect x="74" y="74" width="8" height="8" fill="${color}"/>
+                        <rect x="10" y="10" width="8" height="8" fill="${color}"/><rect x="26" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="10" width="8" height="8" fill="${color}"/><rect x="58" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="10" width="8" height="8" fill="${color}"/><rect x="10" y="26" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="26" width="8" height="8" fill="${color}"/><rect x="74" y="26" width="8" height="8" fill="${color}"/>
+                        <rect x="10" y="42" width="8" height="8" fill="${color}"/><rect x="26" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="42" width="8" height="8" fill="${color}"/><rect x="58" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="42" width="8" height="8" fill="${color}"/><rect x="26" y="58" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="58" width="8" height="8" fill="${color}"/><rect x="74" y="58" width="8" height="8" fill="${color}"/>
+                        <rect x="10" y="74" width="8" height="8" fill="${color}"/><rect x="42" y="74" width="8" height="8" fill="${color}"/>
+                        <rect x="58" y="74" width="8" height="8" fill="${color}"/><rect x="74" y="74" width="8" height="8" fill="${color}"/>
                     </svg>`;
         }
         
-        // ============================================
-        // RENDER CARD PREVIEW
-        // ============================================
         function renderCard() {
             const cardWidthPx = cmToPx(cardConfig.cardWidthCm);
             const cardHeightPx = cmToPx(cardConfig.cardHeightCm);
             const birthDate = previewStudent.date_of_birth ? new Date(previewStudent.date_of_birth).toLocaleDateString('km-KH') : '____/____/______';
             const fontFamily = cardConfig.globalFontFamily;
-            
-            let html = `
-                <div id="renderCard" style="position: relative; width: ${cardWidthPx}px; height: ${cardHeightPx}px; background: ${cardConfig.elements.cardBg.bgColor}; border: ${cardConfig.elements.cardBg.borderWidth}px solid ${cardConfig.elements.cardBg.borderColor}; border-radius: 4px; overflow: visible; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            `;
+            let html = `<div style="position: relative; width: ${cardWidthPx}px; height: ${cardHeightPx}px; background: ${cardConfig.elements.cardBg.bgColor}; border: ${cardConfig.elements.cardBg.borderWidth}px solid ${cardConfig.elements.cardBg.borderColor}; border-radius: 4px; overflow: visible;">`;
             
             // Watermark
             if (cardConfig.elements.watermark.visible) {
-                const wx = cmToPx(cardConfig.elements.watermark.x);
-                const wy = cmToPx(cardConfig.elements.watermark.y);
-                const ww = cmToPx(cardConfig.elements.watermark.width);
-                const wh = cmToPx(cardConfig.elements.watermark.height);
-                html += `<div style="position: absolute; left: ${wx}px; top: ${wy}px; width: ${ww}px; height: ${wh}px; opacity: ${cardConfig.elements.watermark.opacity}; pointer-events: none; z-index: 0;">
+                let w = cardConfig.elements.watermark;
+                html += `<div style="position: absolute; left:${cmToPx(w.x)}px; top:${cmToPx(w.y)}px; width:${cmToPx(w.width)}px; height:${cmToPx(w.height)}px; opacity:${w.opacity}; pointer-events:none; z-index:0;">
                             ${customImages.watermark ? `<img src="${customImages.watermark}" style="width:100%;height:100%;object-fit:contain;">` : 
                                 `<svg viewBox="0 0 200 200" fill="${cardConfig.elements.royalText.color}"><circle cx="100" cy="100" r="90" stroke="currentColor" stroke-width="3" fill="none"/><path d="M100 30 L140 70 L140 130 L100 170 L60 130 L60 70 Z" stroke="currentColor" stroke-width="3" fill="none"/></svg>`}
                         </div>`;
             }
-            
             // Logo
             if (cardConfig.elements.logo.visible) {
-                const lx = cmToPx(cardConfig.elements.logo.x);
-                const ly = cmToPx(cardConfig.elements.logo.y);
-                const lw = cmToPx(cardConfig.elements.logo.width);
-                const lh = cmToPx(cardConfig.elements.logo.height);
-                html += `<div style="position: absolute; left: ${lx}px; top: ${ly}px; width: ${lw}px; height: ${lh}px; z-index: 1;">
+                let l = cardConfig.elements.logo;
+                html += `<div style="position: absolute; left:${cmToPx(l.x)}px; top:${cmToPx(l.y)}px; width:${cmToPx(l.width)}px; height:${cmToPx(l.height)}px; z-index:1;">
                             ${customImages.logo ? `<img src="${customImages.logo}" style="width:100%;height:100%;object-fit:contain;">` : 
                                 `<svg width="100%" height="100%" viewBox="0 0 100 100" fill="${cardConfig.elements.royalText.color}"><circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="2" fill="none"/><path d="M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z" stroke="currentColor" stroke-width="2" fill="none"/><text x="50" y="55" text-anchor="middle" font-size="20" fill="currentColor" font-weight="bold">សា</text></svg>`}
                         </div>`;
             }
-            
             // Royal Text
             if (cardConfig.elements.royalText.visible) {
-                const rx = cmToPx(cardConfig.elements.royalText.x);
-                const ry = cmToPx(cardConfig.elements.royalText.y);
-                const fontSize = cmToPx(cardConfig.elements.royalText.fontSize);
-                html += `<div style="position: absolute; left: ${rx}px; top: ${ry}px; text-align: right; font-family: ${fontFamily}; font-size: ${fontSize}px; color: ${cardConfig.elements.royalText.color}; z-index: 1;">
-                            <div>ព្រះរាជាណាចក្រកម្ពុជា</div>
-                            <div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+                let r = cardConfig.elements.royalText;
+                html += `<div style="position: absolute; left:${cmToPx(r.x)}px; top:${cmToPx(r.y)}px; text-align:right; font-family:${fontFamily}; font-size:${cmToPx(r.fontSize)}px; color:${r.color}; z-index:1;">
+                            <div>ព្រះរាជាណាចក្រកម្ពុជា</div><div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
                         </div>`;
             }
-            
-            // Ministry Text with School Name
+            // Ministry Text
             if (cardConfig.elements.ministryText.visible) {
-                const mx = cmToPx(cardConfig.elements.ministryText.x);
-                const my = cmToPx(cardConfig.elements.ministryText.y);
-                const fontSize = cmToPx(cardConfig.elements.ministryText.fontSize);
-                const lineHeight = fontSize * 1.3;
-                html += `<div style="position: absolute; left: ${mx}px; top: ${my}px; font-family: ${fontFamily}; font-size: ${fontSize}px; line-height: ${lineHeight}px; color: ${cardConfig.elements.ministryText.color}; z-index: 1;">
-                            <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                            <div>មន្ទីរអប់រំ យុវជន និងកីឡា ភ្នំពេញ</div>
-                            <div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div>
+                let m = cardConfig.elements.ministryText;
+                html += `<div style="position: absolute; left:${cmToPx(m.x)}px; top:${cmToPx(m.y)}px; font-family:${fontFamily}; font-size:${cmToPx(m.fontSize)}px; line-height:1.3; color:${m.color}; z-index:1;">
+                            <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div><div>មន្ទីរអប់រំ យុវជន និងកីឡា ភ្នំពេញ</div>
+                            <div style="font-weight:bold; margin-top:2px;">វិទ្យាល័យកំរៀង</div>
                         </div>`;
             }
-            
             // QR Code
             if (cardConfig.elements.qrCode.visible) {
-                const qx = cmToPx(cardConfig.elements.qrCode.x);
-                const qy = cmToPx(cardConfig.elements.qrCode.y);
-                const qs = cmToPx(cardConfig.elements.qrCode.size);
-                html += `<div style="position: absolute; left: ${qx}px; top: ${qy}px; width: ${qs}px; height: ${qs}px; z-index: 1;">
-                            ${generateQRCode(previewStudent.studentID, qs, cardConfig.elements.royalText.color)}
-                        </div>`;
+                let q = cardConfig.elements.qrCode;
+                html += `<div style="position: absolute; left:${cmToPx(q.x)}px; top:${cmToPx(q.y)}px; width:${cmToPx(q.size)}px; height:${cmToPx(q.size)}px; z-index:1;">${generateQRCode(previewStudent.studentID, cmToPx(q.size), cardConfig.elements.royalText.color)}</div>`;
             }
-            
             // Title
             if (cardConfig.elements.titleText.visible) {
-                const tx = cmToPx(cardConfig.elements.titleText.x);
-                const ty = cmToPx(cardConfig.elements.titleText.y);
-                const fontSize = cmToPx(cardConfig.elements.titleText.fontSize);
-                html += `<div style="position: absolute; left: ${tx}px; top: ${ty}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: bold; color: ${cardConfig.elements.titleText.color}; z-index: 1;">
-                            <div>បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
-                        </div>`;
+                let t = cardConfig.elements.titleText;
+                html += `<div style="position: absolute; left:${cmToPx(t.x)}px; top:${cmToPx(t.y)}px; transform:translateX(-50%); text-align:center; font-family:${fontFamily}; font-size:${cmToPx(t.fontSize)}px; font-weight:bold; color:${t.color}; z-index:1;">បណ្ណសម្គាល់ខ្លួនសិស្ស</div>`;
             }
-            
             // Subtitle
             if (cardConfig.elements.subtitleText.visible) {
-                const stx = cmToPx(cardConfig.elements.subtitleText.x);
-                const sty = cmToPx(cardConfig.elements.subtitleText.y);
-                const fontSize = cmToPx(cardConfig.elements.subtitleText.fontSize);
-                html += `<div style="position: absolute; left: ${stx}px; top: ${sty}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${fontSize}px; color: ${cardConfig.elements.subtitleText.color}; z-index: 1;">
-                            <div>ឆ្នាំសិក្សា ២០២៥-២០២៦</div>
-                        </div>`;
+                let s = cardConfig.elements.subtitleText;
+                html += `<div style="position: absolute; left:${cmToPx(s.x)}px; top:${cmToPx(s.y)}px; transform:translateX(-50%); text-align:center; font-family:${fontFamily}; font-size:${cmToPx(s.fontSize)}px; color:${s.color}; z-index:1;">ឆ្នាំសិក្សា ២០២៥-២០២៦</div>`;
             }
-            
             // Student Photo
             if (cardConfig.elements.studentPhoto.visible) {
-                const px = cmToPx(cardConfig.elements.studentPhoto.x);
-                const py = cmToPx(cardConfig.elements.studentPhoto.y);
-                const pw = cmToPx(cardConfig.elements.studentPhoto.width);
-                const ph = cmToPx(cardConfig.elements.studentPhoto.height);
-                html += `<div style="position: absolute; left: ${px}px; top: ${py}px; width: ${pw}px; height: ${ph}px; border: 1px solid ${cardConfig.elements.cardBg.borderColor}; border-radius: 3px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; z-index: 1;">
-                            ${previewStudent.photo ? `<img src="${previewStudent.photo}" style="width:100%;height:100%;object-fit:cover;">` : 
-                                `<svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`}
+                let p = cardConfig.elements.studentPhoto;
+                html += `<div style="position: absolute; left:${cmToPx(p.x)}px; top:${cmToPx(p.y)}px; width:${cmToPx(p.width)}px; height:${cmToPx(p.height)}px; border:1px solid ${cardConfig.elements.cardBg.borderColor}; border-radius:3px; background:#e5e7eb; display:flex; align-items:center; justify-content:center; z-index:1;">
+                            ${previewStudent.photo ? `<img src="${previewStudent.photo}" style="width:100%;height:100%;object-fit:cover;">` : `<svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`}
                         </div>`;
             }
-            
             // Stamp
             if (cardConfig.elements.stamp.visible && customImages.stamp) {
-                const smx = cmToPx(cardConfig.elements.stamp.x);
-                const smy = cmToPx(cardConfig.elements.stamp.y);
-                const sw = cmToPx(cardConfig.elements.stamp.width);
-                const sh = cmToPx(cardConfig.elements.stamp.height);
-                html += `<div style="position: absolute; left: ${smx}px; top: ${smy}px; width: ${sw}px; height: ${sh}px; opacity: ${cardConfig.elements.stamp.opacity}; z-index: 2;">
-                            <img src="${customImages.stamp}" style="width:100%;height:100%;object-fit:contain;">
+                let st = cardConfig.elements.stamp;
+                html += `<div style="position: absolute; left:${cmToPx(st.x)}px; top:${cmToPx(st.y)}px; width:${cmToPx(st.width)}px; height:${cmToPx(st.height)}px; opacity:${st.opacity}; z-index:2;"><img src="${customImages.stamp}" style="width:100%;height:100%;object-fit:contain;"></div>`;
+            }
+            // Student Info
+            if (cardConfig.elements.studentInfo.visible) {
+                let i = cardConfig.elements.studentInfo;
+                let fs = cmToPx(i.fontSize);
+                html += `<div style="position: absolute; left:${cmToPx(i.x)}px; top:${cmToPx(i.y)}px; font-family:${fontFamily}; font-size:${fs}px; line-height:1.4; z-index:1;">
+                    <div><span style="color:${i.labelColor};">គោត្តនាម និងនាម:</span> <span style="color:${i.valueColor};">${previewStudent.name}</span>
+                    <span style="margin-left:15px;"><span style="color:${i.labelColor};">ភេទ:</span> <span style="color:${i.valueColor};">${previewStudent.sex}</span></span></div>
+                    <div><span style="color:${i.labelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color:${i.valueColor};">${birthDate}</span>
+                    <span style="margin-left:15px;"><span style="color:${i.labelColor};">ថ្នាក់:</span> <span style="color:${i.valueColor};">${previewStudent.class}</span></span></div>
+                    <div><span style="color:${i.labelColor};">ទីកន្លែងកំណើត:</span> <span style="color:${i.valueColor};">${previewStudent.address}</span></div>
+                    <div><span style="color:${i.labelColor};">លេខទូរស័ព្ទ:</span> <span style="color:${i.valueColor};">${previewStudent.phonenumber}</span>
+                    <span style="margin-left:15px;"><span style="color:${i.labelColor};">ឈ្មោះឪពុក:</span> <span style="color:${i.valueColor};">${previewStudent.fathername}</span></span></div>
+                    <div><span style="color:${i.labelColor};">អត្តលេខ:</span> <span style="color:${i.valueColor};">${previewStudent.studentID}</span>
+                    <span style="margin-left:15px;"><span style="color:${i.labelColor};">ឈ្មោះម្តាយ:</span> <span style="color:${i.valueColor};">${previewStudent.mothername}</span></span></div>
+                </div>`;
+            }
+            // Date Text
+            if (cardConfig.elements.dateText.visible) {
+                let d = cardConfig.elements.dateText;
+                html += `<div style="position: absolute; left:${cmToPx(d.x)}px; top:${cmToPx(d.y)}px; font-family:${fontFamily}; font-size:${cmToPx(d.fontSize)}px; color:${d.color}; z-index:1;">${d.text}</div>`;
+            }
+            // School Location Text
+            if (cardConfig.elements.schoolLocation.visible) {
+                let sl = cardConfig.elements.schoolLocation;
+                html += `<div style="position: absolute; left:${cmToPx(sl.x)}px; top:${cmToPx(sl.y)}px; font-family:${fontFamily}; font-size:${cmToPx(sl.fontSize)}px; color:${sl.color}; z-index:1;">${sl.text}</div>`;
+            }
+            // Signature
+            if (cardConfig.elements.signature.visible) {
+                let sig = cardConfig.elements.signature;
+                html += `<div style="position: absolute; left:${cmToPx(sig.x)}px; top:${cmToPx(sig.y)}px; width:${cmToPx(sig.width)}px; text-align:center; z-index:1;">
+                            <div style="font-size:${cmToPx(0.2)}px; font-weight:bold; color:#233D2E;">នាយកវិទ្យាល័យ</div>
+                            <div style="margin-top:2px;">${customImages.signature ? `<img src="${customImages.signature}" style="width:100%;height:auto;max-height:${cmToPx(sig.height)}px;object-fit:contain;">` : `<svg width="100%" height="30" viewBox="0 0 200 50" fill="#1a56db"><path d="M10 25 Q30 15 50 25 Q70 35 90 25 Q110 15 130 25 Q150 35 170 25" stroke="#1a56db" stroke-width="2" fill="none"/><text x="180" y="28" font-size="12" fill="#1a56db">សុខ</text></svg>`}</div>
                         </div>`;
             }
-            
-            // Student Info - Full information
-            if (cardConfig.elements.studentInfo.visible) {
-                const ix = cmToPx(cardConfig.elements.studentInfo.x);
-                const iy = cmToPx(cardConfig.elements.studentInfo.y);
-                const fontSize = cmToPx(cardConfig.elements.studentInfo.fontSize);
-                const lineHeight = fontSize * 1.4;
-                
-                html += `<div style="position: absolute; left: ${ix}px; top: ${iy}px; font-family: ${fontFamily}; font-size: ${fontSize}px; line-height: ${lineHeight}px; z-index: 1;">
-                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.name}</span>
-                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ភេទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.sex}</span></span></div>
-                    
-                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${birthDate}</span>
-                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ថ្នាក់:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.class}</span></span></div>
-                    
-                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ទីកន្លែងកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.address}</span></div>
-                    
-                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">លេខទូរស័ព្ទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.phonenumber}</span>
-                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះឪពុក:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.fathername}</span></span></div>
-                    
-                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">អត្តលេខ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.studentID}</span>
-                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះម្តាយ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.mothername}</span></span></div>
-                </div>`;
-            }
-            
-            // Signature with Principal Name
-            if (cardConfig.elements.signature.visible) {
-                const sgx = cmToPx(cardConfig.elements.signature.x);
-                const sgy = cmToPx(cardConfig.elements.signature.y);
-                const sgw = cmToPx(cardConfig.elements.signature.width);
-                const sgh = cmToPx(cardConfig.elements.signature.height);
-                
-                html += `<div style="position: absolute; left: ${sgx}px; top: ${sgy}px; width: ${sgw}px; text-align: center; z-index: 1;">
-                    <div style="font-size: ${cmToPx(0.22)}px; font-weight: bold; color: ${cardConfig.elements.royalText.color};">នាយកវិទ្យាល័យ</div>
-                    <div style="margin-top: 4px;">
-                        ${customImages.signature ? 
-                            `<img src="${customImages.signature}" style="width: 100%; height: auto; max-height: ${sgh}px; object-fit: contain;">` : 
-                            `<svg width="100%" height="40" viewBox="0 0 200 50" fill="#1a56db">
-                                <path d="M10 25 Q30 15 50 25 Q70 35 90 25 Q110 15 130 25 Q150 35 170 25" stroke="#1a56db" stroke-width="2" fill="none"/>
-                                <text x="180" y="28" font-size="12" fill="#1a56db">សុខ</text>
-                            </svg>`
-                        }
-                    </div>
-                    <div style="font-size: ${cmToPx(0.18)}px; color: #D50000; margin-top: 4px; font-weight: bold;">ព្រះគ្រូ សុខ សុភក្ត្រា</div>
-                </div>`;
+            // Principal Text
+            if (cardConfig.elements.principalText.visible) {
+                let pt = cardConfig.elements.principalText;
+                html += `<div style="position: absolute; left:${cmToPx(pt.x)}px; top:${cmToPx(pt.y)}px; font-family:${fontFamily}; font-size:${cmToPx(pt.fontSize)}px; color:${pt.color}; font-weight:bold; text-align:center; z-index:1;">${pt.text}</div>`;
             }
             
             html += `</div>`;
@@ -388,193 +304,122 @@
         // PROPERTY FORM HANDLERS
         // ============================================
         function loadElementProperties(elementName) {
-            const element = cardConfig.elements[elementName];
-            if (!element) return;
-            
-            let formHtml = '';
+            const el = cardConfig.elements[elementName];
+            if (!el) return;
+            let formHtml = `<div class="property-group">`;
             
             if (elementName === 'cardBg') {
-                formHtml = `
-                    <div><label class="block text-xs text-gray-500">ពណ៌ផ្ទៃខាងក្រោយ</label><input type="color" id="propBgColor" value="${element.bgColor}" class="w-full h-8 rounded border"></div>
-                    <div><label class="block text-xs text-gray-500">ពណ៌ស៊ុម</label><input type="color" id="propBorderColor" value="${element.borderColor}" class="w-full h-8 rounded border"></div>
-                    <div><label class="block text-xs text-gray-500">កម្រាស់ស៊ុម (px)</label><input type="number" id="propBorderWidth" value="${element.borderWidth}" class="w-full border rounded p-1 text-sm"></div>
-                `;
-            } 
+                formHtml += `<div><label class="block text-xs">ពណ៌ផ្ទៃខាងក្រោយ</label><input type="color" id="propBgColor" value="${el.bgColor}" class="w-full h-8 rounded border"></div>
+                            <div><label class="block text-xs">ពណ៌ស៊ុម</label><input type="color" id="propBorderColor" value="${el.borderColor}" class="w-full h-8 rounded border"></div>
+                            <div><label class="block text-xs">កម្រាស់ស៊ុម (px)</label><input type="number" id="propBorderWidth" value="${el.borderWidth}" class="w-full border rounded p-1"></div>`;
+            }
             else if (elementName === 'logo' || elementName === 'stamp' || elementName === 'signature' || elementName === 'watermark') {
-                formHtml = `
-                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ទទឹង (cm)</label><input type="number" id="propWidth" value="${element.width}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${element.height}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
-                    ${elementName === 'stamp' || elementName === 'watermark' ? `<div><label class="block text-xs text-gray-500">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${element.opacity || 0.85}" class="w-full"><span id="opacityValue">${element.opacity || 0.85}</span></div>` : ''}
-                    <div class="mt-2"><button id="uploadImageBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបភាព</button><input type="file" id="imageUpload" accept="image/*" class="hidden"></div>
-                `;
+                formHtml += `<div><label class="block text-xs">X (cm)</label><input type="number" id="propX" value="${el.x}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">Y (cm)</label><input type="number" id="propY" value="${el.y}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ទទឹង (cm)</label><input type="number" id="propWidth" value="${el.width}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${el.height}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">បង្ហាញ</label><input type="checkbox" id="propVisible" ${el.visible ? 'checked' : ''}></div>
+                            ${(elementName === 'stamp' || elementName === 'watermark') ? `<div><label class="block text-xs">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${el.opacity}" class="w-full"><span id="opacityValue">${el.opacity}</span></div>` : ''}
+                            <div class="mt-2"><button id="uploadImageBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបភាព</button><input type="file" id="imageUpload" accept="image/*" class="hidden"></div>`;
+            }
+            else if (elementName === 'dateText' || elementName === 'schoolLocation' || elementName === 'principalText') {
+                formHtml += `<div><label class="block text-xs">X (cm)</label><input type="number" id="propX" value="${el.x}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">Y (cm)</label><input type="number" id="propY" value="${el.y}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${el.fontSize}" step="0.01" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ពណ៌</label><input type="color" id="propColor" value="${el.color}" class="w-full h-8 rounded border"></div>
+                            <div><label class="block text-xs">អត្ថបទ</label><input type="text" id="propText" value="${el.text}" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">បង្ហាញ</label><input type="checkbox" id="propVisible" ${el.visible ? 'checked' : ''}></div>`;
             }
             else if (elementName === 'royalText' || elementName === 'ministryText' || elementName === 'titleText' || elementName === 'subtitleText') {
-                formHtml = `
-                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${element.fontSize}" step="0.01" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ពណ៌</label><input type="color" id="propColor" value="${element.color}" class="w-full h-8 rounded border"></div>
-                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
-                `;
+                formHtml += `<div><label class="block text-xs">X (cm)</label><input type="number" id="propX" value="${el.x}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">Y (cm)</label><input type="number" id="propY" value="${el.y}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${el.fontSize}" step="0.01" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ពណ៌</label><input type="color" id="propColor" value="${el.color}" class="w-full h-8 rounded border"></div>
+                            <div><label class="block text-xs">បង្ហាញ</label><input type="checkbox" id="propVisible" ${el.visible ? 'checked' : ''}></div>`;
             }
             else if (elementName === 'qrCode') {
-                formHtml = `
-                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ទំហំ (cm)</label><input type="number" id="propSize" value="${element.size}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
-                `;
+                formHtml += `<div><label class="block text-xs">X (cm)</label><input type="number" id="propX" value="${el.x}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">Y (cm)</label><input type="number" id="propY" value="${el.y}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ទំហំ (cm)</label><input type="number" id="propSize" value="${el.size}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">បង្ហាញ</label><input type="checkbox" id="propVisible" ${el.visible ? 'checked' : ''}></div>`;
             }
             else if (elementName === 'studentInfo') {
-                formHtml = `
-                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${element.fontSize}" step="0.01" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ពណ៌ស្លាក</label><input type="color" id="propLabelColor" value="${element.labelColor}" class="w-full h-8 rounded border"></div>
-                    <div><label class="block text-xs text-gray-500">ពណ៌តម្លៃ</label><input type="color" id="propValueColor" value="${element.valueColor}" class="w-full h-8 rounded border"></div>
-                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
-                `;
+                formHtml += `<div><label class="block text-xs">X (cm)</label><input type="number" id="propX" value="${el.x}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">Y (cm)</label><input type="number" id="propY" value="${el.y}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${el.fontSize}" step="0.01" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ពណ៌ស្លាក</label><input type="color" id="propLabelColor" value="${el.labelColor}" class="w-full h-8 rounded border"></div>
+                            <div><label class="block text-xs">ពណ៌តម្លៃ</label><input type="color" id="propValueColor" value="${el.valueColor}" class="w-full h-8 rounded border"></div>
+                            <div><label class="block text-xs">បង្ហាញ</label><input type="checkbox" id="propVisible" ${el.visible ? 'checked' : ''}></div>`;
             }
             else if (elementName === 'studentPhoto') {
-                formHtml = `
-                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">ទទឹង (cm)</label><input type="number" id="propWidth" value="${element.width}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${element.height}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
-                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
-                    <div class="mt-2"><button id="uploadStudentPhotoBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបសិស្ស</button><input type="file" id="studentPhotoUpload" accept="image/*" class="hidden"></div>
-                `;
+                formHtml += `<div><label class="block text-xs">X (cm)</label><input type="number" id="propX" value="${el.x}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">Y (cm)</label><input type="number" id="propY" value="${el.y}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">ទទឹង (cm)</label><input type="number" id="propWidth" value="${el.width}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${el.height}" step="0.05" class="w-full border rounded p-1"></div>
+                            <div><label class="block text-xs">បង្ហាញ</label><input type="checkbox" id="propVisible" ${el.visible ? 'checked' : ''}></div>
+                            <div class="mt-2"><button id="uploadStudentPhotoBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបសិស្ស</button><input type="file" id="studentPhotoUpload" accept="image/*" class="hidden"></div>`;
             }
             
+            formHtml += `</div>`;
             document.getElementById('propertyForm').innerHTML = formHtml;
             document.getElementById('selectedElementInfo').innerHTML = `កំពុងកែ: <strong>${getElementNameKm(elementName)}</strong>`;
-            attachPropertyEvents(elementName);
+            attachEvents(elementName);
         }
         
-        function getElementNameKm(elementName) {
-            const names = {
-                cardBg: "ផ្ទៃកាត", logo: "Logo សាលា", royalText: "អត្ថបទព្រះរាជា",
-                ministryText: "អត្ថបទក្រសួង", qrCode: "QR Code", titleText: "ចំណងជើង",
-                subtitleText: "ចំណងជើងរង", studentInfo: "ព័ត៌មានសិស្ស", studentPhoto: "រូបថតសិស្ស",
-                stamp: "ត្រា", signature: "ហត្ថលេខា", watermark: "Watermark"
-            };
-            return names[elementName] || elementName;
+        function getElementNameKm(name) {
+            const names = { cardBg:"ផ្ទៃកាត", logo:"Logo", royalText:"អត្ថបទព្រះរាជា", ministryText:"អត្ថបទក្រសួង", qrCode:"QR Code", titleText:"ចំណងជើង", subtitleText:"ចំណងជើងរង", studentInfo:"ព័ត៌មានសិស្ស", studentPhoto:"រូបថតសិស្ស", stamp:"ត្រា", dateText:"កាលបរិច្ឆេទ", schoolLocation:"វិទ្យាល័យ", signature:"ហត្ថលេខា", principalText:"នាយកសាលា", watermark:"Watermark" };
+            return names[name] || name;
         }
         
-        function attachPropertyEvents(elementName) {
-            const element = cardConfig.elements[elementName];
-            if (!element) return;
+        function attachEvents(elementName) {
+            const el = cardConfig.elements[elementName];
+            if (!el) return;
+            const x = document.getElementById('propX'), y = document.getElementById('propY'), w = document.getElementById('propWidth'), h = document.getElementById('propHeight');
+            const size = document.getElementById('propSize'), fs = document.getElementById('propFontSize'), color = document.getElementById('propColor');
+            const labelC = document.getElementById('propLabelColor'), valueC = document.getElementById('propValueColor');
+            const bgC = document.getElementById('propBgColor'), borderC = document.getElementById('propBorderColor'), borderW = document.getElementById('propBorderWidth');
+            const vis = document.getElementById('propVisible'), op = document.getElementById('propOpacity'), text = document.getElementById('propText');
+            if (x) x.addEventListener('change', (e) => { el.x = parseFloat(e.target.value); renderCard(); });
+            if (y) y.addEventListener('change', (e) => { el.y = parseFloat(e.target.value); renderCard(); });
+            if (w) w.addEventListener('change', (e) => { el.width = parseFloat(e.target.value); renderCard(); });
+            if (h) h.addEventListener('change', (e) => { el.height = parseFloat(e.target.value); renderCard(); });
+            if (size) size.addEventListener('change', (e) => { el.size = parseFloat(e.target.value); renderCard(); });
+            if (fs) fs.addEventListener('change', (e) => { el.fontSize = parseFloat(e.target.value); renderCard(); });
+            if (color) color.addEventListener('change', (e) => { el.color = e.target.value; renderCard(); });
+            if (labelC) labelC.addEventListener('change', (e) => { el.labelColor = e.target.value; renderCard(); });
+            if (valueC) valueC.addEventListener('change', (e) => { el.valueColor = e.target.value; renderCard(); });
+            if (bgC) bgC.addEventListener('change', (e) => { el.bgColor = e.target.value; renderCard(); });
+            if (borderC) borderC.addEventListener('change', (e) => { el.borderColor = e.target.value; renderCard(); });
+            if (borderW) borderW.addEventListener('change', (e) => { el.borderWidth = parseInt(e.target.value); renderCard(); });
+            if (vis) vis.addEventListener('change', (e) => { el.visible = e.target.checked; renderCard(); });
+            if (op) op.addEventListener('input', (e) => { el.opacity = parseFloat(e.target.value); document.getElementById('opacityValue').innerText = el.opacity; renderCard(); });
+            if (text) text.addEventListener('change', (e) => { el.text = e.target.value; renderCard(); });
             
-            const xInput = document.getElementById('propX');
-            const yInput = document.getElementById('propY');
-            const wInput = document.getElementById('propWidth');
-            const hInput = document.getElementById('propHeight');
-            const sizeInput = document.getElementById('propSize');
-            const fontSizeInput = document.getElementById('propFontSize');
-            const colorInput = document.getElementById('propColor');
-            const labelColorInput = document.getElementById('propLabelColor');
-            const valueColorInput = document.getElementById('propValueColor');
-            const bgColorInput = document.getElementById('propBgColor');
-            const borderColorInput = document.getElementById('propBorderColor');
-            const borderWidthInput = document.getElementById('propBorderWidth');
-            const visibleCheckbox = document.getElementById('propVisible');
-            const opacitySlider = document.getElementById('propOpacity');
-            
-            if (xInput) xInput.addEventListener('change', (e) => { element.x = parseFloat(e.target.value); renderCard(); });
-            if (yInput) yInput.addEventListener('change', (e) => { element.y = parseFloat(e.target.value); renderCard(); });
-            if (wInput) wInput.addEventListener('change', (e) => { element.width = parseFloat(e.target.value); renderCard(); });
-            if (hInput) hInput.addEventListener('change', (e) => { element.height = parseFloat(e.target.value); renderCard(); });
-            if (sizeInput) sizeInput.addEventListener('change', (e) => { element.size = parseFloat(e.target.value); renderCard(); });
-            if (fontSizeInput) fontSizeInput.addEventListener('change', (e) => { element.fontSize = parseFloat(e.target.value); renderCard(); });
-            if (colorInput) colorInput.addEventListener('change', (e) => { element.color = e.target.value; renderCard(); });
-            if (labelColorInput) labelColorInput.addEventListener('change', (e) => { element.labelColor = e.target.value; renderCard(); });
-            if (valueColorInput) valueColorInput.addEventListener('change', (e) => { element.valueColor = e.target.value; renderCard(); });
-            if (bgColorInput) bgColorInput.addEventListener('change', (e) => { element.bgColor = e.target.value; renderCard(); });
-            if (borderColorInput) borderColorInput.addEventListener('change', (e) => { element.borderColor = e.target.value; renderCard(); });
-            if (borderWidthInput) borderWidthInput.addEventListener('change', (e) => { element.borderWidth = parseInt(e.target.value); renderCard(); });
-            if (visibleCheckbox) visibleCheckbox.addEventListener('change', (e) => { element.visible = e.target.checked; renderCard(); });
-            if (opacitySlider) {
-                opacitySlider.addEventListener('input', (e) => { element.opacity = parseFloat(e.target.value); document.getElementById('opacityValue').innerText = element.opacity; renderCard(); });
-            }
-            
-            // Image upload handling
+            // Image uploads
             if (elementName === 'logo') {
-                const uploadBtn = document.getElementById('uploadImageBtn');
-                const fileInput = document.getElementById('imageUpload');
-                if (uploadBtn && fileInput) {
-                    uploadBtn.addEventListener('click', () => fileInput.click());
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => { customImages.logo = ev.target.result; renderCard(); };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                }
+                let btn = document.getElementById('uploadImageBtn'), file = document.getElementById('imageUpload');
+                if(btn) btn.onclick = () => file.click();
+                if(file) file.onchange = (e) => { let f = e.target.files[0]; if(f){ let r = new FileReader(); r.onload = (ev) => { customImages.logo = ev.target.result; renderCard(); }; r.readAsDataURL(f); } };
             }
             if (elementName === 'stamp') {
-                const uploadBtn = document.getElementById('uploadImageBtn');
-                const fileInput = document.getElementById('imageUpload');
-                if (uploadBtn && fileInput) {
-                    uploadBtn.addEventListener('click', () => fileInput.click());
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => { customImages.stamp = ev.target.result; renderCard(); };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                }
+                let btn = document.getElementById('uploadImageBtn'), file = document.getElementById('imageUpload');
+                if(btn) btn.onclick = () => file.click();
+                if(file) file.onchange = (e) => { let f = e.target.files[0]; if(f){ let r = new FileReader(); r.onload = (ev) => { customImages.stamp = ev.target.result; renderCard(); }; r.readAsDataURL(f); } };
             }
             if (elementName === 'signature') {
-                const uploadBtn = document.getElementById('uploadImageBtn');
-                const fileInput = document.getElementById('imageUpload');
-                if (uploadBtn && fileInput) {
-                    uploadBtn.addEventListener('click', () => fileInput.click());
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => { customImages.signature = ev.target.result; renderCard(); };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                }
+                let btn = document.getElementById('uploadImageBtn'), file = document.getElementById('imageUpload');
+                if(btn) btn.onclick = () => file.click();
+                if(file) file.onchange = (e) => { let f = e.target.files[0]; if(f){ let r = new FileReader(); r.onload = (ev) => { customImages.signature = ev.target.result; renderCard(); }; r.readAsDataURL(f); } };
             }
             if (elementName === 'watermark') {
-                const uploadBtn = document.getElementById('uploadImageBtn');
-                const fileInput = document.getElementById('imageUpload');
-                if (uploadBtn && fileInput) {
-                    uploadBtn.addEventListener('click', () => fileInput.click());
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => { customImages.watermark = ev.target.result; renderCard(); };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                }
+                let btn = document.getElementById('uploadImageBtn'), file = document.getElementById('imageUpload');
+                if(btn) btn.onclick = () => file.click();
+                if(file) file.onchange = (e) => { let f = e.target.files[0]; if(f){ let r = new FileReader(); r.onload = (ev) => { customImages.watermark = ev.target.result; renderCard(); }; r.readAsDataURL(f); } };
             }
             if (elementName === 'studentPhoto') {
-                const uploadBtn = document.getElementById('uploadStudentPhotoBtn');
-                const fileInput = document.getElementById('studentPhotoUpload');
-                if (uploadBtn && fileInput) {
-                    uploadBtn.addEventListener('click', () => fileInput.click());
-                    fileInput.addEventListener('change', (e) => {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = (ev) => { previewStudent.photo = ev.target.result; renderCard(); };
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                }
+                let btn = document.getElementById('uploadStudentPhotoBtn'), file = document.getElementById('studentPhotoUpload');
+                if(btn) btn.onclick = () => file.click();
+                if(file) file.onchange = (e) => { let f = e.target.files[0]; if(f){ let r = new FileReader(); r.onload = (ev) => { previewStudent.photo = ev.target.result; renderCard(); }; r.readAsDataURL(f); } };
             }
         }
         
@@ -585,85 +430,25 @@
             item.addEventListener('click', () => {
                 document.querySelectorAll('.element-list-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
-                currentSelectedElement = item.dataset.element;
-                loadElementProperties(currentSelectedElement);
+                loadElementProperties(item.dataset.element);
             });
         });
         
-        document.getElementById('cardWidthCm').addEventListener('change', (e) => {
-            cardConfig.cardWidthCm = parseFloat(e.target.value);
-            renderCard();
-        });
-        document.getElementById('cardHeightCm').addEventListener('change', (e) => {
-            cardConfig.cardHeightCm = parseFloat(e.target.value);
-            renderCard();
-        });
-        document.getElementById('globalFontFamily').addEventListener('change', (e) => {
-            cardConfig.globalFontFamily = e.target.value;
-            renderCard();
-        });
+        document.getElementById('cardWidthCm').addEventListener('change', (e) => { cardConfig.cardWidthCm = parseFloat(e.target.value); renderCard(); });
+        document.getElementById('cardHeightCm').addEventListener('change', (e) => { cardConfig.cardHeightCm = parseFloat(e.target.value); renderCard(); });
+        document.getElementById('globalFontFamily').addEventListener('change', (e) => { cardConfig.globalFontFamily = e.target.value; renderCard(); });
         
-        // Export config
-        function exportConfig() {
-            const configToSave = { cardConfig, customImages };
-            const dataStr = JSON.stringify(configToSave, null, 2);
-            const blob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'card-config-advanced.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-        
-        // Import config
-        function importConfig(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const config = JSON.parse(e.target.result);
-                    cardConfig = config.cardConfig;
-                    customImages = config.customImages || customImages;
-                    document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm;
-                    document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm;
-                    document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily;
-                    renderCard();
-                    alert('✅ បានផ្ទុកការកំណត់ដោយជោគជ័យ!');
-                } catch(err) {
-                    alert('❌ កំហុស: ឯកសារមិនត្រឹមត្រូវ');
-                }
-            };
-            reader.readAsText(file);
-        }
-        
-        function applyToSystem() {
-            const systemConfig = { cardConfig, customImages };
-            localStorage.setItem('cardSystemConfig', JSON.stringify(systemConfig));
-            alert('✅ បានរក្សាទុកការកំណត់ទៅប្រព័ន្ធ!');
-        }
-        
-        async function downloadPreview() {
-            const cardElement = document.querySelector('#cardPreviewContainer > div');
-            if (!cardElement) { alert('មិនមានកាតដើម្បីទាញយកទេ'); return; }
-            try {
-                const canvas = await html2canvas(cardElement, { scale: 3, backgroundColor: null });
-                const link = document.createElement('a');
-                link.download = 'student-card-design.png';
-                link.href = canvas.toDataURL();
-                link.click();
-                alert('✅ បានទាញយកដោយជោគជ័យ!');
-            } catch(error) {
-                alert('កើតមានបញ្ហា: ' + error.message);
-            }
-        }
+        function exportConfig() { let data = JSON.stringify({ cardConfig, customImages }, null, 2); let blob = new Blob([data], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'card-config.json'; a.click(); URL.revokeObjectURL(blob); }
+        function importConfig(file) { let r = new FileReader(); r.onload = (e) => { try { let c = JSON.parse(e.target.result); cardConfig = c.cardConfig; customImages = c.customImages || {}; document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm; document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm; document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily; renderCard(); alert('✅ បានផ្ទុកដោយជោគជ័យ!'); } catch(err) { alert('❌ កំហុសឯកសារ'); } }; r.readAsText(file); }
+        function applyToSystem() { localStorage.setItem('cardSystemConfig', JSON.stringify({ cardConfig, customImages })); alert('✅ បានរក្សាទុកទៅប្រព័ន្ធ!'); }
+        async function downloadPreview() { let card = document.querySelector('#cardPreviewContainer > div'); if(!card){ alert('គ្មានកាត'); return; } let canvas = await html2canvas(card, { scale: 3, backgroundColor: null }); let a = document.createElement('a'); a.download = 'student-card.png'; a.href = canvas.toDataURL(); a.click(); }
         
         document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
         document.getElementById('importConfigTrigger').addEventListener('click', () => document.getElementById('importConfigBtn').click());
-        document.getElementById('importConfigBtn').addEventListener('change', (e) => { if (e.target.files[0]) importConfig(e.target.files[0]); });
+        document.getElementById('importConfigBtn').addEventListener('change', (e) => { if(e.target.files[0]) importConfig(e.target.files[0]); });
         document.getElementById('applyToSystemBtn').addEventListener('click', applyToSystem);
         document.getElementById('downloadPreviewBtn').addEventListener('click', downloadPreview);
         
-        // Initial render
         renderCard();
     </script>
 </body>
