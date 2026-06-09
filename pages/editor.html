@@ -3,15 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>កែសម្រួលកាតសិស្ស - Card Editor</title>
+    <title>កែសម្រួលកាតសិស្ស - Advanced Card Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.17/dist/interact.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
+        .draggable-element {
+            cursor: move;
+            user-select: none;
+        }
+        .resizable-element {
+            position: relative;
+        }
+        .resize-handle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border: 1px solid white;
+        }
+        .resize-handle.se {
+            bottom: -4px;
+            right: -4px;
+            cursor: se-resize;
+        }
+        .element-selected {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
         .preview-card {
             position: sticky;
             top: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            overflow-x: auto;
+        }
+        .property-panel {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .cm-input {
+            width: 70px;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
         }
         .color-preview {
             width: 30px;
@@ -20,10 +60,20 @@
             border: 1px solid #ccc;
             cursor: pointer;
         }
-        .slider-value {
-            display: inline-block;
-            width: 40px;
-            text-align: center;
+        .element-list-item {
+            padding: 8px;
+            margin: 4px 0;
+            background: #f3f4f6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .element-list-item:hover {
+            background: #e5e7eb;
+        }
+        .element-list-item.active {
+            background: #3b82f6;
+            color: white;
         }
     </style>
 </head>
@@ -31,159 +81,89 @@
     <div class="container mx-auto px-4 py-8">
         <div class="mb-4">
             <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
-            <a href="create.html" class="text-green-600 hover:text-green-800 ml-4">← ត្រឡប់ទៅបង្កើតកាត</a>
         </div>
         
-        <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">🎨 កែសម្រួលទម្រង់កាតសិស្ស</h1>
+        <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">🎨 កែសម្រួលកាតសិស្ស (Advanced)</h1>
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Left Panel: Controls -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-700">⚙️ ការកំណត់ទូទៅ</h2>
-                
-                <!-- Font Settings -->
-                <div class="mb-6 border-b pb-4">
-                    <h3 class="font-bold text-gray-700 mb-3">📝 ពុម្ពអក្សរ (Font)</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600">ប្រភេទពុម្ពអក្សរ</label>
-                            <select id="fontFamily" class="w-full border rounded p-2 mt-1">
-                                <option value="'Khmer', 'Khmer OS Moul Light', sans-serif">Khmer OS Moul Light</option>
-                                <option value="'Khmer', 'Khmer OS Battambang', sans-serif">Khmer OS Battambang</option>
-                                <option value="'Khmer', 'Khmer OS Siemreap', sans-serif">Khmer OS Siemreap</option>
-                                <option value="'Khmer', 'Moul', sans-serif">Moul</option>
-                                <option value="'Khmer', 'Arial', sans-serif">Arial</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">ទំហំអក្សរ</label>
-                            <input type="range" id="fontSize" min="6" max="16" value="8" class="w-full mt-2">
-                            <span id="fontSizeValue" class="text-sm">8px</span>
-                        </div>
-                    </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left Panel: Elements List -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-4">
+                <h3 class="font-bold text-gray-700 mb-3">📦 ធាតុក្នុងកាត</h3>
+                <div id="elementsList" class="space-y-2">
+                    <div class="element-list-item" data-element="cardBg">🃏 ផ្ទៃកាត</div>
+                    <div class="element-list-item" data-element="logo">🏫 Logo សាលា</div>
+                    <div class="element-list-item" data-element="royalText">👑 អត្ថបទព្រះរាជា</div>
+                    <div class="element-list-item" data-element="ministryText">📚 អត្ថបទក្រសួង</div>
+                    <div class="element-list-item" data-element="qrCode">📱 QR Code</div>
+                    <div class="element-list-item" data-element="titleText">📝 ចំណងជើង</div>
+                    <div class="element-list-item" data-element="studentInfo">👤 ព័ត៌មានសិស្ស</div>
+                    <div class="element-list-item" data-element="studentPhoto">🖼️ រូបថតសិស្ស</div>
+                    <div class="element-list-item" data-element="stamp">🏷️ ត្រា</div>
+                    <div class="element-list-item" data-element="signature">✍️ ហត្ថលេខា</div>
+                    <div class="element-list-item" data-element="watermark">💧 Watermark</div>
                 </div>
                 
-                <!-- Card Size -->
-                <div class="mb-6 border-b pb-4">
-                    <h3 class="font-bold text-gray-700 mb-3">📏 ទំហំកាត</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600">ទទឹង (px)</label>
-                            <input type="number" id="cardWidth" value="246" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">កម្ពស់ (px)</label>
-                            <input type="number" id="cardHeight" value="321" class="w-full border rounded p-2 mt-1">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Photo Settings -->
-                <div class="mb-6 border-b pb-4">
-                    <h3 class="font-bold text-gray-700 mb-3">🖼️ រូបថតសិស្ស</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600">ទទឹង (px)</label>
-                            <input type="number" id="photoWidth" value="75" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">កម្ពស់ (px)</label>
-                            <input type="number" id="photoHeight" value="95" class="w-full border rounded p-2 mt-1">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Stamp Settings -->
-                <div class="mb-6 border-b pb-4">
-                    <h3 class="font-bold text-gray-700 mb-3">🏷️ ត្រា</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600">ទទឹង (px)</label>
-                            <input type="number" id="stampWidth" value="60" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">កម្ពស់ (px)</label>
-                            <input type="number" id="stampHeight" value="75" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">គម្លាត (px)</label>
-                            <input type="number" id="stampGap" value="5" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">តម្លាភាព</label>
-                            <input type="range" id="stampOpacity" min="0" max="1" step="0.05" value="0.9" class="w-full mt-2">
-                            <span id="stampOpacityValue" class="text-sm">0.9</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Upload Images -->
-                <div class="mb-6 border-b pb-4">
-                    <h3 class="font-bold text-gray-700 mb-3">📤 ប្ដូររូបភាព</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600">Logo សាលា</label>
-                            <input type="file" id="uploadLogo" accept="image/*" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">ហត្ថលេខា</label>
-                            <input type="file" id="uploadSignature" accept="image/*" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">ត្រា</label>
-                            <input type="file" id="uploadStamp" accept="image/*" class="w-full border rounded p-2 mt-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">Watermark</label>
-                            <input type="file" id="uploadWatermark" accept="image/*" class="w-full border rounded p-2 mt-1">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Color Settings -->
-                <div class="mb-6 border-b pb-4">
-                    <h3 class="font-bold text-gray-700 mb-3">🎨 ពណ៌</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm text-gray-600">ពណ៌ផ្ទៃខាងក្រោយ</label>
-                            <input type="color" id="bgColor" value="#f5f5f0" class="w-full h-10 rounded border p-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">ពណ៌ស៊ុម</label>
-                            <input type="color" id="borderColor" value="#4A86E8" class="w-full h-10 rounded border p-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">ពណ៌អក្សរ(ងងឹត)</label>
-                            <input type="color" id="darkTextColor" value="#233D2E" class="w-full h-10 rounded border p-1">
-                        </div>
-                        <div>
-                            <label class="block text-sm text-gray-600">ពណ៌តម្លៃ(ខៀវ)</label>
-                            <input type="color" id="blueValueColor" value="#304FFE" class="w-full h-10 rounded border p-1">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Export/Import -->
-                <div class="flex space-x-4 mt-6">
-                    <button id="applyBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex-1">✅ អនុវត្តការកំណត់</button>
-                    <button id="resetBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 flex-1">🔄 កំណត់ឡើងវិញ</button>
-                </div>
-                <div class="flex space-x-4 mt-3">
-                    <button id="exportConfigBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex-1">💾 ទាញយក Config</button>
+                <div class="mt-6 pt-4 border-t">
+                    <button id="exportConfigBtn" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm w-full mb-2">💾 ទាញយក Config</button>
                     <input type="file" id="importConfigBtn" accept=".json" class="hidden">
-                    <button id="importConfigTrigger" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex-1">📂 ផ្ទុក Config</button>
+                    <button id="importConfigTrigger" class="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm w-full">📂 ផ្ទុក Config</button>
                 </div>
             </div>
             
-            <!-- Right Panel: Preview -->
-            <div class="preview-card">
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <h2 class="text-xl font-bold mb-4 text-gray-700">👁️ មើលជាមុន</h2>
-                    <div id="previewContainer" class="flex justify-center">
-                        <!-- Preview card will be displayed here -->
+            <!-- Center Panel: Card Preview -->
+            <div class="lg:col-span-6">
+                <div class="preview-card">
+                    <div id="cardPreviewContainer" class="flex justify-center">
+                        <!-- Card will be generated here -->
                     </div>
                     <div class="mt-4 flex space-x-2">
                         <button id="downloadPreviewBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex-1">📥 ទាញយកជារូបភាព</button>
+                        <button id="applyToSystemBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex-1">💾 អនុវត្តទៅប្រព័ន្ធ</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Panel: Properties -->
+            <div class="lg:col-span-4 bg-white rounded-lg shadow-lg p-4 property-panel">
+                <h3 class="font-bold text-gray-700 mb-3">⚙️ ការកំណត់ទូទៅ</h3>
+                
+                <!-- Card Size -->
+                <div class="mb-4 pb-3 border-b">
+                    <h4 class="font-semibold text-gray-600 mb-2">📏 ទំហំកាត</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-500">ទទឹង (cm)</label>
+                            <input type="number" id="cardWidthCm" value="6.5" step="0.1" class="cm-input w-full">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500">កម្ពស់ (cm)</label>
+                            <input type="number" id="cardHeightCm" value="8.5" step="0.1" class="cm-input w-full">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Font Settings -->
+                <div class="mb-4 pb-3 border-b">
+                    <h4 class="font-semibold text-gray-600 mb-2">🔤 ពុម្ពអក្សរទូទៅ</h4>
+                    <div>
+                        <label class="block text-xs text-gray-500">ប្រភេទពុម្ពអក្សរ</label>
+                        <select id="globalFontFamily" class="w-full border rounded p-1 text-sm mt-1">
+                            <option value="'Khmer', 'Khmer OS Moul Light', sans-serif">Khmer OS Moul Light</option>
+                            <option value="'Khmer', 'Khmer OS Battambang', sans-serif">Khmer OS Battambang</option>
+                            <option value="'Khmer', 'Khmer OS Siemreap', sans-serif">Khmer OS Siemreap</option>
+                            <option value="'Khmer', 'Moul', sans-serif">Moul</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Selected Element Properties -->
+                <div id="elementProperties">
+                    <h4 class="font-semibold text-gray-600 mb-2">🎯 កំណត់ធាតុដែលបានជ្រើស</h4>
+                    <div id="selectedElementInfo" class="text-sm text-gray-500 mb-3">
+                        សូមចុចជ្រើសរើសធាតុពីបញ្ជីខាងឆ្វេង
+                    </div>
+                    <div id="propertyForm" class="space-y-3">
+                        <!-- Dynamic properties will appear here -->
                     </div>
                 </div>
             </div>
@@ -192,30 +172,42 @@
     
     <script>
         // ============================================
-        // DEFAULT CONFIGURATION
+        // CONFIGURATION (in cm for positioning)
         // ============================================
+        // Convert cm to px (1cm = 37.8px)
+        function cmToPx(cm) { return cm * 37.8; }
+        function pxToCm(px) { return px / 37.8; }
+        
         let cardConfig = {
-            cardWidth: 246,
-            cardHeight: 321,
-            fontFamily: "'Khmer', 'Khmer OS Moul Light', sans-serif",
-            fontSize: 8,
-            photoWidth: 75,
-            photoHeight: 95,
-            stampWidth: 60,
-            stampHeight: 75,
-            stampGap: 5,
-            stampOpacity: 0.9,
-            bgColor: "#f5f5f0",
-            borderColor: "#4A86E8",
-            darkTextColor: "#233D2E",
-            blueValueColor: "#304FFE"
+            // Card size in cm
+            cardWidthCm: 6.5,
+            cardHeightCm: 8.5,
+            globalFontFamily: "'Khmer', 'Khmer OS Moul Light', sans-serif",
+            
+            // Element positions (in cm, relative to top-left of card)
+            elements: {
+                cardBg: { bgColor: "#f5f5f0", borderColor: "#4A86E8", borderWidth: 1 },
+                logo: { x: 0.3, y: 0.3, width: 0.9, height: 0.9, src: null, visible: true },
+                royalText: { x: 3.5, y: 0.4, fontSize: 0.22, color: "#233D2E", visible: true },
+                ministryText: { x: 0.3, y: 1.5, fontSize: 0.2, color: "#233D2E", visible: true },
+                qrCode: { x: 5.2, y: 1.3, size: 1.2, visible: true },
+                titleText: { x: 3.25, y: 2.8, fontSize: 0.32, color: "#D28A17", visible: true },
+                subtitleText: { x: 3.25, y: 3.1, fontSize: 0.22, color: "#3D8BFF", visible: true },
+                studentInfo: { x: 0.3, y: 3.5, fontSize: 0.2, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
+                studentPhoto: { x: 0.3, y: 6.0, width: 2.0, height: 2.5, src: null, visible: true },
+                stamp: { x: 2.5, y: 6.5, width: 1.6, height: 1.6, src: null, opacity: 0.9, visible: true },
+                signature: { x: 5.0, y: 7.8, width: 2.8, height: 0.8, src: null, visible: true },
+                watermark: { x: 3.25, y: 4.25, width: 3.5, height: 3.5, src: null, opacity: 0.12, visible: true }
+            }
         };
         
-        // Custom images (base64)
-        let customLogo = null;
-        let customSignature = null;
-        let customStamp = null;
-        let customWatermark = null;
+        let currentSelectedElement = null;
+        let customImages = {
+            logo: null,
+            stamp: null,
+            signature: null,
+            watermark: null
+        };
         
         // Sample student data for preview
         let previewStudent = {
@@ -232,298 +224,434 @@
         };
         
         // ============================================
-        // GENERATE PREVIEW CARD
+        // QR CODE GENERATOR
         // ============================================
-        function getPreviewLogo() {
-            if (customLogo) {
-                return `<img src="${customLogo}" alt="Logo" style="width: 35px; height: 35px; object-fit: contain;">`;
-            }
-            return `<svg width="35" height="35" viewBox="0 0 100 100" fill="${cardConfig.darkTextColor}">
-                        <circle cx="50" cy="50" r="45" stroke="${cardConfig.darkTextColor}" stroke-width="2" fill="none"/>
-                        <path d="M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z" stroke="${cardConfig.darkTextColor}" stroke-width="2" fill="none"/>
-                        <text x="50" y="55" text-anchor="middle" font-size="20" fill="${cardConfig.darkTextColor}" font-weight="bold">សា</text>
+        function generateQRCode(studentID, size, color) {
+            return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" fill="${color}">
+                        <rect x="10" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="26" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="58" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="10" width="8" height="8" fill="${color}"/>
+                        <rect x="10" y="26" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="26" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="26" width="8" height="8" fill="${color}"/>
+                        <rect x="10" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="26" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="58" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="42" width="8" height="8" fill="${color}"/>
+                        <rect x="26" y="58" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="58" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="58" width="8" height="8" fill="${color}"/>
+                        <rect x="10" y="74" width="8" height="8" fill="${color}"/>
+                        <rect x="42" y="74" width="8" height="8" fill="${color}"/>
+                        <rect x="58" y="74" width="8" height="8" fill="${color}"/>
+                        <rect x="74" y="74" width="8" height="8" fill="${color}"/>
                     </svg>`;
         }
         
-        function getPreviewSignature() {
-            if (customSignature) {
-                return `<img src="${customSignature}" alt="Signature" style="width: 100px; height: auto; max-height: 40px; object-fit: contain;">`;
-            }
-            return `<svg width="100" height="35" viewBox="0 0 200 50" fill="#1a56db">
-                        <path d="M10 25 Q30 15 50 25 Q70 35 90 25 Q110 15 130 25 Q150 35 170 25" stroke="#1a56db" stroke-width="2" fill="none"/>
-                        <text x="180" y="28" font-size="12" fill="#1a56db">សុខ</text>
-                    </svg>`;
-        }
-        
-        function getPreviewStamp() {
-            if (customStamp) {
-                return `<img src="${customStamp}" alt="Stamp" style="width: 100%; height: 100%; object-fit: contain;">`;
-            }
-            return `<svg viewBox="0 0 100 100" fill="currentColor">
-                        <circle cx="50" cy="50" r="45" stroke="#D50000" stroke-width="2" fill="none"/>
-                        <text x="50" y="55" text-anchor="middle" font-size="14" fill="#D50000">ត្រា</text>
-                    </svg>`;
-        }
-        
-        function getPreviewWatermark() {
-            if (customWatermark) {
-                return `<img src="${customWatermark}" alt="Watermark" style="width: 100%; height: 100%; object-fit: contain; opacity: 0.12;">`;
-            }
-            return `<svg viewBox="0 0 200 200" fill="${cardConfig.darkTextColor}">
-                        <circle cx="100" cy="100" r="90" stroke="${cardConfig.darkTextColor}" stroke-width="3" fill="none"/>
-                        <path d="M100 30 L140 70 L140 130 L100 170 L60 130 L60 70 Z" stroke="${cardConfig.darkTextColor}" stroke-width="3" fill="none"/>
-                    </svg>`;
-        }
-        
-        function generatePreviewCard() {
+        // ============================================
+        // RENDER CARD PREVIEW
+        // ============================================
+        function renderCard() {
+            const cardWidthPx = cmToPx(cardConfig.cardWidthCm);
+            const cardHeightPx = cmToPx(cardConfig.cardHeightCm);
             const birthDate = previewStudent.date_of_birth ? new Date(previewStudent.date_of_birth).toLocaleDateString('km-KH') : '____/____/______';
-            const studentID = previewStudent.studentID;
+            const fontFamily = cardConfig.globalFontFamily;
             
-            return `
-                <div class="student-id-card-preview" style="width: ${cardConfig.cardWidth}px; height: ${cardConfig.cardHeight}px; background: ${cardConfig.bgColor}; border: 1px solid ${cardConfig.borderColor}; border-radius: 4px; padding: 8px 10px; font-family: ${cardConfig.fontFamily}; font-size: ${cardConfig.fontSize}px; position: relative; overflow: visible; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    
-                    <!-- Watermark -->
-                    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; opacity: 0.12; z-index: 0;">
-                        ${getPreviewWatermark()}
-                    </div>
-                    
-                    <!-- Header -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 6px; position: relative; z-index: 1;">
-                        <div>${getPreviewLogo()}</div>
-                        <div style="text-align: right;">
-                            <div style="font-size: ${cardConfig.fontSize}px; color: ${cardConfig.darkTextColor};">ព្រះរាជាណាចក្រកម្ពុជា</div>
-                            <div style="font-size: ${cardConfig.fontSize}px; color: ${cardConfig.darkTextColor};">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Ministry -->
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; position: relative; z-index: 1;">
-                        <div>
-                            <div style="font-size: ${cardConfig.fontSize-1}px; color: ${cardConfig.darkTextColor};">ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                            <div style="font-size: ${cardConfig.fontSize-1}px; color: ${cardConfig.darkTextColor};">មន្ទីរក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                            <div style="font-size: ${cardConfig.fontSize}px; font-weight: bold; color: ${cardConfig.darkTextColor};">វិទ្យាល័យកំរៀង</div>
-                        </div>
-                        <div>${generateQRCode(studentID)}</div>
-                    </div>
-                    
-                    <!-- Title -->
-                    <div style="text-align: center; margin-bottom: 10px; position: relative; z-index: 1;">
-                        <div style="font-size: ${cardConfig.fontSize+3}px; font-weight: bold; color: #D28A17;">បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
-                        <div style="font-size: ${cardConfig.fontSize}px; color: #3D8BFF;">ឆ្នាំសិក្សា ២០២៥-២០២៦</div>
-                    </div>
-                    
-                    <!-- Info Grid -->
-                    <div style="margin-bottom: 8px; position: relative; z-index: 1;">
-                        <div style="display: grid; grid-template-columns: 55px 1fr 40px 1fr; gap: 4px; margin-bottom: 5px;">
-                            <span style="color: ${cardConfig.darkTextColor};">គោត្តនាម និងនាម</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${previewStudent.name}</span>
-                            <span style="color: ${cardConfig.darkTextColor};">ភេទ</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${previewStudent.sex}</span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 55px 1fr; gap: 4px; margin-bottom: 5px;">
-                            <span style="color: ${cardConfig.darkTextColor};">ថ្ងៃខែឆ្នាំកំណើត</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${birthDate}</span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 55px 1fr; gap: 4px; margin-bottom: 5px;">
-                            <span style="color: ${cardConfig.darkTextColor};">ទីកន្លែងកំណើត</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${previewStudent.address}</span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 55px 1fr 55px 1fr; gap: 4px; margin-bottom: 5px;">
-                            <span style="color: ${cardConfig.darkTextColor};">លេខទូរស័ព្ទ</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${previewStudent.phonenumber}</span>
-                            <span style="color: ${cardConfig.darkTextColor};">ឈ្មោះឪពុក</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${previewStudent.fathername}</span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 55px 1fr 55px 1fr; gap: 4px; margin-bottom: 5px;">
-                            <span></span><span></span>
-                            <span style="color: ${cardConfig.darkTextColor};">ឈ្មោះម្តាយ</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${previewStudent.mothername}</span>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 55px 1fr; gap: 4px;">
-                            <span style="color: ${cardConfig.darkTextColor};">អត្តលេខ</span>
-                            <span style="color: ${cardConfig.blueValueColor};">${studentID}</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Bottom Section -->
-                    <div style="display: flex; gap: 10px; position: relative; z-index: 1; margin-top: 5px;">
-                        <div>
-                            <div style="width: ${cardConfig.photoWidth}px; height: ${cardConfig.photoHeight}px; border: 1px solid ${cardConfig.borderColor}; border-radius: 3px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; position: relative; overflow: visible;">
-                                <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                                <div style="position: absolute; top: 0; left: 100%; margin-left: ${cardConfig.stampGap}px; width: ${cardConfig.stampWidth}px; height: ${cardConfig.stampHeight}px; display: flex; align-items: center; justify-content: center; opacity: ${cardConfig.stampOpacity};">
-                                    ${getPreviewStamp()}
-                                </div>
-                            </div>
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: ${cardConfig.fontSize-2}px; color: ${cardConfig.darkTextColor};">ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩</div>
-                            <div style="font-size: ${cardConfig.fontSize-2}px; color: ${cardConfig.darkTextColor};">វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥</div>
-                            <div style="text-align: right;">
-                                <div style="font-size: ${cardConfig.fontSize-1}px; font-weight: bold; color: ${cardConfig.darkTextColor};">នាយកវិទ្យាល័យ</div>
-                                <div>${getPreviewSignature()}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            let html = `
+                <div id="renderCard" style="position: relative; width: ${cardWidthPx}px; height: ${cardHeightPx}px; background: ${cardConfig.elements.cardBg.bgColor}; border: ${cardConfig.elements.cardBg.borderWidth}px solid ${cardConfig.elements.cardBg.borderColor}; border-radius: 4px; overflow: visible; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             `;
-        }
-        
-        // QR Code Generator
-        function generateQRCode(studentID) {
-            return `<svg width="45" height="45" viewBox="0 0 100 100" fill="${cardConfig.darkTextColor}">
-                        <rect x="10" y="10" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="26" y="10" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="42" y="10" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="58" y="10" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="74" y="10" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="10" y="26" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="42" y="26" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="74" y="26" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="10" y="42" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="26" y="42" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="42" y="42" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="58" y="42" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="74" y="42" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="26" y="58" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="42" y="58" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="74" y="58" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="10" y="74" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="42" y="74" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="58" y="74" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                        <rect x="74" y="74" width="8" height="8" fill="${cardConfig.darkTextColor}"/>
-                    </svg>`;
-        }
-        
-        // Update preview
-        function updatePreview() {
-            const container = document.getElementById('previewContainer');
-            container.innerHTML = generatePreviewCard();
-        }
-        
-        // Load configuration from controls
-        function loadConfigFromControls() {
-            cardConfig.cardWidth = parseInt(document.getElementById('cardWidth').value);
-            cardConfig.cardHeight = parseInt(document.getElementById('cardHeight').value);
-            cardConfig.fontFamily = document.getElementById('fontFamily').value;
-            cardConfig.fontSize = parseInt(document.getElementById('fontSize').value);
-            cardConfig.photoWidth = parseInt(document.getElementById('photoWidth').value);
-            cardConfig.photoHeight = parseInt(document.getElementById('photoHeight').value);
-            cardConfig.stampWidth = parseInt(document.getElementById('stampWidth').value);
-            cardConfig.stampHeight = parseInt(document.getElementById('stampHeight').value);
-            cardConfig.stampGap = parseInt(document.getElementById('stampGap').value);
-            cardConfig.stampOpacity = parseFloat(document.getElementById('stampOpacity').value);
-            cardConfig.bgColor = document.getElementById('bgColor').value;
-            cardConfig.borderColor = document.getElementById('borderColor').value;
-            cardConfig.darkTextColor = document.getElementById('darkTextColor').value;
-            cardConfig.blueValueColor = document.getElementById('blueValueColor').value;
             
-            document.getElementById('fontSizeValue').innerText = cardConfig.fontSize + 'px';
-            document.getElementById('stampOpacityValue').innerText = cardConfig.stampOpacity;
+            // Watermark
+            if (cardConfig.elements.watermark.visible) {
+                const wx = cmToPx(cardConfig.elements.watermark.x);
+                const wy = cmToPx(cardConfig.elements.watermark.y);
+                const ww = cmToPx(cardConfig.elements.watermark.width);
+                const wh = cmToPx(cardConfig.elements.watermark.height);
+                html += `<div style="position: absolute; left: ${wx}px; top: ${wy}px; width: ${ww}px; height: ${wh}px; opacity: ${cardConfig.elements.watermark.opacity}; pointer-events: none; z-index: 0;">
+                            ${customImages.watermark ? `<img src="${customImages.watermark}" style="width:100%;height:100%;object-fit:contain;">` : 
+                                `<svg viewBox="0 0 200 200" fill="${cardConfig.elements.royalText.color}"><circle cx="100" cy="100" r="90" stroke="currentColor" stroke-width="3" fill="none"/><path d="M100 30 L140 70 L140 130 L100 170 L60 130 L60 70 Z" stroke="currentColor" stroke-width="3" fill="none"/></svg>`}
+                        </div>`;
+            }
+            
+            // Logo
+            if (cardConfig.elements.logo.visible) {
+                const lx = cmToPx(cardConfig.elements.logo.x);
+                const ly = cmToPx(cardConfig.elements.logo.y);
+                const lw = cmToPx(cardConfig.elements.logo.width);
+                const lh = cmToPx(cardConfig.elements.logo.height);
+                html += `<div style="position: absolute; left: ${lx}px; top: ${ly}px; width: ${lw}px; height: ${lh}px; z-index: 1;">
+                            ${customImages.logo ? `<img src="${customImages.logo}" style="width:100%;height:100%;object-fit:contain;">` : 
+                                `<svg width="100%" height="100%" viewBox="0 0 100 100" fill="${cardConfig.elements.royalText.color}"><circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="2" fill="none"/><path d="M50 15 L70 35 L70 65 L50 85 L30 65 L30 35 Z" stroke="currentColor" stroke-width="2" fill="none"/><text x="50" y="55" text-anchor="middle" font-size="20" fill="currentColor" font-weight="bold">សា</text></svg>`}
+                        </div>`;
+            }
+            
+            // Royal Text
+            if (cardConfig.elements.royalText.visible) {
+                const rx = cmToPx(cardConfig.elements.royalText.x);
+                const ry = cmToPx(cardConfig.elements.royalText.y);
+                const fontSize = cmToPx(cardConfig.elements.royalText.fontSize);
+                html += `<div style="position: absolute; left: ${rx}px; top: ${ry}px; text-align: right; font-family: ${fontFamily}; font-size: ${fontSize}px; color: ${cardConfig.elements.royalText.color}; z-index: 1;">
+                            <div>ព្រះរាជាណាចក្រកម្ពុជា</div>
+                            <div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+                        </div>`;
+            }
+            
+            // Ministry Text
+            if (cardConfig.elements.ministryText.visible) {
+                const mx = cmToPx(cardConfig.elements.ministryText.x);
+                const my = cmToPx(cardConfig.elements.ministryText.y);
+                const fontSize = cmToPx(cardConfig.elements.ministryText.fontSize);
+                html += `<div style="position: absolute; left: ${mx}px; top: ${my}px; font-family: ${fontFamily}; font-size: ${fontSize}px; color: ${cardConfig.elements.ministryText.color}; z-index: 1;">
+                            <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
+                            <div>មន្ទីរក្រសួងអប់រំ យុវជន និងកីឡា</div>
+                            <div style="font-weight: bold;">វិទ្យាល័យកំរៀង</div>
+                        </div>`;
+            }
+            
+            // QR Code
+            if (cardConfig.elements.qrCode.visible) {
+                const qx = cmToPx(cardConfig.elements.qrCode.x);
+                const qy = cmToPx(cardConfig.elements.qrCode.y);
+                const qs = cmToPx(cardConfig.elements.qrCode.size);
+                html += `<div style="position: absolute; left: ${qx}px; top: ${qy}px; width: ${qs}px; height: ${qs}px; z-index: 1;">
+                            ${generateQRCode(previewStudent.studentID, qs, cardConfig.elements.royalText.color)}
+                        </div>`;
+            }
+            
+            // Title
+            if (cardConfig.elements.titleText.visible) {
+                const tx = cmToPx(cardConfig.elements.titleText.x);
+                const ty = cmToPx(cardConfig.elements.titleText.y);
+                const fontSize = cmToPx(cardConfig.elements.titleText.fontSize);
+                html += `<div style="position: absolute; left: ${tx}px; top: ${ty}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${fontSize}px; font-weight: bold; color: ${cardConfig.elements.titleText.color}; z-index: 1;">
+                            <div>បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
+                        </div>`;
+            }
+            
+            // Subtitle
+            if (cardConfig.elements.subtitleText.visible) {
+                const stx = cmToPx(cardConfig.elements.subtitleText.x);
+                const sty = cmToPx(cardConfig.elements.subtitleText.y);
+                const fontSize = cmToPx(cardConfig.elements.subtitleText.fontSize);
+                html += `<div style="position: absolute; left: ${stx}px; top: ${sty}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${fontSize}px; color: ${cardConfig.elements.subtitleText.color}; z-index: 1;">
+                            <div>ឆ្នាំសិក្សា ២០២៥-២០២៦</div>
+                        </div>`;
+            }
+            
+            // Student Photo
+            if (cardConfig.elements.studentPhoto.visible) {
+                const px = cmToPx(cardConfig.elements.studentPhoto.x);
+                const py = cmToPx(cardConfig.elements.studentPhoto.y);
+                const pw = cmToPx(cardConfig.elements.studentPhoto.width);
+                const ph = cmToPx(cardConfig.elements.studentPhoto.height);
+                html += `<div style="position: absolute; left: ${px}px; top: ${py}px; width: ${pw}px; height: ${ph}px; border: 1px solid ${cardConfig.elements.cardBg.borderColor}; border-radius: 3px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; z-index: 1;">
+                            ${previewStudent.photo ? `<img src="${previewStudent.photo}" style="width:100%;height:100%;object-fit:cover;">` : 
+                                `<svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`}
+                        </div>`;
+            }
+            
+            // Stamp
+            if (cardConfig.elements.stamp.visible && customImages.stamp) {
+                const smx = cmToPx(cardConfig.elements.stamp.x);
+                const smy = cmToPx(cardConfig.elements.stamp.y);
+                const sw = cmToPx(cardConfig.elements.stamp.width);
+                const sh = cmToPx(cardConfig.elements.stamp.height);
+                html += `<div style="position: absolute; left: ${smx}px; top: ${smy}px; width: ${sw}px; height: ${sh}px; opacity: ${cardConfig.elements.stamp.opacity}; z-index: 2;">
+                            <img src="${customImages.stamp}" style="width:100%;height:100%;object-fit:contain;">
+                        </div>`;
+            }
+            
+            // Student Info
+            if (cardConfig.elements.studentInfo.visible) {
+                const ix = cmToPx(cardConfig.elements.studentInfo.x);
+                const iy = cmToPx(cardConfig.elements.studentInfo.y);
+                const fontSize = cmToPx(cardConfig.elements.studentInfo.fontSize);
+                html += `<div style="position: absolute; left: ${ix}px; top: ${iy}px; font-family: ${fontFamily}; font-size: ${fontSize}px; z-index: 1;">
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.name}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ភេទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.sex}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${birthDate}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ទីកន្លែងកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.address}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">លេខទូរស័ព្ទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.phonenumber}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះឪពុក:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.fathername}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះម្តាយ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.mothername}</span></div>
+                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">អត្តលេខ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.studentID}</span></div>
+                        </div>`;
+            }
+            
+            // Signature
+            if (cardConfig.elements.signature.visible && customImages.signature) {
+                const sgx = cmToPx(cardConfig.elements.signature.x);
+                const sgy = cmToPx(cardConfig.elements.signature.y);
+                const sgw = cmToPx(cardConfig.elements.signature.width);
+                const sgh = cmToPx(cardConfig.elements.signature.height);
+                html += `<div style="position: absolute; left: ${sgx}px; top: ${sgy}px; width: ${sgw}px; height: ${sgh}px; text-align: right; z-index: 1;">
+                            <div style="font-size: ${cmToPx(0.2)}px; font-weight: bold; color: ${cardConfig.elements.royalText.color};">នាយកវិទ្យាល័យ</div>
+                            <img src="${customImages.signature}" style="width:100%;height:auto;object-fit:contain;">
+                        </div>`;
+            }
+            
+            html += `</div>`;
+            
+            document.getElementById('cardPreviewContainer').innerHTML = html;
         }
         
-        // Apply configuration
-        function applyConfig() {
-            loadConfigFromControls();
-            updatePreview();
-            // Save to localStorage for use in other pages
-            localStorage.setItem('cardConfig', JSON.stringify(cardConfig));
-            localStorage.setItem('customLogo', customLogo);
-            localStorage.setItem('customSignature', customSignature);
-            localStorage.setIdem('customStamp', customStamp);
-            alert('✅ បានរក្សាទុកការកំណត់ដោយជោគជ័យ!');
+        // ============================================
+        // PROPERTY FORM HANDLERS
+        // ============================================
+        function loadElementProperties(elementName) {
+            const element = cardConfig.elements[elementName];
+            if (!element) return;
+            
+            let formHtml = '';
+            
+            if (elementName === 'cardBg') {
+                formHtml = `
+                    <div><label class="block text-xs text-gray-500">ពណ៌ផ្ទៃខាងក្រោយ</label><input type="color" id="propBgColor" value="${element.bgColor}" class="w-full h-8 rounded border"></div>
+                    <div><label class="block text-xs text-gray-500">ពណ៌ស៊ុម</label><input type="color" id="propBorderColor" value="${element.borderColor}" class="w-full h-8 rounded border"></div>
+                    <div><label class="block text-xs text-gray-500">កម្រាស់ស៊ុម (px)</label><input type="number" id="propBorderWidth" value="${element.borderWidth}" class="w-full border rounded p-1 text-sm"></div>
+                `;
+            } 
+            else if (elementName === 'logo' || elementName === 'stamp' || elementName === 'signature' || elementName === 'watermark') {
+                formHtml = `
+                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ទទឹង (cm)</label><input type="number" id="propWidth" value="${element.width}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${element.height}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
+                    ${elementName === 'stamp' ? `<div><label class="block text-xs text-gray-500">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${element.opacity}" class="w-full"><span id="opacityValue">${element.opacity}</span></div>` : ''}
+                    ${elementName === 'watermark' ? `<div><label class="block text-xs text-gray-500">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${element.opacity}" class="w-full"><span id="opacityValue">${element.opacity}</span></div>` : ''}
+                    <div class="mt-2"><button id="uploadImageBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបភាព</button><input type="file" id="imageUpload" accept="image/*" class="hidden"></div>
+                `;
+            }
+            else if (elementName === 'royalText' || elementName === 'ministryText' || elementName === 'titleText' || elementName === 'subtitleText') {
+                formHtml = `
+                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${element.fontSize}" step="0.01" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ពណ៌</label><input type="color" id="propColor" value="${element.color}" class="w-full h-8 rounded border"></div>
+                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
+                `;
+            }
+            else if (elementName === 'qrCode') {
+                formHtml = `
+                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ទំហំ (cm)</label><input type="number" id="propSize" value="${element.size}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
+                `;
+            }
+            else if (elementName === 'studentInfo') {
+                formHtml = `
+                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ទំហំអក្សរ (cm)</label><input type="number" id="propFontSize" value="${element.fontSize}" step="0.01" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ពណ៌ស្លាក</label><input type="color" id="propLabelColor" value="${element.labelColor}" class="w-full h-8 rounded border"></div>
+                    <div><label class="block text-xs text-gray-500">ពណ៌តម្លៃ</label><input type="color" id="propValueColor" value="${element.valueColor}" class="w-full h-8 rounded border"></div>
+                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
+                `;
+            }
+            else if (elementName === 'studentPhoto') {
+                formHtml = `
+                    <div><label class="block text-xs text-gray-500">X (cm)</label><input type="number" id="propX" value="${element.x}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">Y (cm)</label><input type="number" id="propY" value="${element.y}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">ទទឹង (cm)</label><input type="number" id="propWidth" value="${element.width}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${element.height}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
+                    <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
+                    <div class="mt-2"><button id="uploadStudentPhotoBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបសិស្ស</button><input type="file" id="studentPhotoUpload" accept="image/*" class="hidden"></div>
+                `;
+            }
+            
+            document.getElementById('propertyForm').innerHTML = formHtml;
+            document.getElementById('selectedElementInfo').innerHTML = `កំពុងកែ: <strong>${getElementNameKm(elementName)}</strong>`;
+            
+            // Attach event listeners for the properties
+            attachPropertyEvents(elementName);
         }
         
-        // Reset to default
-        function resetConfig() {
-            cardConfig = {
-                cardWidth: 246, cardHeight: 321,
-                fontFamily: "'Khmer', 'Khmer OS Moul Light', sans-serif",
-                fontSize: 8,
-                photoWidth: 75, photoHeight: 95,
-                stampWidth: 60, stampHeight: 75,
-                stampGap: 5, stampOpacity: 0.9,
-                bgColor: "#f5f5f0", borderColor: "#4A86E8",
-                darkTextColor: "#233D2E", blueValueColor: "#304FFE"
+        function getElementNameKm(elementName) {
+            const names = {
+                cardBg: "ផ្ទៃកាត", logo: "Logo សាលា", royalText: "អត្ថបទព្រះរាជា",
+                ministryText: "អត្ថបទក្រសួង", qrCode: "QR Code", titleText: "ចំណងជើង",
+                subtitleText: "ចំណងជើងរង", studentInfo: "ព័ត៌មានសិស្ស", studentPhoto: "រូបថតសិស្ស",
+                stamp: "ត្រា", signature: "ហត្ថលេខា", watermark: "Watermark"
             };
-            customLogo = null;
-            customSignature = null;
-            customStamp = null;
-            customWatermark = null;
-            
-            // Reset form values
-            document.getElementById('cardWidth').value = cardConfig.cardWidth;
-            document.getElementById('cardHeight').value = cardConfig.cardHeight;
-            document.getElementById('fontFamily').value = cardConfig.fontFamily;
-            document.getElementById('fontSize').value = cardConfig.fontSize;
-            document.getElementById('photoWidth').value = cardConfig.photoWidth;
-            document.getElementById('photoHeight').value = cardConfig.photoHeight;
-            document.getElementById('stampWidth').value = cardConfig.stampWidth;
-            document.getElementById('stampHeight').value = cardConfig.stampHeight;
-            document.getElementById('stampGap').value = cardConfig.stampGap;
-            document.getElementById('stampOpacity').value = cardConfig.stampOpacity;
-            document.getElementById('bgColor').value = cardConfig.bgColor;
-            document.getElementById('borderColor').value = cardConfig.borderColor;
-            document.getElementById('darkTextColor').value = cardConfig.darkTextColor;
-            document.getElementById('blueValueColor').value = cardConfig.blueValueColor;
-            
-            document.getElementById('fontSizeValue').innerText = cardConfig.fontSize + 'px';
-            document.getElementById('stampOpacityValue').innerText = cardConfig.stampOpacity;
-            
-            updatePreview();
-            alert('🔄 បានកំណត់តម្លៃដើមវិញ!');
+            return names[elementName] || elementName;
         }
         
-        // Export configuration
+        function attachPropertyEvents(elementName) {
+            const element = cardConfig.elements[elementName];
+            if (!element) return;
+            
+            // Handle X, Y, Width, Height
+            const xInput = document.getElementById('propX');
+            const yInput = document.getElementById('propY');
+            const wInput = document.getElementById('propWidth');
+            const hInput = document.getElementById('propHeight');
+            const sizeInput = document.getElementById('propSize');
+            const fontSizeInput = document.getElementById('propFontSize');
+            const colorInput = document.getElementById('propColor');
+            const labelColorInput = document.getElementById('propLabelColor');
+            const valueColorInput = document.getElementById('propValueColor');
+            const bgColorInput = document.getElementById('propBgColor');
+            const borderColorInput = document.getElementById('propBorderColor');
+            const borderWidthInput = document.getElementById('propBorderWidth');
+            const visibleCheckbox = document.getElementById('propVisible');
+            const opacitySlider = document.getElementById('propOpacity');
+            
+            if (xInput) xInput.addEventListener('change', (e) => { element.x = parseFloat(e.target.value); renderCard(); });
+            if (yInput) yInput.addEventListener('change', (e) => { element.y = parseFloat(e.target.value); renderCard(); });
+            if (wInput) wInput.addEventListener('change', (e) => { element.width = parseFloat(e.target.value); renderCard(); });
+            if (hInput) hInput.addEventListener('change', (e) => { element.height = parseFloat(e.target.value); renderCard(); });
+            if (sizeInput) sizeInput.addEventListener('change', (e) => { element.size = parseFloat(e.target.value); renderCard(); });
+            if (fontSizeInput) fontSizeInput.addEventListener('change', (e) => { element.fontSize = parseFloat(e.target.value); renderCard(); });
+            if (colorInput) colorInput.addEventListener('change', (e) => { element.color = e.target.value; renderCard(); });
+            if (labelColorInput) labelColorInput.addEventListener('change', (e) => { element.labelColor = e.target.value; renderCard(); });
+            if (valueColorInput) valueColorInput.addEventListener('change', (e) => { element.valueColor = e.target.value; renderCard(); });
+            if (bgColorInput) bgColorInput.addEventListener('change', (e) => { element.bgColor = e.target.value; renderCard(); });
+            if (borderColorInput) borderColorInput.addEventListener('change', (e) => { element.borderColor = e.target.value; renderCard(); });
+            if (borderWidthInput) borderWidthInput.addEventListener('change', (e) => { element.borderWidth = parseInt(e.target.value); renderCard(); });
+            if (visibleCheckbox) visibleCheckbox.addEventListener('change', (e) => { element.visible = e.target.checked; renderCard(); });
+            if (opacitySlider) {
+                opacitySlider.addEventListener('input', (e) => { element.opacity = parseFloat(e.target.value); document.getElementById('opacityValue').innerText = element.opacity; renderCard(); });
+            }
+            
+            // Image upload handling
+            if (elementName === 'logo') {
+                const uploadBtn = document.getElementById('uploadImageBtn');
+                const fileInput = document.getElementById('imageUpload');
+                if (uploadBtn && fileInput) {
+                    uploadBtn.addEventListener('click', () => fileInput.click());
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { customImages.logo = ev.target.result; renderCard(); };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+            }
+            if (elementName === 'stamp') {
+                const uploadBtn = document.getElementById('uploadImageBtn');
+                const fileInput = document.getElementById('imageUpload');
+                if (uploadBtn && fileInput) {
+                    uploadBtn.addEventListener('click', () => fileInput.click());
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { customImages.stamp = ev.target.result; renderCard(); };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+            }
+            if (elementName === 'signature') {
+                const uploadBtn = document.getElementById('uploadImageBtn');
+                const fileInput = document.getElementById('imageUpload');
+                if (uploadBtn && fileInput) {
+                    uploadBtn.addEventListener('click', () => fileInput.click());
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { customImages.signature = ev.target.value; renderCard(); };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+            }
+            if (elementName === 'watermark') {
+                const uploadBtn = document.getElementById('uploadImageBtn');
+                const fileInput = document.getElementById('imageUpload');
+                if (uploadBtn && fileInput) {
+                    uploadBtn.addEventListener('click', () => fileInput.click());
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { customImages.watermark = ev.target.result; renderCard(); };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+            }
+            if (elementName === 'studentPhoto') {
+                const uploadBtn = document.getElementById('uploadStudentPhotoBtn');
+                const fileInput = document.getElementById('studentPhotoUpload');
+                if (uploadBtn && fileInput) {
+                    uploadBtn.addEventListener('click', () => fileInput.click());
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => { previewStudent.photo = ev.target.result; renderCard(); };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+            }
+        }
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.querySelectorAll('.element-list-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.element-list-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                currentSelectedElement = item.dataset.element;
+                loadElementProperties(currentSelectedElement);
+            });
+        });
+        
+        document.getElementById('cardWidthCm').addEventListener('change', (e) => {
+            cardConfig.cardWidthCm = parseFloat(e.target.value);
+            renderCard();
+        });
+        document.getElementById('cardHeightCm').addEventListener('change', (e) => {
+            cardConfig.cardHeightCm = parseFloat(e.target.value);
+            renderCard();
+        });
+        document.getElementById('globalFontFamily').addEventListener('change', (e) => {
+            cardConfig.globalFontFamily = e.target.value;
+            renderCard();
+        });
+        
+        // Export config
         function exportConfig() {
-            const config = {
+            const configToSave = {
                 cardConfig: cardConfig,
-                customLogo: customLogo,
-                customSignature: customSignature,
-                customStamp: customStamp,
-                customWatermark: customWatermark
+                customImages: customImages
             };
-            const dataStr = JSON.stringify(config, null, 2);
+            const dataStr = JSON.stringify(configToSave, null, 2);
             const blob = new Blob([dataStr], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'card-config.json';
+            a.download = 'card-config-advanced.json';
             a.click();
             URL.revokeObjectURL(url);
         }
         
-        // Import configuration
+        // Import config
         function importConfig(file) {
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = (e) => {
                 try {
                     const config = JSON.parse(e.target.result);
                     cardConfig = config.cardConfig;
-                    customLogo = config.customLogo;
-                    customSignature = config.customSignature;
-                    customStamp = config.customStamp;
-                    customWatermark = config.customWatermark;
+                    customImages = config.customImages || customImages;
                     
-                    // Update form
-                    document.getElementById('cardWidth').value = cardConfig.cardWidth;
-                    document.getElementById('cardHeight').value = cardConfig.cardHeight;
-                    document.getElementById('fontFamily').value = cardConfig.fontFamily;
-                    document.getElementById('fontSize').value = cardConfig.fontSize;
-                    document.getElementById('photoWidth').value = cardConfig.photoWidth;
-                    document.getElementById('photoHeight').value = cardConfig.photoHeight;
-                    document.getElementById('stampWidth').value = cardConfig.stampWidth;
-                    document.getElementById('stampHeight').value = cardConfig.stampHeight;
-                    document.getElementById('stampGap').value = cardConfig.stampGap;
-                    document.getElementById('stampOpacity').value = cardConfig.stampOpacity;
-                    document.getElementById('bgColor').value = cardConfig.bgColor;
-                    document.getElementById('borderColor').value = cardConfig.borderColor;
-                    document.getElementById('darkTextColor').value = cardConfig.darkTextColor;
-                    document.getElementById('blueValueColor').value = cardConfig.blueValueColor;
+                    // Update form values
+                    document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm;
+                    document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm;
+                    document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily;
                     
-                    document.getElementById('fontSizeValue').innerText = cardConfig.fontSize + 'px';
-                    document.getElementById('stampOpacityValue').innerText = cardConfig.stampOpacity;
-                    
-                    updatePreview();
+                    renderCard();
                     alert('✅ បានផ្ទុកការកំណត់ដោយជោគជ័យ!');
                 } catch(err) {
                     alert('❌ កំហុស: ឯកសារមិនត្រឹមត្រូវ');
@@ -532,32 +660,24 @@
             reader.readAsText(file);
         }
         
-        // Handle image uploads
-        function handleImageUpload(inputId, setter) {
-            document.getElementById(inputId).addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        setter(event.target.result);
-                        updatePreview();
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
+        // Apply to system - save to localStorage for use in other pages
+        function applyToSystem() {
+            const systemConfig = {
+                cardConfig: cardConfig,
+                customImages: customImages
+            };
+            localStorage.setItem('cardSystemConfig', JSON.stringify(systemConfig));
+            alert('✅ បានរក្សាទុកការកំណត់ទៅប្រព័ន្ធ! អ្នកអាចប្រើប្រាស់ក្នុងទំព័រ create.html និង generate.html');
         }
         
         // Download preview as image
         async function downloadPreview() {
-            const cardElement = document.querySelector('#previewContainer > div');
-            if (!cardElement) {
-                alert('មិនមានកាតដើម្បីទាញយកទេ');
-                return;
-            }
+            const cardElement = document.querySelector('#cardPreviewContainer > div');
+            if (!cardElement) { alert('មិនមានកាតដើម្បីទាញយកទេ'); return; }
             try {
-                const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: null });
+                const canvas = await html2canvas(cardElement, { scale: 3, backgroundColor: null });
                 const link = document.createElement('a');
-                link.download = 'card-preview.png';
+                link.download = 'student-card-design.png';
                 link.href = canvas.toDataURL();
                 link.click();
                 alert('✅ បានទាញយកដោយជោគជ័យ!');
@@ -566,59 +686,14 @@
             }
         }
         
-        // Event listeners
-        document.getElementById('applyBtn').addEventListener('click', applyConfig);
-        document.getElementById('resetBtn').addEventListener('click', resetConfig);
         document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
-        document.getElementById('importConfigTrigger').addEventListener('click', () => {
-            document.getElementById('importConfigBtn').click();
-        });
-        document.getElementById('importConfigBtn').addEventListener('change', (e) => {
-            if (e.target.files[0]) importConfig(e.target.files[0]);
-        });
+        document.getElementById('importConfigTrigger').addEventListener('click', () => document.getElementById('importConfigBtn').click());
+        document.getElementById('importConfigBtn').addEventListener('change', (e) => { if (e.target.files[0]) importConfig(e.target.files[0]); });
+        document.getElementById('applyToSystemBtn').addEventListener('click', applyToSystem);
         document.getElementById('downloadPreviewBtn').addEventListener('click', downloadPreview);
         
-        // Range sliders display
-        document.getElementById('fontSize').addEventListener('input', (e) => {
-            document.getElementById('fontSizeValue').innerText = e.target.value + 'px';
-        });
-        document.getElementById('stampOpacity').addEventListener('input', (e) => {
-            document.getElementById('stampOpacityValue').innerText = e.target.value;
-        });
-        
-        // Image uploads
-        handleImageUpload('uploadLogo', (val) => customLogo = val);
-        handleImageUpload('uploadSignature', (val) => customSignature = val);
-        handleImageUpload('uploadStamp', (val) => customStamp = val);
-        handleImageUpload('uploadWatermark', (val) => customWatermark = val);
-        
-        // Load saved config from localStorage
-        const savedConfig = localStorage.getItem('cardConfig');
-        if (savedConfig) {
-            try {
-                const config = JSON.parse(savedConfig);
-                cardConfig = config;
-                document.getElementById('cardWidth').value = cardConfig.cardWidth;
-                document.getElementById('cardHeight').value = cardConfig.cardHeight;
-                document.getElementById('fontFamily').value = cardConfig.fontFamily;
-                document.getElementById('fontSize').value = cardConfig.fontSize;
-                document.getElementById('photoWidth').value = cardConfig.photoWidth;
-                document.getElementById('photoHeight').value = cardConfig.photoHeight;
-                document.getElementById('stampWidth').value = cardConfig.stampWidth;
-                document.getElementById('stampHeight').value = cardConfig.stampHeight;
-                document.getElementById('stampGap').value = cardConfig.stampGap;
-                document.getElementById('stampOpacity').value = cardConfig.stampOpacity;
-                document.getElementById('bgColor').value = cardConfig.bgColor;
-                document.getElementById('borderColor').value = cardConfig.borderColor;
-                document.getElementById('darkTextColor').value = cardConfig.darkTextColor;
-                document.getElementById('blueValueColor').value = cardConfig.blueValueColor;
-                document.getElementById('fontSizeValue').innerText = cardConfig.fontSize + 'px';
-                document.getElementById('stampOpacityValue').innerText = cardConfig.stampOpacity;
-            } catch(e) {}
-        }
-        
-        // Initial preview
-        updatePreview();
+        // Initial render
+        renderCard();
     </script>
 </body>
 </html>
