@@ -18,6 +18,22 @@
         @media print {
             .no-print { display: none; }
         }
+        .class-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .class-badge:hover {
+            transform: scale(1.05);
+        }
+        .class-filter-active {
+            background-color: #3b82f6 !important;
+            color: white !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -30,13 +46,25 @@
         
         <!-- Search Section -->
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8 no-print">
+            <!-- Class Filter Dropdown -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">🏫 ជ្រើសរើសថ្នាក់</label>
+                <select id="classSelect" class="w-full md:w-1/2 rounded-md border p-2 bg-white">
+                    <option value="">-- ទាំងអស់ --</option>
+                </select>
+            </div>
+            
+            <!-- Quick Class Badges -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">📚 ថ្នាក់ពេញនិយម</label>
+                <div id="quickClasses" class="flex flex-wrap gap-2">
+                    <!-- Dynamic class badges will appear here -->
+                </div>
+            </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">ស្វែងរកតាមថ្នាក់</label>
-                    <input type="text" id="searchClass" placeholder="ឧទាហរណ៍: ថ្នាក់ទី១២A" class="w-full rounded-md border p-2">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">ស្វែងរកតាមឈ្មោះ</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">✏️ ស្វែងរកតាមឈ្មោះ</label>
                     <input type="text" id="searchName" placeholder="បញ្ចូលឈ្មោះសិស្ស..." class="w-full rounded-md border p-2">
                 </div>
                 <div class="flex space-x-2 items-end">
@@ -62,7 +90,6 @@
                 </div>
             </div>
             <div id="searchResults" class="overflow-x-auto">
-                <!-- Results will be displayed here -->
                 <div class="text-center py-8 text-gray-500">
                     <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
@@ -101,6 +128,7 @@
     // Global variables
     let currentStudents = [];
     let selectedStudents = new Map();
+    let allClassNames = new Set(); // Store unique class names
     
     // ============================================
     // HELPER FUNCTIONS
@@ -149,13 +177,58 @@
     }
     
     // ============================================
+    // LOAD UNIQUE CLASS NAMES FOR FILTER
+    // ============================================
+    async function loadClassNames() {
+        try {
+            const { data, error } = await supabaseClient
+                .from(TABLE_NAME)
+                .select('class')
+                .not('class', 'is', null);
+            
+            if (error) throw error;
+            
+            allClassNames.clear();
+            data.forEach(item => {
+                if (item.class && item.class.trim() !== '') {
+                    allClassNames.add(item.class);
+                }
+            });
+            
+            // Sort class names
+            const sortedClasses = Array.from(allClassNames).sort();
+            
+            // Populate dropdown
+            const select = document.getElementById('classSelect');
+            select.innerHTML = '<option value="">-- ទាំងអស់ --</option>';
+            sortedClasses.forEach(className => {
+                select.innerHTML += `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`;
+            });
+            
+            // Populate quick badges (top 12 classes)
+            const quickContainer = document.getElementById('quickClasses');
+            quickContainer.innerHTML = '';
+            sortedClasses.slice(0, 12).forEach(className => {
+                quickContainer.innerHTML += `
+                    <span class="class-badge bg-gray-200 text-gray-700 hover:bg-blue-500 hover:text-white" 
+                          onclick="document.getElementById('classSelect').value='${escapeHtml(className)}'; searchStudents();">
+                        ${escapeHtml(className)}
+                    </span>
+                `;
+            });
+            
+        } catch (error) {
+            console.error('Error loading class names:', error);
+        }
+    }
+    
+    // ============================================
     // LOAD ALL STUDENTS WITH PAGINATION
     // ============================================
     async function loadAllStudents() {
-        const loadingMsg = showInfoBanner('កំពុងផ្ទុកទិន្នន័យសិស្ស...', false);
+        showInfoBanner('កំពុងផ្ទុកទិន្នន័យសិស្ស...', false);
         
         try {
-            // First, get total count
             const { count, error: countError } = await supabaseClient
                 .from(TABLE_NAME)
                 .select('*', { count: 'exact', head: true });
@@ -173,7 +246,6 @@
                 return;
             }
             
-            // Fetch in batches of 1000
             const batchSize = 1000;
             const allData = [];
             
@@ -210,13 +282,13 @@
     }
     
     // ============================================
-    // SEARCH STUDENTS WITH PAGINATION
+    // SEARCH STUDENTS WITH CLASS AND NAME FILTERS
     // ============================================
     async function searchStudents() {
-        const searchClass = document.getElementById('searchClass').value.trim();
+        const selectedClass = document.getElementById('classSelect').value;
         const searchName = document.getElementById('searchName').value.trim();
         
-        if (!searchClass && !searchName) {
+        if (!selectedClass && !searchName) {
             loadAllStudents();
             return;
         }
@@ -224,11 +296,10 @@
         showInfoBanner('កំពុងស្វែងរក...', false);
         
         try {
-            // First, get count of matching records
             let countQuery = supabaseClient.from(TABLE_NAME).select('*', { count: 'exact', head: true });
             
-            if (searchClass) {
-                countQuery = countQuery.ilike('class', `%${searchClass}%`);
+            if (selectedClass) {
+                countQuery = countQuery.eq('class', selectedClass);
             }
             if (searchName) {
                 countQuery = countQuery.ilike('name', `%${searchName}%`);
@@ -247,15 +318,14 @@
                 return;
             }
             
-            // Fetch in batches
             const batchSize = 1000;
             const allData = [];
             
             for (let i = 0; i < totalResults; i += batchSize) {
                 let query = supabaseClient.from(TABLE_NAME).select('*');
                 
-                if (searchClass) {
-                    query = query.ilike('class', `%${searchClass}%`);
+                if (selectedClass) {
+                    query = query.eq('class', selectedClass);
                 }
                 if (searchName) {
                     query = query.ilike('name', `%${searchName}%`);
@@ -345,7 +415,6 @@
             </table>
         `;
         
-        // Add event listeners to checkboxes
         document.querySelectorAll('.student-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const studentID = e.target.value;
@@ -492,21 +561,26 @@
     });
     
     document.getElementById('resetBtn')?.addEventListener('click', () => {
-        document.getElementById('searchClass').value = '';
+        document.getElementById('classSelect').value = '';
         document.getElementById('searchName').value = '';
         loadAllStudents();
     });
     
-    document.getElementById('searchClass')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') searchStudents();
+    document.getElementById('classSelect')?.addEventListener('change', () => {
+        searchStudents();
     });
     
     document.getElementById('searchName')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchStudents();
     });
     
-    // Load data on page load
-    loadAllStudents();
-</script>
+    // Initialize
+    async function init() {
+        await loadClassNames();
+        await loadAllStudents();
+    }
+    
+    init();
+    </script>
 </body>
 </html>
