@@ -6,79 +6,49 @@
     <title>កែសម្រួលកាតសិស្ស - Advanced Card Editor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.17/dist/interact.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
-        .draggable-element {
-            cursor: move;
-            user-select: none;
+        .element-list-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f3f4f6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .resizable-element {
-            position: relative;
+        .element-list-item:hover {
+            background: #e5e7eb;
+            transform: translateX(5px);
         }
-        .resize-handle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
+        .element-list-item.active {
             background: #3b82f6;
-            border: 1px solid white;
-        }
-        .resize-handle.se {
-            bottom: -4px;
-            right: -4px;
-            cursor: se-resize;
-        }
-        .element-selected {
-            outline: 2px solid #3b82f6;
-            outline-offset: 2px;
-        }
-        .preview-card {
-            position: sticky;
-            top: 20px;
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            overflow-x: auto;
+            color: white;
         }
         .property-panel {
             max-height: 80vh;
             overflow-y: auto;
         }
         .cm-input {
-            width: 70px;
-            padding: 4px;
+            width: 80px;
+            padding: 6px;
             border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        .color-preview {
-            width: 30px;
-            height: 30px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            cursor: pointer;
-        }
-        .element-list-item {
-            padding: 8px;
-            margin: 4px 0;
-            background: #f3f4f6;
             border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
+            font-size: 13px;
         }
-        .element-list-item:hover {
-            background: #e5e7eb;
-        }
-        .element-list-item.active {
-            background: #3b82f6;
-            color: white;
+        .preview-card {
+            position: sticky;
+            top: 20px;
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
+        <!-- Navigation -->
         <div class="mb-4">
             <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
         </div>
@@ -87,7 +57,7 @@
         
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Left Panel: Elements List -->
-            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-4">
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-4">
                 <h3 class="font-bold text-gray-700 mb-3">📦 ធាតុក្នុងកាត</h3>
                 <div id="elementsList" class="space-y-2">
                     <div class="element-list-item" data-element="cardBg">🃏 ផ្ទៃកាត</div>
@@ -113,6 +83,7 @@
             <!-- Center Panel: Card Preview -->
             <div class="lg:col-span-6">
                 <div class="preview-card">
+                    <h3 class="font-bold text-gray-700 mb-3 text-center">👁️ មើលជាមុន</h3>
                     <div id="cardPreviewContainer" class="flex justify-center">
                         <!-- Card will be generated here -->
                     </div>
@@ -123,8 +94,8 @@
                 </div>
             </div>
             
-            <!-- Right Panel: Properties -->
-            <div class="lg:col-span-4 bg-white rounded-lg shadow-lg p-4 property-panel">
+            //- Right Panel: Properties -->
+            <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-4 property-panel">
                 <h3 class="font-bold text-gray-700 mb-3">⚙️ ការកំណត់ទូទៅ</h3>
                 
                 <!-- Card Size -->
@@ -147,11 +118,12 @@
                     <h4 class="font-semibold text-gray-600 mb-2">🔤 ពុម្ពអក្សរទូទៅ</h4>
                     <div>
                         <label class="block text-xs text-gray-500">ប្រភេទពុម្ពអក្សរ</label>
-                        <select id="globalFontFamily" class="w-full border rounded p-1 text-sm mt-1">
+                        <select id="globalFontFamily" class="w-full border rounded p-2 text-sm mt-1">
                             <option value="'Khmer', 'Khmer OS Moul Light', sans-serif">Khmer OS Moul Light</option>
                             <option value="'Khmer', 'Khmer OS Battambang', sans-serif">Khmer OS Battambang</option>
                             <option value="'Khmer', 'Khmer OS Siemreap', sans-serif">Khmer OS Siemreap</option>
                             <option value="'Khmer', 'Moul', sans-serif">Moul</option>
+                            <option value="'Khmer', 'Arial', sans-serif">Arial</option>
                         </select>
                     </div>
                 </div>
@@ -159,7 +131,7 @@
                 <!-- Selected Element Properties -->
                 <div id="elementProperties">
                     <h4 class="font-semibold text-gray-600 mb-2">🎯 កំណត់ធាតុដែលបានជ្រើស</h4>
-                    <div id="selectedElementInfo" class="text-sm text-gray-500 mb-3">
+                    <div id="selectedElementInfo" class="text-sm text-gray-500 mb-3 p-2 bg-gray-50 rounded">
                         សូមចុចជ្រើសរើសធាតុពីបញ្ជីខាងឆ្វេង
                     </div>
                     <div id="propertyForm" class="space-y-3">
@@ -174,30 +146,27 @@
         // ============================================
         // CONFIGURATION (in cm for positioning)
         // ============================================
-        // Convert cm to px (1cm = 37.8px)
         function cmToPx(cm) { return cm * 37.8; }
         function pxToCm(px) { return px / 37.8; }
         
         let cardConfig = {
-            // Card size in cm
             cardWidthCm: 6.5,
             cardHeightCm: 8.5,
             globalFontFamily: "'Khmer', 'Khmer OS Moul Light', sans-serif",
             
-            // Element positions (in cm, relative to top-left of card)
             elements: {
                 cardBg: { bgColor: "#f5f5f0", borderColor: "#4A86E8", borderWidth: 1 },
                 logo: { x: 0.3, y: 0.3, width: 0.9, height: 0.9, src: null, visible: true },
-                royalText: { x: 3.5, y: 0.4, fontSize: 0.22, color: "#233D2E", visible: true },
+                royalText: { x: 4.2, y: 0.4, fontSize: 0.22, color: "#233D2E", visible: true },
                 ministryText: { x: 0.3, y: 1.5, fontSize: 0.2, color: "#233D2E", visible: true },
-                qrCode: { x: 5.2, y: 1.3, size: 1.2, visible: true },
+                qrCode: { x: 5.5, y: 1.3, size: 1.1, visible: true },
                 titleText: { x: 3.25, y: 2.8, fontSize: 0.32, color: "#D28A17", visible: true },
-                subtitleText: { x: 3.25, y: 3.1, fontSize: 0.22, color: "#3D8BFF", visible: true },
-                studentInfo: { x: 0.3, y: 3.5, fontSize: 0.2, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
+                subtitleText: { x: 3.25, y: 3.15, fontSize: 0.22, color: "#3D8BFF", visible: true },
+                studentInfo: { x: 0.3, y: 3.6, fontSize: 0.2, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
                 studentPhoto: { x: 0.3, y: 6.0, width: 2.0, height: 2.5, src: null, visible: true },
-                stamp: { x: 2.5, y: 6.5, width: 1.6, height: 1.6, src: null, opacity: 0.9, visible: true },
-                signature: { x: 5.0, y: 7.8, width: 2.8, height: 0.8, src: null, visible: true },
-                watermark: { x: 3.25, y: 4.25, width: 3.5, height: 3.5, src: null, opacity: 0.12, visible: true }
+                stamp: { x: 2.5, y: 6.5, width: 1.6, height: 1.6, src: null, opacity: 0.85, visible: true },
+                signature: { x: 4.5, y: 7.5, width: 2.5, height: 0.9, src: null, visible: true },
+                watermark: { x: 3.25, y: 4.25, width: 4.0, height: 4.0, src: null, opacity: 0.1, visible: true }
             }
         };
         
@@ -209,7 +178,7 @@
             watermark: null
         };
         
-        // Sample student data for preview
+        // Preview student data
         let previewStudent = {
             studentID: "STU-001",
             name: "សុខ សុភក្ត្រា",
@@ -299,15 +268,16 @@
                         </div>`;
             }
             
-            // Ministry Text
+            // Ministry Text with School Name
             if (cardConfig.elements.ministryText.visible) {
                 const mx = cmToPx(cardConfig.elements.ministryText.x);
                 const my = cmToPx(cardConfig.elements.ministryText.y);
                 const fontSize = cmToPx(cardConfig.elements.ministryText.fontSize);
-                html += `<div style="position: absolute; left: ${mx}px; top: ${my}px; font-family: ${fontFamily}; font-size: ${fontSize}px; color: ${cardConfig.elements.ministryText.color}; z-index: 1;">
+                const lineHeight = fontSize * 1.3;
+                html += `<div style="position: absolute; left: ${mx}px; top: ${my}px; font-family: ${fontFamily}; font-size: ${fontSize}px; line-height: ${lineHeight}px; color: ${cardConfig.elements.ministryText.color}; z-index: 1;">
                             <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                            <div>មន្ទីរក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                            <div style="font-weight: bold;">វិទ្យាល័យកំរៀង</div>
+                            <div>មន្ទីរអប់រំ យុវជន និងកីឡា ភ្នំពេញ</div>
+                            <div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div>
                         </div>`;
             }
             
@@ -364,37 +334,53 @@
                         </div>`;
             }
             
-            // Student Info
+            // Student Info - Full information
             if (cardConfig.elements.studentInfo.visible) {
                 const ix = cmToPx(cardConfig.elements.studentInfo.x);
                 const iy = cmToPx(cardConfig.elements.studentInfo.y);
                 const fontSize = cmToPx(cardConfig.elements.studentInfo.fontSize);
-                html += `<div style="position: absolute; left: ${ix}px; top: ${iy}px; font-family: ${fontFamily}; font-size: ${fontSize}px; z-index: 1;">
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.name}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ភេទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.sex}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${birthDate}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ទីកន្លែងកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.address}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">លេខទូរស័ព្ទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.phonenumber}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះឪពុក:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.fathername}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះម្តាយ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.mothername}</span></div>
-                            <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">អត្តលេខ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.studentID}</span></div>
-                        </div>`;
+                const lineHeight = fontSize * 1.4;
+                
+                html += `<div style="position: absolute; left: ${ix}px; top: ${iy}px; font-family: ${fontFamily}; font-size: ${fontSize}px; line-height: ${lineHeight}px; z-index: 1;">
+                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.name}</span>
+                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ភេទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.sex}</span></span></div>
+                    
+                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${birthDate}</span>
+                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ថ្នាក់:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.class}</span></span></div>
+                    
+                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ទីកន្លែងកំណើត:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.address}</span></div>
+                    
+                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">លេខទូរស័ព្ទ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.phonenumber}</span>
+                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះឪពុក:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.fathername}</span></span></div>
+                    
+                    <div><span style="color: ${cardConfig.elements.studentInfo.labelColor};">អត្តលេខ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.studentID}</span>
+                    <span style="margin-left: 20px;"><span style="color: ${cardConfig.elements.studentInfo.labelColor};">ឈ្មោះម្តាយ:</span> <span style="color: ${cardConfig.elements.studentInfo.valueColor};">${previewStudent.mothername}</span></span></div>
+                </div>`;
             }
             
-            // Signature
-            if (cardConfig.elements.signature.visible && customImages.signature) {
+            // Signature with Principal Name
+            if (cardConfig.elements.signature.visible) {
                 const sgx = cmToPx(cardConfig.elements.signature.x);
                 const sgy = cmToPx(cardConfig.elements.signature.y);
                 const sgw = cmToPx(cardConfig.elements.signature.width);
                 const sgh = cmToPx(cardConfig.elements.signature.height);
-                html += `<div style="position: absolute; left: ${sgx}px; top: ${sgy}px; width: ${sgw}px; height: ${sgh}px; text-align: right; z-index: 1;">
-                            <div style="font-size: ${cmToPx(0.2)}px; font-weight: bold; color: ${cardConfig.elements.royalText.color};">នាយកវិទ្យាល័យ</div>
-                            <img src="${customImages.signature}" style="width:100%;height:auto;object-fit:contain;">
-                        </div>`;
+                
+                html += `<div style="position: absolute; left: ${sgx}px; top: ${sgy}px; width: ${sgw}px; text-align: center; z-index: 1;">
+                    <div style="font-size: ${cmToPx(0.22)}px; font-weight: bold; color: ${cardConfig.elements.royalText.color};">នាយកវិទ្យាល័យ</div>
+                    <div style="margin-top: 4px;">
+                        ${customImages.signature ? 
+                            `<img src="${customImages.signature}" style="width: 100%; height: auto; max-height: ${sgh}px; object-fit: contain;">` : 
+                            `<svg width="100%" height="40" viewBox="0 0 200 50" fill="#1a56db">
+                                <path d="M10 25 Q30 15 50 25 Q70 35 90 25 Q110 15 130 25 Q150 35 170 25" stroke="#1a56db" stroke-width="2" fill="none"/>
+                                <text x="180" y="28" font-size="12" fill="#1a56db">សុខ</text>
+                            </svg>`
+                        }
+                    </div>
+                    <div style="font-size: ${cmToPx(0.18)}px; color: #D50000; margin-top: 4px; font-weight: bold;">ព្រះគ្រូ សុខ សុភក្ត្រា</div>
+                </div>`;
             }
             
             html += `</div>`;
-            
             document.getElementById('cardPreviewContainer').innerHTML = html;
         }
         
@@ -421,8 +407,7 @@
                     <div><label class="block text-xs text-gray-500">ទទឹង (cm)</label><input type="number" id="propWidth" value="${element.width}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
                     <div><label class="block text-xs text-gray-500">កម្ពស់ (cm)</label><input type="number" id="propHeight" value="${element.height}" step="0.05" class="w-full border rounded p-1 text-sm"></div>
                     <div><label class="block text-xs text-gray-500">បង្ហាញ</label><input type="checkbox" id="propVisible" ${element.visible ? 'checked' : ''} class="mt-2"></div>
-                    ${elementName === 'stamp' ? `<div><label class="block text-xs text-gray-500">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${element.opacity}" class="w-full"><span id="opacityValue">${element.opacity}</span></div>` : ''}
-                    ${elementName === 'watermark' ? `<div><label class="block text-xs text-gray-500">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${element.opacity}" class="w-full"><span id="opacityValue">${element.opacity}</span></div>` : ''}
+                    ${elementName === 'stamp' || elementName === 'watermark' ? `<div><label class="block text-xs text-gray-500">តម្លាភាព</label><input type="range" id="propOpacity" min="0" max="1" step="0.05" value="${element.opacity || 0.85}" class="w-full"><span id="opacityValue">${element.opacity || 0.85}</span></div>` : ''}
                     <div class="mt-2"><button id="uploadImageBtn" class="bg-blue-500 text-white px-3 py-1 rounded text-sm w-full">📤 ដាក់រូបភាព</button><input type="file" id="imageUpload" accept="image/*" class="hidden"></div>
                 `;
             }
@@ -466,8 +451,6 @@
             
             document.getElementById('propertyForm').innerHTML = formHtml;
             document.getElementById('selectedElementInfo').innerHTML = `កំពុងកែ: <strong>${getElementNameKm(elementName)}</strong>`;
-            
-            // Attach event listeners for the properties
             attachPropertyEvents(elementName);
         }
         
@@ -485,7 +468,6 @@
             const element = cardConfig.elements[elementName];
             if (!element) return;
             
-            // Handle X, Y, Width, Height
             const xInput = document.getElementById('propX');
             const yInput = document.getElementById('propY');
             const wInput = document.getElementById('propWidth');
@@ -558,7 +540,7 @@
                         const file = e.target.files[0];
                         if (file) {
                             const reader = new FileReader();
-                            reader.onload = (ev) => { customImages.signature = ev.target.value; renderCard(); };
+                            reader.onload = (ev) => { customImages.signature = ev.target.result; renderCard(); };
                             reader.readAsDataURL(file);
                         }
                     });
@@ -623,10 +605,7 @@
         
         // Export config
         function exportConfig() {
-            const configToSave = {
-                cardConfig: cardConfig,
-                customImages: customImages
-            };
+            const configToSave = { cardConfig, customImages };
             const dataStr = JSON.stringify(configToSave, null, 2);
             const blob = new Blob([dataStr], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -645,12 +624,9 @@
                     const config = JSON.parse(e.target.result);
                     cardConfig = config.cardConfig;
                     customImages = config.customImages || customImages;
-                    
-                    // Update form values
                     document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm;
                     document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm;
                     document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily;
-                    
                     renderCard();
                     alert('✅ បានផ្ទុកការកំណត់ដោយជោគជ័យ!');
                 } catch(err) {
@@ -660,17 +636,12 @@
             reader.readAsText(file);
         }
         
-        // Apply to system - save to localStorage for use in other pages
         function applyToSystem() {
-            const systemConfig = {
-                cardConfig: cardConfig,
-                customImages: customImages
-            };
+            const systemConfig = { cardConfig, customImages };
             localStorage.setItem('cardSystemConfig', JSON.stringify(systemConfig));
-            alert('✅ បានរក្សាទុកការកំណត់ទៅប្រព័ន្ធ! អ្នកអាចប្រើប្រាស់ក្នុងទំព័រ create.html និង generate.html');
+            alert('✅ បានរក្សាទុកការកំណត់ទៅប្រព័ន្ធ!');
         }
         
-        // Download preview as image
         async function downloadPreview() {
             const cardElement = document.querySelector('#cardPreviewContainer > div');
             if (!cardElement) { alert('មិនមានកាតដើម្បីទាញយកទេ'); return; }
