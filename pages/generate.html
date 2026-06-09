@@ -228,11 +228,19 @@
             color: #233D2E;
         }
         
-        .modal-cards-grid {
+        /* Print Grid - 2 columns x 3 rows = 6 cards per page */
+        .print-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            justify-items: center;
+            align-items: start;
+        }
+        
+        .print-card-item {
             display: flex;
-            flex-wrap: wrap;
             justify-content: center;
-            gap: 20px;
+            align-items: center;
         }
         
         .hidden {
@@ -267,6 +275,71 @@
             font-size: 13px;
             color: #166534;
             font-family: 'Khmer', sans-serif;
+        }
+        
+        /* Print styles for A4 paper - 6 cards per page (2x3 grid) */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .nav-bar, .controls-header, .action-buttons, .info-box, .remove-card-btn, 
+            .btn, #clearAllBtn, #generateCardsBtn, .no-print {
+                display: none !important;
+            }
+            
+            .modal {
+                position: relative;
+                background: white;
+                display: block !important;
+                overflow: visible;
+            }
+            
+            .modal-content {
+                max-width: 100%;
+                max-height: none;
+                padding: 0;
+                margin: 0;
+                box-shadow: none;
+                background: white;
+            }
+            
+            .modal-header {
+                display: none;
+            }
+            
+            .print-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 15px;
+                page-break-inside: avoid;
+            }
+            
+            .print-card-item {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            
+            .student-id-card {
+                box-shadow: none;
+                margin: 0 auto;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+        
+        /* A4 size hint */
+        .print-size-hint {
+            margin-top: 16px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #92400e;
+            text-align: center;
         }
     </style>
 </head>
@@ -309,23 +382,26 @@
             <!-- Info Box -->
             <div class="info-box">
                 <span>💡</span>
-                <span>កាតសិស្សមានទំហំ 6.5cm × 8.5cm (បញ្ឈរ)។ អ្នកអាចបោះពុម្ពកាតទាំងអស់បានដោយចុចប៊ូតុង "បង្កើតកាតសិស្ស" ។</span>
+                <span>កាតសិស្សមានទំហំ 6.5cm × 8.5cm (បញ្ឈរ)។ ពេលបោះពុម្ព កាតនឹងរៀបចំជា 2 ជួរ × 3 ជួរដេក = 6 កាតក្នុង 1 ទំព័រ A4។</span>
+            </div>
+            <div class="print-size-hint">
+                📄 ណែនាំ៖ នៅពេលបោះពុម្ព សូមជ្រើសរើស "ទំហំ A4" និង "គ្មានស៊ុម" (Borderless) ដើម្បីបានលទ្ធផលល្អបំផុត។
             </div>
         </div>
     </div>
     
-    <!-- Modal for displaying all cards -->
+    <!-- Modal for displaying all cards with 6-cards-per-page layout -->
     <div id="cardsModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="font-size: 20px;">🪪 កាតសិស្សទាំងអស់</h3>
+                <h3 style="font-size: 20px;">🪪 កាតសិស្សទាំងអស់ (បោះពុម្ព 6 កាត/ទំព័រ)</h3>
                 <div style="display: flex; gap: 12px;">
-                    <button id="printAllCards" class="btn" style="background: #8b5cf6; color: white;">🖨️ បោះពុម្ពទាំងអស់</button>
+                    <button id="printAllCards" class="btn" style="background: #8b5cf6; color: white;">🖨️ បោះពុម្ពទាំងអស់ (6 កាត/ទំព័រ)</button>
                     <button id="closeModalBtn" class="btn" style="background: #dc2626; color: white;">✖ បិទ</button>
                 </div>
             </div>
-            <div id="cardsContainer" class="modal-cards-grid">
-                <!-- Cards will be generated here -->
+            <div id="cardsContainer" class="print-grid">
+                <!-- Cards will be generated here in 2x3 grid -->
             </div>
         </div>
     </div>
@@ -382,7 +458,7 @@
                 generateBtn.disabled = false;
             }
             
-            // Generate cards using generateSmallCardHTML (which now returns same as generateCardHTML)
+            // Generate cards using generateSmallCardHTML
             container.innerHTML = selectedStudents.map(student => `
                 <div class="card-wrapper">
                     <button class="remove-card-btn" onclick="removeStudent('${student.studentID}')">✖</button>
@@ -412,7 +488,24 @@
         });
         
         // ============================================
-        // GENERATE ALL CARDS
+        // SPLIT CARDS INTO PAGES (6 cards per page in 2x3 grid)
+        // ============================================
+        function splitCardsIntoPages(cardsHTMLArray) {
+            const pages = [];
+            for (let i = 0; i < cardsHTMLArray.length; i += 6) {
+                const pageCards = cardsHTMLArray.slice(i, i + 6);
+                const pageHTML = `
+                    <div class="print-grid" style="page-break-after: always;">
+                        ${pageCards.map(card => `<div class="print-card-item">${card}</div>`).join('')}
+                    </div>
+                `;
+                pages.push(pageHTML);
+            }
+            return pages.join('');
+        }
+        
+        // ============================================
+        // GENERATE ALL CARDS (6 per page layout)
         // ============================================
         document.getElementById('generateCardsBtn')?.addEventListener('click', () => {
             if (!selectedStudents || selectedStudents.length === 0) {
@@ -420,20 +513,28 @@
                 return;
             }
             
-            // Generate cards using the same template
-            const cardsHTML = selectedStudents.map(student => generateSmallCardHTML(student)).join('');
+            // Generate cards HTML array
+            const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
+            
+            // Split into pages with 6 cards per page (2x3 grid)
+            const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
+            
             const modal = document.getElementById('cardsModal');
             const container = document.getElementById('cardsContainer');
-            container.innerHTML = cardsHTML;
+            
+            // Wrap in a single container with all pages
+            container.innerHTML = pagesHTML;
             modal.classList.remove('hidden');
         });
         
         // ============================================
-        // PRINT ALL CARDS
+        // PRINT ALL CARDS (6 per page)
         // ============================================
         document.getElementById('printAllCards')?.addEventListener('click', () => {
-            const cardsHTML = document.getElementById('cardsContainer').innerHTML;
-            if (!cardsHTML || cardsHTML.trim() === '') {
+            const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
+            const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
+            
+            if (!pagesHTML || pagesHTML.trim() === '') {
                 alert('មិនមានកាតដើម្បីបោះពុម្ពទេ');
                 return;
             }
@@ -454,27 +555,50 @@
                                 box-sizing: border-box;
                             }
                             body {
-                                display: flex;
-                                flex-wrap: wrap;
-                                justify-content: center;
-                                gap: 20px;
-                                padding: 20px;
-                                margin: 0;
                                 background: white;
+                                padding: 15px;
+                                margin: 0;
+                            }
+                            .print-grid {
+                                display: grid;
+                                grid-template-columns: repeat(2, 1fr);
+                                gap: 15px;
+                                justify-items: center;
+                                align-items: start;
+                                page-break-after: always;
+                                margin-bottom: 20px;
+                            }
+                            .print-grid:last-child {
+                                page-break-after: auto;
+                            }
+                            .print-card-item {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                page-break-inside: avoid;
+                                break-inside: avoid;
+                            }
+                            .student-id-card {
+                                box-shadow: none;
+                                margin: 0 auto;
+                                page-break-inside: avoid;
+                                break-inside: avoid;
                             }
                             @media print {
                                 body {
-                                    padding: 10px;
-                                    gap: 15px;
+                                    padding: 0;
+                                    margin: 0;
                                 }
-                                .student-id-card {
-                                    break-inside: avoid;
-                                    page-break-inside: avoid;
+                                .print-grid {
+                                    gap: 12px;
+                                    padding: 10px;
                                 }
                             }
                         </style>
                     </head>
-                    <body>${cardsHTML}</body>
+                    <body>
+                        ${pagesHTML}
+                    </body>
                 </html>
             `);
             printWindow.document.close();
@@ -498,7 +622,7 @@
         // INITIALIZE
         // ============================================
         loadSelectedStudents();
-        console.log('✅ Generate page loaded successfully - Cards same as create.html');
+        console.log('✅ Generate page loaded successfully - 6 cards per page layout');
     </script>
 </body>
 </html>
