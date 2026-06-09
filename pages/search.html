@@ -89,58 +89,169 @@
     </div>
     
     <script>
-        // ============================================
-        // SUPABASE CONFIGURATION
-        // ============================================
-        const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const TABLE_NAME = 'table_student';
-        
-        // Global variables
-        let currentStudents = [];
-        let selectedStudents = new Map(); // Use Map to store student data by ID
-        
-        // ============================================
-        // LOAD STUDENTS
-        // ============================================
-        async function loadAllStudents() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                currentStudents = data || [];
-                displaySearchResults(currentStudents);
-                updateSelectedSummary();
-                
-            } catch (error) {
-                console.error('Error loading students:', error);
-                document.getElementById('searchResults').innerHTML = `
-                    <div class="text-center py-8 text-red-500">
-                        <p>❌ កំហុសក្នុងការផ្ទុកទិន្នន័យ: ${error.message}</p>
-                    </div>
-                `;
+    // ============================================
+    // SUPABASE CONFIGURATION
+    // ============================================
+    const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const TABLE_NAME = 'table_student';
+    
+    // Global variables
+    let currentStudents = [];
+    let selectedStudents = new Map();
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function showInfoBanner(message, isError = false) {
+        let banner = document.getElementById('infoBanner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'infoBanner';
+            banner.className = 'bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-4 rounded';
+            const searchSection = document.querySelector('.bg-white.rounded-lg.shadow-lg.p-6.mb-8');
+            if (searchSection) {
+                searchSection.parentNode.insertBefore(banner, searchSection.nextSibling);
             }
         }
         
-        // ============================================
-        // SEARCH STUDENTS
-        // ============================================
-        async function searchStudents() {
-            const searchClass = document.getElementById('searchClass').value.trim();
-            const searchName = document.getElementById('searchName').value.trim();
+        if (isError) {
+            banner.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4 rounded';
+        } else {
+            banner.className = 'bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-4 rounded';
+        }
+        
+        banner.innerHTML = `
+            <div class="flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                <span>${message}</span>
+                <button onclick="document.getElementById('infoBanner').remove()" class="ml-auto hover:opacity-75">✖</button>
+            </div>
+        `;
+        
+        setTimeout(() => {
+            if (banner && banner.parentNode) banner.remove();
+        }, 8000);
+    }
+    
+    // ============================================
+    // LOAD ALL STUDENTS WITH PAGINATION
+    // ============================================
+    async function loadAllStudents() {
+        const loadingMsg = showInfoBanner('កំពុងផ្ទុកទិន្នន័យសិស្ស...', false);
+        
+        try {
+            // First, get total count
+            const { count, error: countError } = await supabaseClient
+                .from(TABLE_NAME)
+                .select('*', { count: 'exact', head: true });
             
-            if (!searchClass && !searchName) {
-                loadAllStudents();
+            if (countError) throw countError;
+            
+            const totalStudents = count;
+            console.log(`📊 Total students in database: ${totalStudents}`);
+            
+            if (totalStudents === 0) {
+                currentStudents = [];
+                displaySearchResults(currentStudents);
+                updateSelectedSummary();
+                showInfoBanner('មិនទាន់មានទិន្នន័យសិស្សនៅឡើយទេ', false);
                 return;
             }
             
-            try {
+            // Fetch in batches of 1000
+            const batchSize = 1000;
+            const allData = [];
+            
+            for (let i = 0; i < totalStudents; i += batchSize) {
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .range(i, i + batchSize - 1);
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    console.log(`✅ Loaded ${allData.length} of ${totalStudents} students`);
+                }
+            }
+            
+            currentStudents = allData;
+            displaySearchResults(currentStudents);
+            updateSelectedSummary();
+            
+            showInfoBanner(`✅ បានផ្ទុកសិស្ស ${totalStudents} នាក់ដោយជោគជ័យ!`);
+            
+        } catch (error) {
+            console.error('Error loading students:', error);
+            document.getElementById('searchResults').innerHTML = `
+                <div class="text-center py-8 text-red-500">
+                    <p>❌ កំហុសក្នុងការផ្ទុកទិន្នន័យ: ${error.message}</p>
+                </div>
+            `;
+            showInfoBanner(`❌ កំហុស: ${error.message}`, true);
+        }
+    }
+    
+    // ============================================
+    // SEARCH STUDENTS WITH PAGINATION
+    // ============================================
+    async function searchStudents() {
+        const searchClass = document.getElementById('searchClass').value.trim();
+        const searchName = document.getElementById('searchName').value.trim();
+        
+        if (!searchClass && !searchName) {
+            loadAllStudents();
+            return;
+        }
+        
+        showInfoBanner('កំពុងស្វែងរក...', false);
+        
+        try {
+            // First, get count of matching records
+            let countQuery = supabaseClient.from(TABLE_NAME).select('*', { count: 'exact', head: true });
+            
+            if (searchClass) {
+                countQuery = countQuery.ilike('class', `%${searchClass}%`);
+            }
+            if (searchName) {
+                countQuery = countQuery.ilike('name', `%${searchName}%`);
+            }
+            
+            const { count, error: countError } = await countQuery;
+            if (countError) throw countError;
+            
+            const totalResults = count;
+            console.log(`📊 Search results count: ${totalResults}`);
+            
+            if (totalResults === 0) {
+                currentStudents = [];
+                displaySearchResults(currentStudents);
+                showInfoBanner('រកមិនឃើញសិស្សដែលត្រូវនឹងលក្ខខណ្ឌស្វែងរក', false);
+                return;
+            }
+            
+            // Fetch in batches
+            const batchSize = 1000;
+            const allData = [];
+            
+            for (let i = 0; i < totalResults; i += batchSize) {
                 let query = supabaseClient.from(TABLE_NAME).select('*');
                 
                 if (searchClass) {
@@ -150,267 +261,252 @@
                     query = query.ilike('name', `%${searchName}%`);
                 }
                 
-                const { data, error } = await query.order('created_at', { ascending: false });
+                const { data, error } = await query
+                    .order('created_at', { ascending: false })
+                    .range(i, i + batchSize - 1);
                 
                 if (error) throw error;
                 
-                currentStudents = data || [];
-                displaySearchResults(currentStudents);
-                
-                if (currentStudents.length === 0) {
-                    document.getElementById('searchResults').innerHTML = `
-                        <div class="text-center py-8 text-gray-500">
-                            <p>❌ រកមិនឃើញសិស្សដែលត្រូវនឹងលក្ខខណ្ឌស្វែងរក</p>
-                        </div>
-                    `;
+                if (data && data.length > 0) {
+                    allData.push(...data);
                 }
-                
-            } catch (error) {
-                console.error('Search error:', error);
-                alert('❌ កំហុស: ' + error.message);
             }
+            
+            currentStudents = allData;
+            displaySearchResults(currentStudents);
+            showInfoBanner(`✅ រកឃើញសិស្ស ${totalResults} នាក់!`);
+            
+        } catch (error) {
+            console.error('Search error:', error);
+            alert('❌ កំហុស: ' + error.message);
+            showInfoBanner(`❌ កំហុស: ${error.message}`, true);
         }
+    }
+    
+    // ============================================
+    // DISPLAY SEARCH RESULTS
+    // ============================================
+    function displaySearchResults(students) {
+        const container = document.getElementById('searchResults');
         
-        // ============================================
-        // DISPLAY SEARCH RESULTS
-        // ============================================
-        function displaySearchResults(students) {
-            const container = document.getElementById('searchResults');
-            
-            if (!students || students.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
-                        </svg>
-                        <p>មិនមានទិន្នន័យសិស្សទេ</p>
-                    </div>
-                `;
-                document.getElementById('resultCount').innerHTML = '';
-                return;
-            }
-            
-            document.getElementById('resultCount').innerHTML = `(ឃើញ ${students.length} នាក់)`;
-            
+        if (!students || students.length === 0) {
             container.innerHTML = `
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50 sticky top-0">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-12">ជ្រើស</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ឈ្មោះ</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ភេទ</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ថ្នាក់</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ទូរស័ព្ទ</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">សកម្មភាព</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${students.map(student => `
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3">
-                                    <input type="checkbox" class="student-checkbox checkbox-custom" 
-                                           value="${student.studentID}" 
-                                           data-student='${JSON.stringify(student).replace(/'/g, "&#39;")}'
-                                           ${selectedStudents.has(student.studentID) ? 'checked' : ''}>
-                                </td>
-                                <td class="px-4 py-3 text-sm font-mono">${escapeHtml(student.studentID)}</td>
-                                <td class="px-4 py-3 text-sm font-medium">${escapeHtml(student.name)}</td>
-                                <td class="px-4 py-3 text-sm">${escapeHtml(student.sex) || 'N/A'}</td>
-                                <td class="px-4 py-3 text-sm">
-                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${escapeHtml(student.class) || 'N/A'}</span>
-                                </td>
-                                <td class="px-4 py-3 text-sm">${escapeHtml(student.phonenumber) || 'N/A'}</td>
-                                <td class="px-4 py-3 text-sm">
-                                    <button onclick="viewStudent('${student.studentID}')" class="text-blue-600 hover:text-blue-800 mr-2">👁️ មើល</button>
-                                    <button onclick="toggleSelectStudent('${student.studentID}')" class="text-green-600 hover:text-green-800">
-                                        ${selectedStudents.has(student.studentID) ? '✖ ដកចេញ' : '➕ ជ្រើស'}
-                                    </button>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            
-            // Add event listeners to checkboxes
-            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', (e) => {
-                    const studentID = e.target.value;
-                    if (e.target.checked) {
-                        const studentData = JSON.parse(e.target.getAttribute('data-student'));
-                        selectedStudents.set(studentID, studentData);
-                    } else {
-                        selectedStudents.delete(studentID);
-                    }
-                    updateSelectedCount();
-                    updateSelectedSummary();
-                });
-            });
-            
-            updateSelectedCount();
-        }
-        
-        // ============================================
-        // UTILITY FUNCTIONS
-        // ============================================
-        function escapeHtml(str) {
-            if (!str) return '';
-            return String(str).replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-        
-        function updateSelectedCount() {
-            const count = selectedStudents.size;
-            document.getElementById('selectedCount').innerHTML = count;
-            document.getElementById('finalSelectedCount').innerHTML = count;
-        }
-        
-        function updateSelectedSummary() {
-            const container = document.getElementById('selectedSummary');
-            const students = Array.from(selectedStudents.values());
-            
-            if (students.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <p>មិនទាន់មានសិស្សដែលបានជ្រើសរើសទេ</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            container.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    ${students.map(student => `
-                        <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
-                            <div class="flex items-center space-x-3">
-                                ${student.photo ? 
-                                    `<img src="${student.photo}" class="w-10 h-10 rounded-full object-cover">` : 
-                                    `<div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                                        <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>`
-                                }
-                                <div>
-                                    <p class="font-semibold text-sm">${escapeHtml(student.name)}</p>
-                                    <p class="text-xs text-gray-500">${escapeHtml(student.studentID)} | ${escapeHtml(student.class) || 'N/A'}</p>
-                                </div>
-                            </div>
-                            <button onclick="removeSelectedStudent('${student.studentID}')" class="text-red-600 hover:text-red-800">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                </svg>
-                            </button>
-                        </div>
-                    `).join('')}
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                    </svg>
+                    <p>មិនមានទិន្នន័យសិស្សទេ</p>
                 </div>
             `;
+            document.getElementById('resultCount').innerHTML = '';
+            return;
         }
         
-        // Global functions for buttons
-        window.toggleSelectStudent = (studentID) => {
-            const student = currentStudents.find(s => s.studentID === studentID);
-            if (student) {
-                if (selectedStudents.has(studentID)) {
-                    selectedStudents.delete(studentID);
+        document.getElementById('resultCount').innerHTML = `(ឃើញ ${students.length} នាក់)`;
+        
+        container.innerHTML = `
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-12">ជ្រើស</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ឈ្មោះ</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ភេទ</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ថ្នាក់</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ទូរស័ព្ទ</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">សកម្មភាព</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    ${students.map(student => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" class="student-checkbox checkbox-custom" 
+                                       value="${student.studentID}" 
+                                       data-student='${JSON.stringify(student).replace(/'/g, "&#39;")}'
+                                       ${selectedStudents.has(student.studentID) ? 'checked' : ''}>
+                            </td>
+                            <td class="px-4 py-3 text-sm font-mono">${escapeHtml(student.studentID)}</td>
+                            <td class="px-4 py-3 text-sm font-medium">${escapeHtml(student.name)}</td>
+                            <td class="px-4 py-3 text-sm">${escapeHtml(student.sex) || 'N/A'}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${escapeHtml(student.class) || 'N/A'}</span>
+                            </td>
+                            <td class="px-4 py-3 text-sm">${escapeHtml(student.phonenumber) || 'N/A'}</td>
+                            <td class="px-4 py-3 text-sm">
+                                <button onclick="viewStudent('${student.studentID}')" class="text-blue-600 hover:text-blue-800 mr-2">👁️ មើល</button>
+                                <button onclick="toggleSelectStudent('${student.studentID}')" class="text-green-600 hover:text-green-800">
+                                    ${selectedStudents.has(student.studentID) ? '✖ ដកចេញ' : '➕ ជ្រើស'}
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+        
+        // Add event listeners to checkboxes
+        document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const studentID = e.target.value;
+                if (e.target.checked) {
+                    const studentData = JSON.parse(e.target.getAttribute('data-student'));
+                    selectedStudents.set(studentID, studentData);
                 } else {
-                    selectedStudents.set(studentID, student);
+                    selectedStudents.delete(studentID);
                 }
                 updateSelectedCount();
                 updateSelectedSummary();
-                displaySearchResults(currentStudents);
-            }
-        };
-        
-        window.removeSelectedStudent = (studentID) => {
-            selectedStudents.delete(studentID);
-            updateSelectedCount();
-            updateSelectedSummary();
-            displaySearchResults(currentStudents);
-        };
-        
-        window.viewStudent = (studentID) => {
-            window.location.href = `create.html?studentID=${studentID}`;
-        };
-        
-        // ============================================
-        // BUTTON HANDLERS
-        // ============================================
-        
-        // Select all in current results
-        document.getElementById('selectAllBtn')?.addEventListener('click', () => {
-            currentStudents.forEach(student => {
-                if (!selectedStudents.has(student.studentID)) {
-                    selectedStudents.set(student.studentID, student);
-                }
             });
+        });
+        
+        updateSelectedCount();
+    }
+    
+    // ============================================
+    // UPDATE FUNCTIONS
+    // ============================================
+    function updateSelectedCount() {
+        const count = selectedStudents.size;
+        document.getElementById('selectedCount').innerHTML = count;
+        document.getElementById('finalSelectedCount').innerHTML = count;
+    }
+    
+    function updateSelectedSummary() {
+        const container = document.getElementById('selectedSummary');
+        const students = Array.from(selectedStudents.values());
+        
+        if (students.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <p>មិនទាន់មានសិស្សដែលបានជ្រើសរើសទេ</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                ${students.map(student => `
+                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
+                        <div class="flex items-center space-x-3">
+                            ${student.photo ? 
+                                `<img src="${student.photo}" class="w-10 h-10 rounded-full object-cover">` : 
+                                `<div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                                    <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>`
+                            }
+                            <div>
+                                <p class="font-semibold text-sm">${escapeHtml(student.name)}</p>
+                                <p class="text-xs text-gray-500">${escapeHtml(student.studentID)} | ${escapeHtml(student.class) || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <button onclick="removeSelectedStudent('${student.studentID}')" class="text-red-600 hover:text-red-800">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // ============================================
+    // GLOBAL FUNCTIONS
+    // ============================================
+    window.toggleSelectStudent = (studentID) => {
+        const student = currentStudents.find(s => s.studentID === studentID);
+        if (student) {
+            if (selectedStudents.has(studentID)) {
+                selectedStudents.delete(studentID);
+            } else {
+                selectedStudents.set(studentID, student);
+            }
             updateSelectedCount();
             updateSelectedSummary();
             displaySearchResults(currentStudents);
-        });
-        
-        // Deselect all in current results
-        document.getElementById('deselectAllBtn')?.addEventListener('click', () => {
-            currentStudents.forEach(student => {
-                selectedStudents.delete(student.studentID);
-            });
-            updateSelectedCount();
-            updateSelectedSummary();
-            displaySearchResults(currentStudents);
-        });
-        
-        // Add selected and go to generate
-        document.getElementById('addSelectedBtn')?.addEventListener('click', () => {
-            if (selectedStudents.size === 0) {
-                alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
-                return;
+        }
+    };
+    
+    window.removeSelectedStudent = (studentID) => {
+        selectedStudents.delete(studentID);
+        updateSelectedCount();
+        updateSelectedSummary();
+        displaySearchResults(currentStudents);
+    };
+    
+    window.viewStudent = (studentID) => {
+        window.location.href = `create.html?studentID=${studentID}`;
+    };
+    
+    // ============================================
+    // BUTTON HANDLERS
+    // ============================================
+    document.getElementById('selectAllBtn')?.addEventListener('click', () => {
+        currentStudents.forEach(student => {
+            if (!selectedStudents.has(student.studentID)) {
+                selectedStudents.set(student.studentID, student);
             }
-            
-            // Save to localStorage
-            const selectedArray = Array.from(selectedStudents.values());
-            localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
-            alert(`✅ បានរក្សាទុកសិស្ស ${selectedStudents.size} នាក់!`);
         });
+        updateSelectedCount();
+        updateSelectedSummary();
+        displaySearchResults(currentStudents);
+    });
+    
+    document.getElementById('deselectAllBtn')?.addEventListener('click', () => {
+        currentStudents.forEach(student => {
+            selectedStudents.delete(student.studentID);
+        });
+        updateSelectedCount();
+        updateSelectedSummary();
+        displaySearchResults(currentStudents);
+    });
+    
+    document.getElementById('addSelectedBtn')?.addEventListener('click', () => {
+        if (selectedStudents.size === 0) {
+            alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
+            return;
+        }
         
-        // Go to generate page
-        document.getElementById('goToGenerateBtn')?.addEventListener('click', () => {
-            if (selectedStudents.size === 0) {
-                alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
-                return;
-            }
-            
-            const selectedArray = Array.from(selectedStudents.values());
-            localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
-            window.location.href = 'generate.html';
-        });
+        const selectedArray = Array.from(selectedStudents.values());
+        localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
+        alert(`✅ បានរក្សាទុកសិស្ស ${selectedStudents.size} នាក់!`);
+    });
+    
+    document.getElementById('goToGenerateBtn')?.addEventListener('click', () => {
+        if (selectedStudents.size === 0) {
+            alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
+            return;
+        }
         
-        // Search button
-        document.getElementById('searchBtn')?.addEventListener('click', () => {
-            searchStudents();
-        });
-        
-        // Reset button
-        document.getElementById('resetBtn')?.addEventListener('click', () => {
-            document.getElementById('searchClass').value = '';
-            document.getElementById('searchName').value = '';
-            loadAllStudents();
-        });
-        
-        // Enter key support
-        document.getElementById('searchClass')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchStudents();
-        });
-        document.getElementById('searchName')?.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') searchStudents();
-        });
-        
-        // Load data on page load
+        const selectedArray = Array.from(selectedStudents.values());
+        localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
+        window.location.href = 'generate.html';
+    });
+    
+    document.getElementById('searchBtn')?.addEventListener('click', () => {
+        searchStudents();
+    });
+    
+    document.getElementById('resetBtn')?.addEventListener('click', () => {
+        document.getElementById('searchClass').value = '';
+        document.getElementById('searchName').value = '';
         loadAllStudents();
-    </script>
+    });
+    
+    document.getElementById('searchClass')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchStudents();
+    });
+    
+    document.getElementById('searchName')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchStudents();
+    });
+    
+    // Load data on page load
+    loadAllStudents();
+</script>
 </body>
 </html>
