@@ -94,10 +94,10 @@ function generateQRCode(studentID, size, color) {
 }
 
 // ============================================
-// STAMP FUNCTIONS - reads position from config
+// STAMP - INDEPENDENT (not inside photo)
 // ============================================
 
-function getStampImage() {
+function getStampElement() {
     const stampVisible = getElementConfig('stamp', 'visible', true);
     if (!stampVisible) return '';
     
@@ -114,14 +114,13 @@ function getStampImage() {
     `;
 }
 
+// ============================================
+// STUDENT PHOTO (without stamp)
+// ============================================
+
 function getPhotoHTML(photoData) {
     const studentPhotoVisible = getElementConfig('studentPhoto', 'visible', true);
     if (!studentPhotoVisible) return '';
-    
-    const studentPhotoX = getElementConfig('studentPhoto', 'x', 0.3);
-    const studentPhotoY = getElementConfig('studentPhoto', 'y', 5.8);
-    const studentPhotoWidth = getElementConfig('studentPhoto', 'width', 2.0);
-    const studentPhotoHeight = getElementConfig('studentPhoto', 'height', 2.5);
     
     const photoHtml = (photoData && photoData !== 'null' && photoData !== '') 
         ? `<img src="${photoData}" alt="Student Photo" style="width:100%;height:100%;object-fit:cover;display:block;">`
@@ -132,16 +131,11 @@ function getPhotoHTML(photoData) {
             <span style="font-size:10px;margin-top:5px;">រូបថត</span>
         </div>`;
     
-    return `
-        <div style="position: relative; width: 100%; height: 100%; overflow: visible;">
-            ${photoHtml}
-            ${getStampImage()}
-        </div>
-   `;
+    return photoHtml;
 }
 
 // ============================================
-// SCHOOL LOGO, SIGNATURE, WATERMARK
+// SCHOOL LOGO
 // ============================================
 
 function getSchoolLogo() {
@@ -159,6 +153,10 @@ function getSchoolLogo() {
         </div>
     `;
 }
+
+// ============================================
+// SIGNATURE
+// ============================================
 
 function getSignatureImage() {
     const signatureVisible = getElementConfig('signature', 'visible', true);
@@ -178,6 +176,10 @@ function getSignatureImage() {
         </div>
     `;
 }
+
+// ============================================
+// WATERMARK
+// ============================================
 
 function getWatermarkLogo() {
     const watermarkVisible = getElementConfig('watermark', 'visible', true);
@@ -280,6 +282,7 @@ function generateCardHTML(data) {
             
             ${getWatermarkLogo()}
             ${getSchoolLogo()}
+            ${getStampElement()}
             
             ${royalTextVisible ? `<div style="position: absolute; left: ${cmToPx(royalTextX)}px; top: ${cmToPx(royalTextY)}px; text-align: right; font-family: ${fontFamily}; font-size: ${cmToPx(royalTextFontSize)}px; color: ${royalTextColor}; z-index: 1;">
                 <div>ព្រះរាជាណាចក្រកម្ពុជា</div>
@@ -304,9 +307,9 @@ function generateCardHTML(data) {
                 <div>ឆ្នាំសិក្សា ២០២៥-២០២៦</div>
             </div>` : ''}
             
-            ${studentPhotoVisible ? `<div style="position: absolute; left: ${cmToPx(studentPhotoX)}px; top: ${cmToPx(studentPhotoY)}px; width: ${cmToPx(studentPhotoWidth)}px; height: ${cmToPx(studentPhotoHeight)}px; border: 1px solid ${cardBorderColor}; border-radius: 3px; background: #e5e7eb; overflow: visible; z-index: 1;">
+            <div style="position: absolute; left: ${cmToPx(studentPhotoX)}px; top: ${cmToPx(studentPhotoY)}px; width: ${cmToPx(studentPhotoWidth)}px; height: ${cmToPx(studentPhotoHeight)}px; border: 1px solid ${cardBorderColor}; border-radius: 3px; background: #e5e7eb; overflow: hidden; z-index: 1;">
                 ${getPhotoHTML(data.photo)}
-            </div>` : ''}
+            </div>
             
             ${studentInfoVisible ? `<div style="position: absolute; left: ${cmToPx(studentInfoX)}px; top: ${cmToPx(studentInfoY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(studentInfoFontSize)}px; line-height: 1.4; z-index: 1;">
                 <div><span style="color: ${studentInfoLabelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.name) || '___________________'}</span>
