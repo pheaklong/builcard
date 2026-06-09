@@ -228,7 +228,7 @@ function generateCardHTML(data) {
     
     const qrCodeX = getElementConfig('qrCode', 'x', 5.5);
     const qrCodeY = getElementConfig('qrCode', 'y', 1.3);
-    const qrCodeSize = getElementConfig('qrCode', 'size', 1.6);
+    const qrCodeSize = getElementConfig('qrCode', 'size', 1.8);
     
     const titleTextVisible = getElementConfig('titleText', 'visible', true);
     const titleTextX = getElementConfig('titleText', 'x', 3.25);
