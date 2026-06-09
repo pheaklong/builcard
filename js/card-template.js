@@ -76,7 +76,7 @@ function getStampImage() {
     return `
         <div style="
             position: absolute;
-            bottom: -28px;      /* Overlap 1cm (28px ≈ 1cm at 96dpi) */
+            bottom: 0px;      /* Overlap 1cm (28px ≈ 1cm at 96dpi) */
             right: 30px;       /* Overlap 1cm from right edge */
             width: 70px;
             height: 70px;
