@@ -20,19 +20,65 @@
         }
         .class-badge {
             display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin: 2px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin: 3px;
             cursor: pointer;
             transition: all 0.2s;
+            background-color: #e5e7eb;
+            color: #374151;
         }
         .class-badge:hover {
-            transform: scale(1.05);
+            background-color: #3b82f6;
+            color: white;
+            transform: scale(1.02);
         }
-        .class-filter-active {
-            background-color: #3b82f6 !important;
-            color: white !important;
+        .filter-input {
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .filter-input:focus {
+            border-color: #3b82f6;
+            ring: 2px solid #3b82f6;
+        }
+        .classes-container {
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .classes-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .classes-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .classes-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        /* Table styles */
+        .student-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        .student-table th {
+            position: sticky;
+            top: 0;
+            background-color: #f9fafb;
+            z-index: 10;
+        }
+        .table-container {
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -45,70 +91,73 @@
         <h1 class="text-3xl font-bold text-center mb-8 text-green-600">🔍 ស្វែងរក និងជ្រើសរើសសិស្ស</h1>
         
         <!-- Search Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8 no-print">
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8 no-print">
             <!-- Class Filter Dropdown -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">🏫 ជ្រើសរើសថ្នាក់</label>
-                <select id="classSelect" class="w-full md:w-1/2 rounded-md border p-2 bg-white">
+                <select id="classSelect" class="w-full md:w-1/2 rounded-lg border border-gray-300 p-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">-- ទាំងអស់ --</option>
                 </select>
             </div>
             
-            <!-- Quick Class Badges -->
+            <!-- Quick Class Badges with Search -->
             <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-2">📚 ថ្នាក់ពេញនិយម</label>
-                <div id="quickClasses" class="flex flex-wrap gap-2">
-                    <!-- Dynamic class badges will appear here -->
+                <label class="block text-sm font-medium text-gray-700 mb-2">📚 ថ្នាក់ទាំងអស់ (ចុចដើម្បីស្វែងរក)</label>
+                <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <input type="text" id="classFilterInput" class="filter-input" placeholder="🔍 ស្វែងរកថ្នាក់...">
+                    <div id="quickClasses" class="classes-container">
+                        <div class="text-gray-400 text-sm text-center py-4">កំពុងផ្ទុកបញ្ជីថ្នាក់...</div>
+                    </div>
                 </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">✏️ ស្វែងរកតាមឈ្មោះ</label>
-                    <input type="text" id="searchName" placeholder="បញ្ចូលឈ្មោះសិស្ស..." class="w-full rounded-md border p-2">
+                    <input type="text" id="searchName" placeholder="បញ្ចូលឈ្មោះសិស្ស..." class="w-full rounded-lg border border-gray-300 p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="flex space-x-2 items-end">
-                    <button id="searchBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex-1">🔍 ស្វែងរក</button>
-                    <button id="resetBtn" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 flex-1">🔄 កំណត់ឡើងវិញ</button>
+                    <button id="searchBtn" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition flex-1 font-medium">🔍 ស្វែងរក</button>
+                    <button id="resetBtn" class="bg-gray-500 text-white px-5 py-2.5 rounded-lg hover:bg-gray-600 transition flex-1 font-medium">🔄 កំណត់ឡើងវិញ</button>
                 </div>
             </div>
         </div>
         
         <!-- Search Results with Selection -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <div class="flex items-center space-x-4">
-                    <h2 class="text-xl font-bold text-gray-700">📋 លទ្ធផលស្វែងរក</h2>
-                    <span id="resultCount" class="text-sm text-gray-500"></span>
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-xl font-bold text-gray-800">📋 លទ្ធផលស្វែងរក</h2>
+                    <span id="resultCount" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold"></span>
                 </div>
-                <div class="flex space-x-2">
-                    <button id="selectAllBtn" class="bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700 text-sm">☑️ ជ្រើសទាំងអស់</button>
-                    <button id="deselectAllBtn" class="bg-gray-600 text-white px-3 py-1 rounded-lg hover:bg-gray-700 text-sm">☐ មិនជ្រើសទាំងអស់</button>
-                    <button id="addSelectedBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                        ➕ បន្ថែមសិស្សដែលបានជ្រើស (<span id="selectedCount">0</span>)
+                <div class="flex flex-wrap gap-2">
+                    <button id="selectAllBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm font-medium">☑️ ជ្រើសទាំងអស់</button>
+                    <button id="deselectAllBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition text-sm font-medium">☐ មិនជ្រើសទាំងអស់</button>
+                    <button id="addSelectedBtn" class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition font-medium">
+                        ➕ បន្ថែម (<span id="selectedCount">0</span>)
                     </button>
                 </div>
             </div>
-            <div id="searchResults" class="overflow-x-auto">
-                <div class="text-center py-8 text-gray-500">
-                    <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+            <div id="searchResults" class="table-container">
+                <div class="text-center py-12">
+                    <svg class="w-20 h-20 mx-auto text-gray-300 mb-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
                     </svg>
-                    <p>សូមបញ្ចូលពាក្យស្វែងរក ឬចុចបង្ហាញទាំងអស់</p>
+                    <p class="text-gray-500 text-lg">សូមបញ្ចូលពាក្យស្វែងរក ឬចុចបង្ហាញទាំងអស់</p>
                 </div>
             </div>
         </div>
         
         <!-- Selected Students Summary -->
-        <div class="mt-8 bg-white rounded-lg shadow-lg p-6 no-print">
-            <h2 class="text-xl font-bold mb-4 text-gray-700">✅ សិស្សដែលបានជ្រើសរើស</h2>
-            <div id="selectedSummary" class="min-h-[100px]">
+        <div class="mt-8 bg-white rounded-xl shadow-lg p-6 no-print">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">✅ សិស្សដែលបានជ្រើសរើស</h2>
+            <div id="selectedSummary" class="min-h-[120px]">
                 <div class="text-center py-8 text-gray-500">
                     <p>មិនទាន់មានសិស្សដែលបានជ្រើសរើសទេ</p>
                 </div>
             </div>
             <div class="mt-4 flex justify-end">
-                <button id="goToGenerateBtn" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
+                <button id="goToGenerateBtn" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition font-medium">
                     🖨️ បន្តទៅបង្កើតកាត (<span id="finalSelectedCount">0</span>)
                 </button>
             </div>
@@ -128,7 +177,7 @@
     // Global variables
     let currentStudents = [];
     let selectedStudents = new Map();
-    let allClassNames = new Set(); // Store unique class names
+    let allClassNamesList = [];
     
     // ============================================
     // HELPER FUNCTIONS
@@ -145,82 +194,131 @@
     
     function showInfoBanner(message, isError = false) {
         let banner = document.getElementById('infoBanner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'infoBanner';
-            banner.className = 'bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-4 rounded';
-            const searchSection = document.querySelector('.bg-white.rounded-lg.shadow-lg.p-6.mb-8');
-            if (searchSection) {
-                searchSection.parentNode.insertBefore(banner, searchSection.nextSibling);
-            }
-        }
+        if (banner) banner.remove();
         
-        if (isError) {
-            banner.className = 'bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4 rounded';
-        } else {
-            banner.className = 'bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-4 rounded';
-        }
+        banner = document.createElement('div');
+        banner.id = 'infoBanner';
+        banner.className = `${isError ? 'bg-red-100 border-red-500 text-red-700' : 'bg-blue-100 border-blue-500 text-blue-700'} border-l-4 p-4 mb-5 rounded shadow-md`;
         
         banner.innerHTML = `
-            <div class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                </svg>
-                <span>${message}</span>
-                <button onclick="document.getElementById('infoBanner').remove()" class="ml-auto hover:opacity-75">✖</button>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="hover:opacity-70">✖</button>
             </div>
         `;
         
-        setTimeout(() => {
-            if (banner && banner.parentNode) banner.remove();
-        }, 8000);
+        const searchSection = document.querySelector('.bg-white.rounded-xl.shadow-lg.p-6.mb-8');
+        if (searchSection) {
+            searchSection.parentNode.insertBefore(banner, searchSection.nextSibling);
+        }
+        
+        setTimeout(() => { if (banner && banner.parentNode) banner.remove(); }, 4000);
     }
     
     // ============================================
-    // LOAD UNIQUE CLASS NAMES FOR FILTER
+    // LOAD UNIQUE CLASS NAMES WITH PAGINATION
     // ============================================
     async function loadClassNames() {
         try {
-            const { data, error } = await supabaseClient
+            const quickContainer = document.getElementById('quickClasses');
+            if (quickContainer) quickContainer.innerHTML = '<div class="text-gray-400 text-sm text-center py-4">កំពុងផ្ទុកបញ្ជីថ្នាក់...</div>';
+            
+            const { count, error: countError } = await supabaseClient
                 .from(TABLE_NAME)
-                .select('class')
+                .select('*', { count: 'exact', head: true })
                 .not('class', 'is', null);
             
-            if (error) throw error;
+            if (countError) throw countError;
             
-            allClassNames.clear();
-            data.forEach(item => {
-                if (item.class && item.class.trim() !== '') {
-                    allClassNames.add(item.class);
+            const totalStudents = count;
+            console.log(`📊 Total students with class: ${totalStudents}`);
+            
+            const batchSize = 1000;
+            const allClassNamesSet = new Set();
+            
+            for (let i = 0; i < totalStudents; i += batchSize) {
+                const { data, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('class')
+                    .not('class', 'is', null)
+                    .range(i, i + batchSize - 1);
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    data.forEach(item => {
+                        if (item.class && item.class.trim() !== '') {
+                            allClassNamesSet.add(item.class);
+                        }
+                    });
                 }
+            }
+            
+            allClassNamesList = Array.from(allClassNamesSet).sort((a, b) => {
+                const gradeA = parseInt(a.match(/\d+/)?.[0] || 0);
+                const gradeB = parseInt(b.match(/\d+/)?.[0] || 0);
+                if (gradeA && gradeB) return gradeA - gradeB;
+                return a.localeCompare(b, 'km');
             });
             
-            // Sort class names
-            const sortedClasses = Array.from(allClassNames).sort();
+            console.log(`📚 Total unique classes: ${allClassNamesList.length}`);
             
-            // Populate dropdown
             const select = document.getElementById('classSelect');
             select.innerHTML = '<option value="">-- ទាំងអស់ --</option>';
-            sortedClasses.forEach(className => {
+            allClassNamesList.forEach(className => {
                 select.innerHTML += `<option value="${escapeHtml(className)}">${escapeHtml(className)}</option>`;
             });
             
-            // Populate quick badges (top 12 classes)
-            const quickContainer = document.getElementById('quickClasses');
-            quickContainer.innerHTML = '';
-            sortedClasses.slice(0, 12).forEach(className => {
-                quickContainer.innerHTML += `
-                    <span class="class-badge bg-gray-200 text-gray-700 hover:bg-blue-500 hover:text-white" 
-                          onclick="document.getElementById('classSelect').value='${escapeHtml(className)}'; searchStudents();">
-                        ${escapeHtml(className)}
-                    </span>
-                `;
-            });
+            displayClassBadges(allClassNamesList);
             
         } catch (error) {
             console.error('Error loading class names:', error);
+            document.getElementById('quickClasses').innerHTML = '<div class="text-red-500 text-sm text-center py-4">កំហុសក្នុងការផ្ទុកបញ្ជីថ្នាក់</div>';
         }
     }
+    
+    function displayClassBadges(classes) {
+        const container = document.getElementById('quickClasses');
+        if (!container) return;
+        
+        if (classes.length === 0) {
+            container.innerHTML = '<div class="text-gray-400 text-sm text-center py-4">រកមិនឃើញថ្នាក់</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        classes.forEach(className => {
+            container.innerHTML += `
+                <span class="class-badge" onclick="selectClassAndSearch('${escapeHtml(className)}')">
+                    ${escapeHtml(className)}
+                </span>
+            `;
+        });
+    }
+    
+    function filterClasses() {
+        const searchText = document.getElementById('classFilterInput')?.value.toLowerCase() || '';
+        const filtered = allClassNamesList.filter(className => 
+            className.toLowerCase().includes(searchText)
+        );
+        displayClassBadges(filtered);
+    }
+    
+    function selectClassAndSearch(className) {
+        const classSelect = document.getElementById('classSelect');
+        if (classSelect) classSelect.value = className;
+        const searchName = document.getElementById('searchName');
+        if (searchName) searchName.value = '';
+        searchStudents();
+    }
+    
+    window.selectClassAndSearch = selectClassAndSearch;
+    window.filterClasses = filterClasses;
     
     // ============================================
     // LOAD ALL STUDENTS WITH PAGINATION
@@ -273,7 +371,7 @@
         } catch (error) {
             console.error('Error loading students:', error);
             document.getElementById('searchResults').innerHTML = `
-                <div class="text-center py-8 text-red-500">
+                <div class="text-center py-12 text-red-500">
                     <p>❌ កំហុសក្នុងការផ្ទុកទិន្នន័យ: ${error.message}</p>
                 </div>
             `;
@@ -285,8 +383,8 @@
     // SEARCH STUDENTS WITH CLASS AND NAME FILTERS
     // ============================================
     async function searchStudents() {
-        const selectedClass = document.getElementById('classSelect').value;
-        const searchName = document.getElementById('searchName').value.trim();
+        const selectedClass = document.getElementById('classSelect')?.value || '';
+        const searchName = document.getElementById('searchName')?.value.trim() || '';
         
         if (!selectedClass && !searchName) {
             loadAllStudents();
@@ -354,67 +452,97 @@
     }
     
     // ============================================
-    // DISPLAY SEARCH RESULTS
+    // DISPLAY SEARCH RESULTS - CORRECT TABLE STRUCTURE
     // ============================================
     function displaySearchResults(students) {
         const container = document.getElementById('searchResults');
         
         if (!students || students.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-8 text-gray-500">
-                    <svg class="w-16 h-16 mx-auto mb-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                <div class="text-center py-12">
+                    <svg class="w-20 h-20 mx-auto text-gray-300 mb-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
                     </svg>
-                    <p>មិនមានទិន្នន័យសិស្សទេ</p>
+                    <p class="text-gray-500 text-lg">មិនមានទិន្នន័យសិស្សទេ</p>
                 </div>
             `;
-            document.getElementById('resultCount').innerHTML = '';
+            const resultCount = document.getElementById('resultCount');
+            if (resultCount) resultCount.innerHTML = '';
             return;
         }
         
-        document.getElementById('resultCount').innerHTML = `(ឃើញ ${students.length} នាក់)`;
+        const resultCount = document.getElementById('resultCount');
+        if (resultCount) resultCount.innerHTML = `ឃើញ ${students.length} នាក់`;
         
-        container.innerHTML = `
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50 sticky top-0">
+        let tableHtml = `
+            <table class="student-table min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-12">ជ្រើស</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student ID</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ឈ្មោះ</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ភេទ</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ថ្នាក់</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ទូរស័ព្ទ</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">សកម្មភាព</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10">
+                            <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">លេខសម្គាល់</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ឈ្មោះ</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ភេទ</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ថ្នាក់</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ទូរស័ព្ទ</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">សកម្មភាព</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    ${students.map(student => `
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3">
-                                <input type="checkbox" class="student-checkbox checkbox-custom" 
-                                       value="${student.studentID}" 
-                                       data-student='${JSON.stringify(student).replace(/'/g, "&#39;")}'
-                                       ${selectedStudents.has(student.studentID) ? 'checked' : ''}>
-                            </td>
-                            <td class="px-4 py-3 text-sm font-mono">${escapeHtml(student.studentID)}</td>
-                            <td class="px-4 py-3 text-sm font-medium">${escapeHtml(student.name)}</td>
-                            <td class="px-4 py-3 text-sm">${escapeHtml(student.sex) || 'N/A'}</td>
-                            <td class="px-4 py-3 text-sm">
-                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">${escapeHtml(student.class) || 'N/A'}</span>
-                            </td>
-                            <td class="px-4 py-3 text-sm">${escapeHtml(student.phonenumber) || 'N/A'}</td>
-                            <td class="px-4 py-3 text-sm">
-                                <button onclick="viewStudent('${student.studentID}')" class="text-blue-600 hover:text-blue-800 mr-2">👁️ មើល</button>
-                                <button onclick="toggleSelectStudent('${student.studentID}')" class="text-green-600 hover:text-green-800">
-                                    ${selectedStudents.has(student.studentID) ? '✖ ដកចេញ' : '➕ ជ្រើស'}
-                                </button>
-                            </td>
-                        </tr>
-                    `).join('')}
+        `;
+        
+        students.forEach(student => {
+            const isChecked = selectedStudents.has(student.studentID);
+            tableHtml += `
+                <tr class="hover:bg-gray-50 transition duration-150">
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <input type="checkbox" class="student-checkbox w-4 h-4 text-blue-600 rounded border-gray-300" 
+                               value="${student.studentID}" 
+                               data-student='${JSON.stringify(student).replace(/'/g, "&#39;")}'
+                               ${isChecked ? 'checked' : ''}>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="text-sm font-mono text-gray-900">${escapeHtml(student.studentID)}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="text-sm font-medium text-gray-900">${escapeHtml(student.name)}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="text-sm text-gray-600">${escapeHtml(student.sex) || '-'}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${escapeHtml(student.class) || '-'}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="text-sm text-gray-600">${escapeHtml(student.phonenumber) || '-'}</span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">
+                        <button onclick="viewStudent('${student.studentID}')" class="text-blue-600 hover:text-blue-800 transition mx-1" title="មើល">
+                            <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="toggleSelectStudent('${student.studentID}')" class="${isChecked ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'} transition mx-1" title="${isChecked ? 'ដកចេញ' : 'ជ្រើសរើស'}">
+                            ${isChecked ? 
+                                '<svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>' : 
+                                '<svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>'
+                            }
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tableHtml += `
                 </tbody>
             </table>
         `;
         
+        container.innerHTML = tableHtml;
+        
+        // Add event listeners to checkboxes
         document.querySelectorAll('.student-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const studentID = e.target.value;
@@ -429,6 +557,26 @@
             });
         });
         
+        // Handle "Select All" checkbox
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                    const studentID = checkbox.value;
+                    if (isChecked) {
+                        const studentData = JSON.parse(checkbox.getAttribute('data-student'));
+                        selectedStudents.set(studentID, studentData);
+                    } else {
+                        selectedStudents.delete(studentID);
+                    }
+                });
+                updateSelectedCount();
+                updateSelectedSummary();
+            });
+        }
+        
         updateSelectedCount();
     }
     
@@ -437,8 +585,10 @@
     // ============================================
     function updateSelectedCount() {
         const count = selectedStudents.size;
-        document.getElementById('selectedCount').innerHTML = count;
-        document.getElementById('finalSelectedCount').innerHTML = count;
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const finalSelectedCountSpan = document.getElementById('finalSelectedCount');
+        if (selectedCountSpan) selectedCountSpan.innerHTML = count;
+        if (finalSelectedCountSpan) finalSelectedCountSpan.innerHTML = count;
     }
     
     function updateSelectedSummary() {
@@ -457,7 +607,7 @@
         container.innerHTML = `
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 ${students.map(student => `
-                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100">
+                    <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition">
                         <div class="flex items-center space-x-3">
                             ${student.photo ? 
                                 `<img src="${student.photo}" class="w-10 h-10 rounded-full object-cover">` : 
@@ -472,9 +622,9 @@
                                 <p class="text-xs text-gray-500">${escapeHtml(student.studentID)} | ${escapeHtml(student.class) || 'N/A'}</p>
                             </div>
                         </div>
-                        <button onclick="removeSelectedStudent('${student.studentID}')" class="text-red-600 hover:text-red-800">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                        <button onclick="removeSelectedStudent('${student.studentID}')" class="text-red-600 hover:text-red-800 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
@@ -561,8 +711,13 @@
     });
     
     document.getElementById('resetBtn')?.addEventListener('click', () => {
-        document.getElementById('classSelect').value = '';
-        document.getElementById('searchName').value = '';
+        const classSelect = document.getElementById('classSelect');
+        const searchName = document.getElementById('searchName');
+        const classFilter = document.getElementById('classFilterInput');
+        if (classSelect) classSelect.value = '';
+        if (searchName) searchName.value = '';
+        if (classFilter) classFilter.value = '';
+        displayClassBadges(allClassNamesList);
         loadAllStudents();
     });
     
@@ -570,11 +725,17 @@
         searchStudents();
     });
     
+    document.getElementById('classFilterInput')?.addEventListener('input', () => {
+        filterClasses();
+    });
+    
     document.getElementById('searchName')?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') searchStudents();
     });
     
-    // Initialize
+    // ============================================
+    // INITIALIZE
+    // ============================================
     async function init() {
         await loadClassNames();
         await loadAllStudents();
