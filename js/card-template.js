@@ -67,32 +67,56 @@ function escapeHtml(str) {
 function cmToPx(cm) { return cm * 37.8; }
 
 // ============================================
-// QR CODE GENERATION - HIGH QUALITY SVG FOR PRINT
+// QR CODE GENERATION - HIGH QUALITY (QRCODE.JS LIBRARY)
 // ============================================
 
 function generateQRCode(studentID, size, color) {
-    console.log('🎯 Generating QR Code for student:', studentID);
-    
-    // Create the QR code URL with student ID
+    const canvasId = `qr-${studentID.replace(/[^a-zA-Z0-9]/g, '-')}-${Date.now()}`;
     const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/digital-card.html?id=${encodeURIComponent(studentID)}`;
-    console.log('QR Code URL:', qrCodeUrl);
+    const qrSize = Math.max(100, size);
+    const darkColor = color || "#000000";
     
-    // Using qrserver.com API which returns crisp SVG format (best for printing)
-    // size is in pixels, convert from cm if needed
-    const qrSizePx = Math.max(80, size);
-    const darkColor = color.replace('#', '');
-    
-    const svgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSizePx}x${qrSizePx}&data=${encodeURIComponent(qrCodeUrl)}&format=svg&color=${darkColor}&bgcolor=ffffff`;
+    // Store config for potential retry
+    window._qrConfigs = window._qrConfigs || {};
+    window._qrConfigs[canvasId] = { url: qrCodeUrl, size: qrSize, color: darkColor };
     
     return `
         <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <img src="${svgUrl}" 
-                 alt="QR Code" 
-                 style="width:100%; height:auto; image-rendering:crisp-edges;"
-                 onload="console.log('✅ QR Code loaded for ${studentID}')"
-                 onerror="console.error('❌ QR Code failed for ${studentID}'); this.parentElement.innerHTML='<div style=\\'color:red;font-size:10px;text-align:center;\\'>QR Error</div>';" />
-            <div style="font-size:${Math.max(5, size/10)}px; color:#666; margin-top:3px; text-align:center;">ស្កេនមើល</div>
+            <canvas id="${canvasId}" width="${qrSize}" height="${qrSize}" style="width:100%; height:auto; image-rendering:crisp-edges;"></canvas>
+            <div style="font-size:${Math.max(7, size/10)}px; color:#666; margin-top:5px; text-align:center; font-family:'Khmer',sans-serif;">ស្កេនកាត</div>
         </div>
+        <script>
+            (function() {
+                function generateQR() {
+                    const canvas = document.getElementById('${canvasId}');
+                    if (!canvas) return false;
+                    
+                    if (typeof QRCode !== 'undefined' && QRCode.toCanvas) {
+                        QRCode.toCanvas(canvas, '${qrCodeUrl}', {
+                            width: ${qrSize},
+                            margin: 2,
+                            color: { dark: '${darkColor}', light: '#ffffff' },
+                            errorCorrectionLevel: 'H'
+                        }, function(err) {
+                            if (err) console.warn('QR Code warning:', err);
+                            else console.log('✅ QR Code generated for ${studentID}');
+                        });
+                        return true;
+                    }
+                    return false;
+                }
+                
+                if (!generateQR()) {
+                    let attempts = 0;
+                    const interval = setInterval(function() {
+                        attempts++;
+                        if (generateQR() || attempts > 20) {
+                            clearInterval(interval);
+                        }
+                    }, 200);
+                }
+            })();
+        <\/script>
     `;
 }
 
@@ -234,7 +258,7 @@ function generateCardHTML(data) {
     
     const qrCodeX = getElementConfig('qrCode', 'x', 5.5);
     const qrCodeY = getElementConfig('qrCode', 'y', 1.3);
-    const qrCodeSize = getElementConfig('qrCode', 'size', 1.6); // Increased from 1.1 to 1.6 for better scan
+    const qrCodeSize = getElementConfig('qrCode', 'size', 1.8); // Increased for better scanning
     
     const titleTextVisible = getElementConfig('titleText', 'visible', true);
     const titleTextX = getElementConfig('titleText', 'x', 3.25);
@@ -282,8 +306,8 @@ function generateCardHTML(data) {
     const principalTextColor = getElementConfig('principalText', 'color', "#D50000");
     const principalTextContent = getElementConfig('principalText', 'text', "ព្រះគ្រូ សុខ សុភក្ត្រា");
     
-    // Generate QR code HTML with proper size in pixels
-    const qrCodePxSize = Math.max(60, cmToPx(qrCodeSize));
+    // Generate QR code HTML with proper size
+    const qrCodePxSize = Math.max(80, cmToPx(qrCodeSize));
     const qrCodeHTML = qrCodeVisible ? generateQRCode(studentID, qrCodePxSize, royalTextColor) : '';
     
     return `
@@ -304,7 +328,7 @@ function generateCardHTML(data) {
                 <div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div>
             </div>` : ''}
             
-            ${qrCodeVisible ? `<div style="position: absolute; left: ${cmToPx(qrCodeX)}px; top: ${cmToPx(qrCodeY)}px; width: ${cmToPx(qrCodeSize)}px; height: ${cmToPx(qrCodeSize)}px; z-index: 10; background: white; border-radius: 6px; padding: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 1px solid #e0e0e0;">
+            ${qrCodeVisible ? `<div style="position: absolute; left: ${cmToPx(qrCodeX)}px; top: ${cmToPx(qrCodeY)}px; width: ${cmToPx(qrCodeSize)}px; height: ${cmToPx(qrCodeSize)}px; z-index: 10; background: white; border-radius: 8px; padding: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 1px solid #e0e0e0;">
                 ${qrCodeHTML}
             </div>` : ''}
             
@@ -362,5 +386,5 @@ if (typeof window !== 'undefined') {
     window.getElementConfig = getElementConfig;
     
     console.log('✅ card-template.js loaded successfully');
-    console.log('✅ QR Code will use high-quality SVG from qrserver.com');
+    console.log('✅ QR Code using QRCode.js library for high quality');
 }
