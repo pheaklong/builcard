@@ -295,7 +295,7 @@ function generateCardHTML(data) {
             
             ${ministryTextVisible ? `<div style="position: absolute; left: ${cmToPx(ministryTextX)}px; top: ${cmToPx(ministryTextY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(ministryTextFontSize)}px; line-height: 1.3; color: ${ministryTextColor}; z-index: 1;">
                 <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                <div>មន្ទីរអប់រំ យុវជន និងកីឡា ភ្នំពេញ</div>
+                <div>មន្ទីរអប់រំ យុវជន និងកីឡាខេត្តបាត់ដំបង</div>
                 <div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div>
             </div>` : ''}
             
