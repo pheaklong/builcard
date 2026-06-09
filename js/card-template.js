@@ -1,4 +1,78 @@
 // ============================================
+// LOAD CUSTOM CONFIGURATION FROM LOCALSTORAGE
+// ============================================
+
+let customCardConfig = null;
+
+function loadCustomConfig() {
+    try {
+        const savedConfig = localStorage.getItem('cardSystemConfig');
+        if (savedConfig) {
+            const config = JSON.parse(savedConfig);
+            customCardConfig = config.cardConfig;
+            console.log('✅ Loaded custom card configuration from system');
+            return true;
+        }
+    } catch(e) {
+        console.warn('Failed to load custom config:', e);
+    }
+    return false;
+}
+
+// Load config on script initialization
+loadCustomConfig();
+
+// Helper function to get custom value or default
+function getCustomConfigValue(path, defaultValue) {
+    if (!customCardConfig) return defaultValue;
+    
+    const parts = path.split('.');
+    let current = customCardConfig;
+    for (const part of parts) {
+        if (current && current[part] !== undefined) {
+            current = current[part];
+        } else {
+            return defaultValue;
+        }
+    }
+    return current;
+}
+
+// Get element position/size with custom config support
+function getElementConfig(elementName, property, defaultValue) {
+    if (customCardConfig && customCardConfig.elements && customCardConfig.elements[elementName]) {
+        const val = customCardConfig.elements[elementName][property];
+        if (val !== undefined) return val;
+    }
+    return defaultValue;
+}
+
+// Get card dimensions from custom config
+function getCardWidthCm() {
+    return getCustomConfigValue('cardWidthCm', 6.5);
+}
+
+function getCardHeightCm() {
+    return getCustomConfigValue('cardHeightCm', 8.5);
+}
+
+function getGlobalFontFamily() {
+    return getCustomConfigValue('globalFontFamily', "'Khmer', 'Khmer OS Moul Light', sans-serif");
+}
+
+function getCardBgColor() {
+    return getElementConfig('cardBg', 'bgColor', "#f5f5f0");
+}
+
+function getCardBorderColor() {
+    return getElementConfig('cardBg', 'borderColor', "#4A86E8");
+}
+
+function getCardBorderWidth() {
+    return getElementConfig('cardBg', 'borderWidth', 1);
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
@@ -13,228 +87,293 @@ function escapeHtml(str) {
 }
 
 // Generate QR Code (student ID)
-function generateQRCode(studentID) {
+function generateQRCode(studentID, size, color) {
+    const qrSize = size || 45;
+    const qrColor = color || "#233D2E";
     return `
-        <svg width="45" height="45" viewBox="0 0 100 100" fill="#233D2E">
-            <rect x="10" y="10" width="8" height="8" fill="#233D2E"/>
-            <rect x="26" y="10" width="8" height="8" fill="#233D2E"/>
-            <rect x="42" y="10" width="8" height="8" fill="#233D2E"/>
-            <rect x="58" y="10" width="8" height="8" fill="#233D2E"/>
-            <rect x="74" y="10" width="8" height="8" fill="#233D2E"/>
-            <rect x="10" y="26" width="8" height="8" fill="#233D2E"/>
-            <rect x="42" y="26" width="8" height="8" fill="#233D2E"/>
-            <rect x="74" y="26" width="8" height="8" fill="#233D2E"/>
-            <rect x="10" y="42" width="8" height="8" fill="#233D2E"/>
-            <rect x="26" y="42" width="8" height="8" fill="#233D2E"/>
-            <rect x="42" y="42" width="8" height="8" fill="#233D2E"/>
-            <rect x="58" y="42" width="8" height="8" fill="#233D2E"/>
-            <rect x="74" y="42" width="8" height="8" fill="#233D2E"/>
-            <rect x="26" y="58" width="8" height="8" fill="#233D2E"/>
-            <rect x="42" y="58" width="8" height="8" fill="#233D2E"/>
-            <rect x="74" y="58" width="8" height="8" fill="#233D2E"/>
-            <rect x="10" y="74" width="8" height="8" fill="#233D2E"/>
-            <rect x="42" y="74" width="8" height="8" fill="#233D2E"/>
-            <rect x="58" y="74" width="8" height="8" fill="#233D2E"/>
-            <rect x="74" y="74" width="8" height="8" fill="#233D2E"/>
+        <svg width="${qrSize}" height="${qrSize}" viewBox="0 0 100 100" fill="${qrColor}">
+            <rect x="10" y="10" width="8" height="8" fill="${qrColor}"/>
+            <rect x="26" y="10" width="8" height="8" fill="${qrColor}"/>
+            <rect x="42" y="10" width="8" height="8" fill="${qrColor}"/>
+            <rect x="58" y="10" width="8" height="8" fill="${qrColor}"/>
+            <rect x="74" y="10" width="8" height="8" fill="${qrColor}"/>
+            <rect x="10" y="26" width="8" height="8" fill="${qrColor}"/>
+            <rect x="42" y="26" width="8" height="8" fill="${qrColor}"/>
+            <rect x="74" y="26" width="8" height="8" fill="${qrColor}"/>
+            <rect x="10" y="42" width="8" height="8" fill="${qrColor}"/>
+            <rect x="26" y="42" width="8" height="8" fill="${qrColor}"/>
+            <rect x="42" y="42" width="8" height="8" fill="${qrColor}"/>
+            <rect x="58" y="42" width="8" height="8" fill="${qrColor}"/>
+            <rect x="74" y="42" width="8" height="8" fill="${qrColor}"/>
+            <rect x="26" y="58" width="8" height="8" fill="${qrColor}"/>
+            <rect x="42" y="58" width="8" height="8" fill="${qrColor}"/>
+            <rect x="74" y="58" width="8" height="8" fill="${qrColor}"/>
+            <rect x="10" y="74" width="8" height="8" fill="${qrColor}"/>
+            <rect x="42" y="74" width="8" height="8" fill="${qrColor}"/>
+            <rect x="58" y="74" width="8" height="8" fill="${qrColor}"/>
+            <rect x="74" y="74" width="8" height="8" fill="${qrColor}"/>
         </svg>
     `;
 }
 
 // School Logo - using local image file
 function getSchoolLogo() {
+    const logoVisible = getElementConfig('logo', 'visible', true);
+    if (!logoVisible) return '';
+    
+    const logoX = getElementConfig('logo', 'x', 0.3);
+    const logoY = getElementConfig('logo', 'y', 0.3);
+    const logoWidth = getElementConfig('logo', 'width', 0.9);
+    const logoHeight = getElementConfig('logo', 'height', 0.9);
+    
+    function cmToPx(cm) { return cm * 37.8; }
+    
     return `
-        <img src="../logomoeys.png" 
-             alt="School Logo" 
-             style="width: 35px; height: 35px; object-fit: contain;">
+        <div style="position: absolute; left: ${cmToPx(logoX)}px; top: ${cmToPx(logoY)}px; width: ${cmToPx(logoWidth)}px; height: ${cmToPx(logoHeight)}px; z-index: 1;">
+            <img src="../logomoeys.png" alt="School Logo" style="width:100%;height:100%;object-fit:contain;">
+        </div>
     `;
 }
 
 // Signature Image - using signature.png
 function getSignatureImage() {
+    const signatureVisible = getElementConfig('signature', 'visible', true);
+    if (!signatureVisible) return '';
+    
+    const signatureX = getElementConfig('signature', 'x', 4.5);
+    const signatureY = getElementConfig('signature', 'y', 7.7);
+    const signatureWidth = getElementConfig('signature', 'width', 2.2);
+    const signatureHeight = getElementConfig('signature', 'height', 0.8);
+    
+    function cmToPx(cm) { return cm * 37.8; }
+    
     return `
-        <img src="../Signature.png" 
-             alt="នាយកវិទ្យាល័យ" 
-             style="width: 100px; height: auto; max-height: 40px; object-fit: contain;">
+        <div style="position: absolute; left: ${cmToPx(signatureX)}px; top: ${cmToPx(signatureY)}px; width: ${cmToPx(signatureWidth)}px; text-align: center; z-index: 1;">
+            <div style="font-size: ${cmToPx(0.2)}px; font-weight: bold; color: #233D2E;">នាយកវិទ្យាល័យ</div>
+            <div style="margin-top: 2px;">
+                <img src="../Signature.png" alt="Signature" style="width:100%;height:auto;max-height:${cmToPx(signatureHeight)}px;object-fit:contain;">
+            </div>
+        </div>
     `;
 }
 
-// Watermark Logo - using same logo image as watermark
+// Watermark Logo
 function getWatermarkLogo() {
+    const watermarkVisible = getElementConfig('watermark', 'visible', true);
+    if (!watermarkVisible) return '';
+    
+    const watermarkX = getElementConfig('watermark', 'x', 3.25);
+    const watermarkY = getElementConfig('watermark', 'y', 4.25);
+    const watermarkWidth = getElementConfig('watermark', 'width', 4.0);
+    const watermarkHeight = getElementConfig('watermark', 'height', 4.0);
+    const watermarkOpacity = getElementConfig('watermark', 'opacity', 0.1);
+    
+    function cmToPx(cm) { return cm * 37.8; }
+    
     return `
-        <img src="../logomoeys.png" 
-             alt="Watermark" 
-             style="width: 100%; height: 100%; object-fit: contain; opacity: 0.12;">
+        <div style="position: absolute; left: ${cmToPx(watermarkX)}px; top: ${cmToPx(watermarkY)}px; width: ${cmToPx(watermarkWidth)}px; height: ${cmToPx(watermarkHeight)}px; opacity: ${watermarkOpacity}; pointer-events: none; z-index: 0;">
+            <img src="../logomoeys.png" alt="Watermark" style="width:100%;height:100%;object-fit:contain;">
+        </div>
     `;
 }
 
 // ============================================
-// ============================================
-// STAMP FUNCTIONS - stamp overlaps photo by 1cm
+// STAMP FUNCTIONS
 // ============================================
 
 function getStampImage() {
+    const stampVisible = getElementConfig('stamp', 'visible', true);
+    if (!stampVisible) return '';
+    
+    const stampX = getElementConfig('stamp', 'x', 2.5);
+    const stampY = getElementConfig('stamp', 'y', 6.3);
+    const stampWidth = getElementConfig('stamp', 'width', 1.6);
+    const stampHeight = getElementConfig('stamp', 'height', 1.6);
+    const stampOpacity = getElementConfig('stamp', 'opacity', 0.85);
+    
+    function cmToPx(cm) { return cm * 37.8; }
+    
     return `
-        <div style="
-            position: absolute;
-            bottom: 0px;      /* Overlap 1cm (28px ≈ 1cm at 96dpi) */
-            right: 30px;       /* Overlap 1cm from right edge */
-            width: 70px;
-            height: 70px;
-            z-index: 20;
-            pointer-events: none;
-        ">
-            <img src="../tra.png"
-                 alt="ត្រា"
-                 style="
-                    width: 100%;
-                    height: 100%;
-                    object-fit: contain;
-                    opacity: 0.9;
-                 ">
+        <div style="position: absolute; left: ${cmToPx(stampX)}px; top: ${cmToPx(stampY)}px; width: ${cmToPx(stampWidth)}px; height: ${cmToPx(stampHeight)}px; opacity: ${stampOpacity}; z-index: 20; pointer-events: none;">
+            <img src="../tra.png" alt="ត្រា" style="width:100%;height:100%;object-fit:contain;">
         </div>
     `;
 }
 
 function getPhotoHTML(photoData) {
-    if (photoData && photoData !== 'null' && photoData !== '') {
-        return `
-            <div style="
-                position: relative;
-                width: 100%;
-                height: 100%;
-                overflow: visible;
-            ">
-                <img src="${photoData}"
-                     alt="Student Photo"
-                     style="
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                        display: block;
-                     ">
-                ${getStampImage()}
-            </div>
-        `;
-    }
-
-    return `
-        <div style="
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        ">
+    const studentPhotoVisible = getElementConfig('studentPhoto', 'visible', true);
+    if (!studentPhotoVisible) return '';
+    
+    const studentPhotoX = getElementConfig('studentPhoto', 'x', 0.3);
+    const studentPhotoY = getElementConfig('studentPhoto', 'y', 5.8);
+    const studentPhotoWidth = getElementConfig('studentPhoto', 'width', 2.0);
+    const studentPhotoHeight = getElementConfig('studentPhoto', 'height', 2.5);
+    
+    function cmToPx(cm) { return cm * 37.8; }
+    
+    const photoHtml = (photoData && photoData !== 'null' && photoData !== '') 
+        ? `<img src="${photoData}" alt="Student Photo" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
             <span style="font-size:10px;margin-top:5px;">រូបថត</span>
+        </div>`;
+    
+    return `
+        <div style="position: relative; width: 100%; height: 100%; overflow: visible;">
+            ${photoHtml}
             ${getStampImage()}
         </div>
     `;
 }
 
 // ============================================
-// MAIN CARD GENERATOR (6.5cm x 8.5cm)
+// MAIN CARD GENERATOR (with custom config support)
 // ============================================
 
 function generateCardHTML(data) {
+    // Get custom config values
+    const cardWidthCm = getCardWidthCm();
+    const cardHeightCm = getCardHeightCm();
+    const fontFamily = getGlobalFontFamily();
+    const cardBgColor = getCardBgColor();
+    const cardBorderColor = getCardBorderColor();
+    const cardBorderWidth = getCardBorderWidth();
+    
+    const cardWidthPx = cardWidthCm * 37.8;
+    const cardHeightPx = cardHeightCm * 37.8;
+    
     const studentID = data.studentID || '_________';
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : '____/____/______';
     
+    // Get element configurations
+    const royalTextVisible = getElementConfig('royalText', 'visible', true);
+    const royalTextX = getElementConfig('royalText', 'x', 4.2);
+    const royalTextY = getElementConfig('royalText', 'y', 0.4);
+    const royalTextFontSize = getElementConfig('royalText', 'fontSize', 0.22);
+    const royalTextColor = getElementConfig('royalText', 'color', "#233D2E");
+    
+    const ministryTextVisible = getElementConfig('ministryText', 'visible', true);
+    const ministryTextX = getElementConfig('ministryText', 'x', 0.3);
+    const ministryTextY = getElementConfig('ministryText', 'y', 1.5);
+    const ministryTextFontSize = getElementConfig('ministryText', 'fontSize', 0.2);
+    const ministryTextColor = getElementConfig('ministryText', 'color', "#233D2E");
+    
+    const qrCodeVisible = getElementConfig('qrCode', 'visible', true);
+    const qrCodeX = getElementConfig('qrCode', 'x', 5.5);
+    const qrCodeY = getElementConfig('qrCode', 'y', 1.3);
+    const qrCodeSize = getElementConfig('qrCode', 'size', 1.1);
+    
+    const titleTextVisible = getElementConfig('titleText', 'visible', true);
+    const titleTextX = getElementConfig('titleText', 'x', 3.25);
+    const titleTextY = getElementConfig('titleText', 'y', 2.8);
+    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.32);
+    const titleTextColor = getElementConfig('titleText', 'color', "#D28A17");
+    
+    const subtitleTextVisible = getElementConfig('subtitleText', 'visible', true);
+    const subtitleTextX = getElementConfig('subtitleText', 'x', 3.25);
+    const subtitleTextY = getElementConfig('subtitleText', 'y', 3.15);
+    const subtitleTextFontSize = getElementConfig('subtitleText', 'fontSize', 0.22);
+    const subtitleTextColor = getElementConfig('subtitleText', 'color', "#3D8BFF");
+    
+    const studentInfoVisible = getElementConfig('studentInfo', 'visible', true);
+    const studentInfoX = getElementConfig('studentInfo', 'x', 0.3);
+    const studentInfoY = getElementConfig('studentInfo', 'y', 3.6);
+    const studentInfoFontSize = getElementConfig('studentInfo', 'fontSize', 0.19);
+    const studentInfoLabelColor = getElementConfig('studentInfo', 'labelColor', "#233D2E");
+    const studentInfoValueColor = getElementConfig('studentInfo', 'valueColor', "#304FFE");
+    
+    const dateTextVisible = getElementConfig('dateText', 'visible', true);
+    const dateTextX = getElementConfig('dateText', 'x', 2.5);
+    const dateTextY = getElementConfig('dateText', 'y', 7.0);
+    const dateTextFontSize = getElementConfig('dateText', 'fontSize', 0.16);
+    const dateTextColor = getElementConfig('dateText', 'color', "#233D2E");
+    const dateTextContent = getElementConfig('dateText', 'text', "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩");
+    
+    const schoolLocationVisible = getElementConfig('schoolLocation', 'visible', true);
+    const schoolLocationX = getElementConfig('schoolLocation', 'x', 2.5);
+    const schoolLocationY = getElementConfig('schoolLocation', 'y', 7.35);
+    const schoolLocationFontSize = getElementConfig('schoolLocation', 'fontSize', 0.16);
+    const schoolLocationColor = getElementConfig('schoolLocation', 'color', "#233D2E");
+    const schoolLocationContent = getElementConfig('schoolLocation', 'text', "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥");
+    
+    const principalTextVisible = getElementConfig('principalText', 'visible', true);
+    const principalTextX = getElementConfig('principalText', 'x', 4.5);
+    const principalTextY = getElementConfig('principalText', 'y', 7.5);
+    const principalTextFontSize = getElementConfig('principalText', 'fontSize', 0.18);
+    const principalTextColor = getElementConfig('principalText', 'color', "#D50000");
+    const principalTextContent = getElementConfig('principalText', 'text', "ព្រះគ្រូ សុខ សុភក្ត្រា");
+    
+    function cmToPx(cm) { return cm * 37.8; }
+    
     return `
-        <div class="student-id-card">
-            <!-- Background Watermark -->
-            <div class="watermark-bg">
-                ${getWatermarkLogo()}
+        <div class="student-id-card" style="width: ${cardWidthPx}px; height: ${cardHeightPx}px; background: ${cardBgColor}; border: ${cardBorderWidth}px solid ${cardBorderColor}; border-radius: 4px; padding: 8px 10px; font-family: ${fontFamily}; position: relative; overflow: visible; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            
+            <!-- Watermark -->
+            ${getWatermarkLogo()}
+            
+            <!-- Logo -->
+            ${getSchoolLogo()}
+            
+            <!-- Royal Text -->
+            ${royalTextVisible ? `<div style="position: absolute; left: ${cmToPx(royalTextX)}px; top: ${cmToPx(royalTextY)}px; text-align: right; font-family: ${fontFamily}; font-size: ${cmToPx(royalTextFontSize)}px; color: ${royalTextColor}; z-index: 1;">
+                <div>ព្រះរាជាណាចក្រកម្ពុជា</div>
+                <div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
+            </div>` : ''}
+            
+            <!-- Ministry Text -->
+            ${ministryTextVisible ? `<div style="position: absolute; left: ${cmToPx(ministryTextX)}px; top: ${cmToPx(ministryTextY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(ministryTextFontSize)}px; line-height: 1.3; color: ${ministryTextColor}; z-index: 1;">
+                <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
+                <div>មន្ទីរអប់រំ យុវជន និងកីឡា ភ្នំពេញ</div>
+                <div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div>
+            </div>` : ''}
+            
+            <!-- QR Code -->
+            ${qrCodeVisible ? `<div style="position: absolute; left: ${cmToPx(qrCodeX)}px; top: ${cmToPx(qrCodeY)}px; width: ${cmToPx(qrCodeSize)}px; height: ${cmToPx(qrCodeSize)}px; z-index: 1;">
+                ${generateQRCode(studentID, cmToPx(qrCodeSize), royalTextColor)}
+            </div>` : ''}
+            
+            <!-- Title -->
+            ${titleTextVisible ? `<div style="position: absolute; left: ${cmToPx(titleTextX)}px; top: ${cmToPx(titleTextY)}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${cmToPx(titleTextFontSize)}px; font-weight: bold; color: ${titleTextColor}; z-index: 1;">
+                <div>បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
+            </div>` : ''}
+            
+            <!-- Subtitle -->
+            ${subtitleTextVisible ? `<div style="position: absolute; left: ${cmToPx(subtitleTextX)}px; top: ${cmToPx(subtitleTextY)}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${cmToPx(subtitleTextFontSize)}px; color: ${subtitleTextColor}; z-index: 1;">
+                <div>ឆ្នាំសិក្សា ២០២៥-២០២៦</div>
+            </div>` : ''}
+            
+            <!-- Student Photo -->
+            <div style="position: absolute; left: ${cmToPx(getElementConfig('studentPhoto', 'x', 0.3))}px; top: ${cmToPx(getElementConfig('studentPhoto', 'y', 5.8))}px; width: ${cmToPx(getElementConfig('studentPhoto', 'width', 2.0))}px; height: ${cmToPx(getElementConfig('studentPhoto', 'height', 2.5))}px; border: 1px solid ${cardBorderColor}; border-radius: 3px; background: #e5e7eb; overflow: visible; z-index: 1;">
+                ${getPhotoHTML(data.photo)}
             </div>
             
-            <!-- Header: Logo + Royal Text -->
-            <div class="card-header">
-                <div class="logo-area">
-                    ${getSchoolLogo()}
-                </div>
-                <div class="royal-text">
-                    <div class="royal-line-1">ព្រះរាជាណាចក្រកម្ពុជា</div>
-                    <div class="royal-line-2">ជាតិ សាសនា ព្រះមហាក្សត្រ</div>
-                </div>
-            </div>
+            <!-- Student Info -->
+            ${studentInfoVisible ? `<div style="position: absolute; left: ${cmToPx(studentInfoX)}px; top: ${cmToPx(studentInfoY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(studentInfoFontSize)}px; line-height: 1.4; z-index: 1;">
+                <div><span style="color: ${studentInfoLabelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.name) || '___________________'}</span>
+                <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ភេទ:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.sex) || '_____'}</span></span></div>
+                <div><span style="color: ${studentInfoLabelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color: ${studentInfoValueColor};">${birthDate}</span>
+                <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ថ្នាក់:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.class) || '_____'}</span></span></div>
+                <div><span style="color: ${studentInfoLabelColor};">ទីកន្លែងកំណើត:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.address) || '_____________________________'}</span></div>
+                <div><span style="color: ${studentInfoLabelColor};">លេខទូរស័ព្ទ:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.phonenumber) || '_______________'}</span>
+                <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ឈ្មោះឪពុក:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.fathername) || '_____________'}</span></span></div>
+                <div><span style="color: ${studentInfoLabelColor};">អត្តលេខ:</span> <span style="color: ${studentInfoValueColor};">${studentID}</span>
+                <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ឈ្មោះម្តាយ:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.mothername) || '_____________'}</span></span></div>
+            </div>` : ''}
             
-            <!-- Ministry & School Section -->
-            <div class="ministry-section">
-                <div class="ministry-text">
-                    <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                    <div>មន្ទីរក្រសួងអប់រំ យុវជន និងកីឡា</div>
-                    <div class="school-name-card">វិទ្យាល័យកំរៀង</div>
-                </div>
-                <div class="qr-area">
-                    ${generateQRCode(studentID)}
-                </div>
-            </div>
+            <!-- Date Text -->
+            ${dateTextVisible ? `<div style="position: absolute; left: ${cmToPx(dateTextX)}px; top: ${cmToPx(dateTextY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(dateTextFontSize)}px; color: ${dateTextColor}; z-index: 1;">${dateTextContent}</div>` : ''}
             
-            <!-- Title Section -->
-            <div class="title-section-card">
-                <div class="card-title-text">បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
-                <div class="academic-year-card">ឆ្នាំសិក្សា ២០២៥-២០២៦</div>
-            </div>
+            <!-- School Location Text -->
+            ${schoolLocationVisible ? `<div style="position: absolute; left: ${cmToPx(schoolLocationX)}px; top: ${cmToPx(schoolLocationY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(schoolLocationFontSize)}px; color: ${schoolLocationColor}; z-index: 1;">${schoolLocationContent}</div>` : ''}
             
-            <!-- Student Information Grid -->
-            <div class="info-grid">
-                <div class="info-row-grid">
-                    <span class="info-label-grid">គោត្តនាម និងនាម</span>
-                    <span class="info-value-grid">${escapeHtml(data.name) || '___________________'}</span>
-                    <span class="info-label-grid">ភេទ</span>
-                    <span class="info-value-grid">${escapeHtml(data.sex) || '_____'}</span>
-                </div>
-                <div class="info-row-grid">
-                    <span class="info-label-grid">ថ្ងៃខែឆ្នាំកំណើត</span>
-                    <span class="info-value-grid" colspan="3">${birthDate}</span>
-                </div>
-                <div class="info-row-grid">
-                    <span class="info-label-grid">ទីកន្លែងកំណើត</span>
-                    <span class="info-value-grid" colspan="3">${escapeHtml(data.address) || '_____________________________'}</span>
-                </div>
-                <div class="info-row-grid">
-                    <span class="info-label-grid">លេខទូរស័ព្ទសាលា</span>
-                    <span class="info-value-grid">${escapeHtml(data.phonenumber) || '_______________'}</span>
-                    <span class="info-label-grid">ឈ្មោះឪពុក</span>
-                    <span class="info-value-grid">${escapeHtml(data.fathername) || '_____________'}</span>
-                </div>
-                <div class="info-row-grid">
-                    <span class="info-label-grid"></span>
-                    <span class="info-value-grid"></span>
-                    <span class="info-label-grid">ឈ្មោះម្តាយ</span>
-                    <span class="info-value-grid">${escapeHtml(data.mothername) || '_____________'}</span>
-                </div>
-                <div class="info-row-grid">
-                    <span class="info-label-grid">អត្តលេខ</span>
-                    <span class="info-value-grid" colspan="3">${studentID}</span>
-                </div>
-            </div>
+            <!-- Signature -->
+            ${getSignatureImage()}
             
-            <!-- Bottom Section: Photo + Date & Signature -->
-            <div class="bottom-section-card">
-                <div class="photo-section">
-                    <div class="photo-frame-card">
-                        ${getPhotoHTML(data.photo)}
-                    </div>
-                </div>
-                <div class="info-section-card">
-                    <div class="date-text">
-                        ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩
-                    </div>
-                    <div class="school-detail-text">
-                        វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥
-                    </div>
-                    <div class="principal-section">
-                        <div class="principal-title">នាយកវិទ្យាល័យ</div>
-                        <div class="signature-image">${getSignatureImage()}</div>
-                    </div>
-                </div>
-            </div>
+            <!-- Principal Text -->
+            ${principalTextVisible ? `<div style="position: absolute; left: ${cmToPx(principalTextX)}px; top: ${cmToPx(principalTextY)}px; font-family: ${fontFamily}; font-size: ${cmToPx(principalTextFontSize)}px; color: ${principalTextColor}; font-weight: bold; text-align: center; z-index: 1;">${principalTextContent}</div>` : ''}
+            
         </div>
     `;
 }
