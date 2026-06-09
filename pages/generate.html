@@ -8,29 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/card-style.css">
-    <!-- QR Code Library for high quality printing -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-<style>
-   ​
-    /* Ensure QR code images render properly in print */
-    img[alt="QR Code"] {
-        print-color-adjust: exact;
-        -webkit-print-color-adjust: exact;
-        forced-color-adjust: none;
-    }
-    
-    @media print {
-        img[alt="QR Code"] {
-            display: block !important;
-            visibility: visible !important;
-        }
-    }
-​
-        canvas {
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-        }
-​
+    <style>
         * {
             margin: 0;
             padding: 0;
@@ -48,7 +26,6 @@
             margin: 0 auto;
         }
         
-        /* Header Navigation */
         .nav-bar {
             background: white;
             border-radius: 12px;
@@ -74,7 +51,6 @@
             background: #f0f0f0;
         }
         
-        /* Main Panel */
         .main-panel {
             background: white;
             border-radius: 16px;
@@ -82,7 +58,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
-        /* Header Controls */
         .controls-header {
             display: flex;
             justify-content: space-between;
@@ -149,7 +124,6 @@
             transform: none;
         }
         
-        /* Cards Grid - Portrait Layout */
         .cards-grid {
             display: flex;
             flex-wrap: wrap;
@@ -160,7 +134,6 @@
             padding: 8px;
         }
         
-        /* Each card wrapper */
         .card-wrapper {
             position: relative;
             transition: all 0.3s ease;
@@ -195,7 +168,6 @@
             transform: scale(1.1);
         }
         
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -210,7 +182,6 @@
             opacity: 0.5;
         }
         
-        /* Modal */
         .modal {
             position: fixed;
             top: 0;
@@ -250,7 +221,6 @@
             color: #233D2E;
         }
         
-        /* Print Grid - 3 columns x 2 rows = 6 cards per page (Landscape) */
         .print-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -274,7 +244,6 @@
             display: none;
         }
         
-        /* Scrollbar */
         .cards-grid::-webkit-scrollbar {
             width: 8px;
         }
@@ -289,7 +258,6 @@
             border-radius: 4px;
         }
         
-        /* Info Box */
         .info-box {
             background: #f0fdf4;
             border: 1px solid #86efac;
@@ -313,11 +281,24 @@
             color: #92400e;
             text-align: center;
         }
+        
+        /* QR Code print fix */
+        img[alt="QR Code"] {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+            forced-color-adjust: none;
+        }
+        
+        @media print {
+            img[alt="QR Code"] {
+                display: block !important;
+                visibility: visible !important;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Navigation -->
         <div class="nav-bar">
             <div class="nav-links">
                 <a href="../index.html" style="color: #233D2E;">← ត្រឡប់ទៅមេនុយ</a>
@@ -328,7 +309,6 @@
             </div>
         </div>
         
-        <!-- Main Panel -->
         <div class="main-panel">
             <div class="controls-header">
                 <div class="title-section">
@@ -340,7 +320,6 @@
                 </div>
             </div>
             
-            <!-- Cards Grid - Portrait Cards (same as create.html) -->
             <div id="selectedStudentsList" class="cards-grid">
                 <div class="empty-state">
                     <svg fill="currentColor" viewBox="0 0 20 20">
@@ -351,7 +330,6 @@
                 </div>
             </div>
             
-            <!-- Info Box -->
             <div class="info-box">
                 <span>💡</span>
                 <span>កាតសិស្សមានទំហំ 6.5cm × 8.5cm (បញ្ឈរ)។ ពេលបោះពុម្ព កាតនឹងរៀបចំជា 3 ជួរ × 2 ជួរដេក = 6 កាតក្នុង 1 ទំព័រ A4 Landscape ។</span>
@@ -362,7 +340,6 @@
         </div>
     </div>
     
-    <!-- Modal for displaying all cards with 6-cards-per-page layout -->
     <div id="cardsModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -372,22 +349,14 @@
                     <button id="closeModalBtn" class="btn" style="background: #dc2626; color: white;">✖ បិទ</button>
                 </div>
             </div>
-            <div id="cardsContainer" class="print-grid">
-                <!-- Cards will be generated here in 3x2 grid -->
-            </div>
+            <div id="cardsContainer" class="print-grid"></div>
         </div>
     </div>
     
     <script src="../js/card-template.js"></script>
     <script>
-        // ============================================
-        // GLOBAL VARIABLES
-        // ============================================
         let selectedStudents = [];
         
-        // ============================================
-        // LOAD SELECTED STUDENTS FROM LOCALSTORAGE
-        // ============================================
         function loadSelectedStudents() {
             const stored = localStorage.getItem('selectedStudents');
             if (stored) {
@@ -398,37 +367,20 @@
             }
         }
         
-        // ============================================
-        // DISPLAY SELECTED STUDENTS
-        // ============================================
         function displaySelectedStudents() {
             const container = document.getElementById('selectedStudentsList');
             const countSpan = document.getElementById('selectedCount');
             const generateBtn = document.getElementById('generateCardsBtn');
             
             if (!selectedStudents || selectedStudents.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <svg fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                        </svg>
-                        <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
-                        <p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="empty-state"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg><p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p><p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p></div>`;
                 if (countSpan) countSpan.innerHTML = '(0 នាក់)';
-                if (generateBtn) {
-                    generateBtn.innerHTML = '🖨️ បង្កើតកាតសិស្ស (0)';
-                    generateBtn.disabled = true;
-                }
+                if (generateBtn) { generateBtn.innerHTML = '🖨️ បង្កើតកាតសិស្ស (0)'; generateBtn.disabled = true; }
                 return;
             }
             
             if (countSpan) countSpan.innerHTML = `(${selectedStudents.length} នាក់)`;
-            if (generateBtn) {
-                generateBtn.innerHTML = `🖨️ បង្កើតកាតសិស្ស (${selectedStudents.length})`;
-                generateBtn.disabled = false;
-            }
+            if (generateBtn) { generateBtn.innerHTML = `🖨️ បង្កើតកាតសិស្ស (${selectedStudents.length})`; generateBtn.disabled = false; }
             
             container.innerHTML = selectedStudents.map(student => `
                 <div class="card-wrapper">
@@ -438,18 +390,12 @@
             `).join('');
         }
         
-        // ============================================
-        // REMOVE STUDENT
-        // ============================================
         window.removeStudent = (studentID) => {
             selectedStudents = selectedStudents.filter(s => s.studentID !== studentID);
             localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
             displaySelectedStudents();
         };
         
-        // ============================================
-        // CLEAR ALL STUDENTS
-        // ============================================
         document.getElementById('clearAllBtn')?.addEventListener('click', () => {
             if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
                 selectedStudents = [];
@@ -458,55 +404,44 @@
             }
         });
         
-        // ============================================
-        // SPLIT CARDS INTO PAGES (6 cards per page in 3x2 grid)
-        // ============================================
         function splitCardsIntoPages(cardsHTMLArray) {
             const pages = [];
             for (let i = 0; i < cardsHTMLArray.length; i += 6) {
                 const pageCards = cardsHTMLArray.slice(i, i + 6);
-                while (pageCards.length < 6) {
-                    pageCards.push('<div style="width:0;height:0;visibility:hidden;"></div>');
-                }
-                const pageHTML = `
-                    <div class="print-grid" style="page-break-after: always;">
-                        ${pageCards.map(card => `<div class="print-card-item">${card}</div>`).join('')}
-                    </div>
-                `;
-                pages.push(pageHTML);
+                while (pageCards.length < 6) pageCards.push('<div style="width:0;height:0;visibility:hidden;"></div>');
+                pages.push(`<div class="print-grid" style="page-break-after: always;">${pageCards.map(card => `<div class="print-card-item">${card}</div>`).join('')}</div>`);
             }
             return pages.join('');
         }
         
-        // ============================================
-        // GENERATE ALL CARDS (Modal preview)
-        // ============================================
         document.getElementById('generateCardsBtn')?.addEventListener('click', () => {
-            if (!selectedStudents || selectedStudents.length === 0) {
-                alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ');
-                return;
-            }
-            
+            if (!selectedStudents || selectedStudents.length === 0) { alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ'); return; }
             const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
-            const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
-            const modal = document.getElementById('cardsModal');
-            const container = document.getElementById('cardsContainer');
-            container.innerHTML = pagesHTML;
-            modal.classList.remove('hidden');
+            document.getElementById('cardsContainer').innerHTML = splitCardsIntoPages(cardsHTMLArray);
+            document.getElementById('cardsModal').classList.remove('hidden');
         });
         
         // ============================================
-        // PRINT ALL CARDS (6 per page, exact size 6.5cm x 8.5cm)
+        // PRINT FUNCTION - FIXED QR CODE
         // ============================================
-        document.getElementById('printAllCards')?.addEventListener('click', () => {
+        document.getElementById('printAllCards')?.addEventListener('click', async () => {
             if (!selectedStudents || selectedStudents.length === 0) {
                 alert('មិនមានសិស្សដើម្បីបោះពុម្ពទេ');
                 return;
             }
             
+            // Show loading message
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'printLoading';
+            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;';
+            loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំកាតសម្រាប់បោះពុម្ព... សូមរងចាាំ</div></div>';
+            document.body.appendChild(loadingDiv);
+            
+            // Generate all cards
             const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
             const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
             
+            // Create print window
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -518,80 +453,72 @@
                         <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
                         <link rel="stylesheet" href="../css/card-style.css">
                         <style>
-                            * {
-                                margin: 0;
-                                padding: 0;
-                                box-sizing: border-box;
-                            }
-                            body {
-                                background: white;
-                                margin: 0;
-                                padding: 0.2cm;
-                            }
-                            @page {
-                                size: A4 landscape;
-                                margin: 0.2cm;
-                            }
-                            /* 3x2 grid with exact card dimensions */
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { background: white; margin: 0; padding: 0.2cm; }
+                            @page { size: A4 landscape; margin: 0.2cm; }
                             .print-grid {
                                 display: grid;
                                 grid-template-columns: repeat(3, 6.5cm);
                                 grid-template-rows: repeat(2, 8.5cm);
-                                gap: 10px;
+                                gap: 6px;
                                 justify-content: center;
                                 align-items: center;
                                 page-break-after: always;
-                                margin-bottom: 10px;
+                                margin-bottom: 6px;
                             }
-                            .print-grid:last-child {
-                                page-break-after: auto;
-                            }
-                            .print-card-item {
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                width: 6.5cm;
-                                height: 8.5cm;
-                            }
-                            .student-id-card {
-                                width: 6.5cm !important;
-                                height: 8.5cm !important;
-                                margin: 0 !important;
-                                box-shadow: none !important;
-                                page-break-inside: avoid !important;
-                                break-inside: avoid !important;
-                            }
-                            .remove-card-btn {
-                                display: none !important;
-                            }
+                            .print-grid:last-child { page-break-after: auto; }
+                            .print-card-item { display: flex; justify-content: center; align-items: center; width: 6.5cm; height: 8.5cm; }
+                            .student-id-card { width: 6.5cm !important; height: 8.5cm !important; margin: 0 !important; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; }
+                            .remove-card-btn { display: none !important; }
+                            img { max-width: 100%; height: auto; }
+                            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
                             @media print {
-                                body {
-                                    background: white;
-                                    margin: 0;
-                                    padding: 0;
-                                }
-                                .print-grid {
-                                    break-inside: avoid;
-                                    page-break-after: always;
-                                }
-                                .student-id-card {
-                                    break-inside: avoid;
-                                }
+                                body { margin: 0; padding: 0; }
+                                .print-grid { break-inside: avoid; page-break-after: always; }
+                                .student-id-card { break-inside: avoid; }
+                                img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                             }
                         </style>
                     </head>
                     <body>
                         ${pagesHTML}
+                        <script>
+                            // Wait for all images to load before printing
+                            window.onload = function() {
+                                const images = document.querySelectorAll('img');
+                                let loadedCount = 0;
+                                if (images.length === 0) {
+                                    setTimeout(() => window.print(), 500);
+                                    return;
+                                }
+                                images.forEach(img => {
+                                    if (img.complete) {
+                                        loadedCount++;
+                                        if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                    } else {
+                                        img.addEventListener('load', () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                        });
+                                        img.addEventListener('error', () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                        });
+                                    }
+                                });
+                            };
+                        <\/script>
                     </body>
                 </html>
             `);
             printWindow.document.close();
-            printWindow.print();
+            
+            // Remove loading message after a short delay
+            setTimeout(() => {
+                if (loadingDiv) loadingDiv.remove();
+            }, 2000);
         });
         
-        // ============================================
-        // MODAL CONTROLS
-        // ============================================
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
             document.getElementById('cardsModal').classList.add('hidden');
         });
@@ -602,11 +529,8 @@
             }
         });
         
-        // ============================================
-        // INITIALIZE
-        // ============================================
         loadSelectedStudents();
-        console.log('✅ Generate page loaded - 6 cards per A4 landscape with exact 6.5x8.5cm size');
+        console.log('✅ Generate page loaded');
     </script>
 </body>
 </html>
