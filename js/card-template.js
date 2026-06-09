@@ -66,31 +66,34 @@ function escapeHtml(str) {
 
 function cmToPx(cm) { return cm * 37.8; }
 
+// ============================================
+// QR CODE GENERATION WITH LINK
+// ============================================
+
 function generateQRCode(studentID, size, color) {
     const qrSize = size || 45;
     const qrColor = color || "#233D2E";
-    return `<svg width="${qrSize}" height="${qrSize}" viewBox="0 0 100 100" fill="${qrColor}">
-                <rect x="10" y="10" width="8" height="8" fill="${qrColor}"/>
-                <rect x="26" y="10" width="8" height="8" fill="${qrColor}"/>
-                <rect x="42" y="10" width="8" height="8" fill="${qrColor}"/>
-                <rect x="58" y="10" width="8" height="8" fill="${qrColor}"/>
-                <rect x="74" y="10" width="8" height="8" fill="${qrColor}"/>
-                <rect x="10" y="26" width="8" height="8" fill="${qrColor}"/>
-                <rect x="42" y="26" width="8" height="8" fill="${qrColor}"/>
-                <rect x="74" y="26" width="8" height="8" fill="${qrColor}"/>
-                <rect x="10" y="42" width="8" height="8" fill="${qrColor}"/>
-                <rect x="26" y="42" width="8" height="8" fill="${qrColor}"/>
-                <rect x="42" y="42" width="8" height="8" fill="${qrColor}"/>
-                <rect x="58" y="42" width="8" height="8" fill="${qrColor}"/>
-                <rect x="74" y="42" width="8" height="8" fill="${qrColor}"/>
-                <rect x="26" y="58" width="8" height="8" fill="${qrColor}"/>
-                <rect x="42" y="58" width="8" height="8" fill="${qrColor}"/>
-                <rect x="74" y="58" width="8" height="8" fill="${qrColor}"/>
-                <rect x="10" y="74" width="8" height="8" fill="${qrColor}"/>
-                <rect x="42" y="74" width="8" height="8" fill="${qrColor}"/>
-                <rect x="58" y="74" width="8" height="8" fill="${qrColor}"/>
-                <rect x="74" y="74" width="8" height="8" fill="${qrColor}"/>
-            </svg>`;
+    
+    // Create the QR code URL with student ID
+    const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/digital-card.html?id=${encodeURIComponent(studentID)}`;
+    
+    // Using a free QR code API (quickchart.io) that generates QR codes from URLs
+    // This creates an actual scannable QR code that will navigate to the link
+    const qrCodeImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrCodeUrl)}&size=${qrSize}&dark=${qrColor.replace('#', '')}&light=ffffff`;
+    
+    return `<img src="${qrCodeImageUrl}" alt="QR Code" style="width:100%;height:100%;object-fit:contain;" />`;
+}
+
+// Alternative: Generate QR code using a different format (SVG fallback)
+function generateQRCodeSimple(studentID, size, color) {
+    const qrSize = size || 45;
+    const qrColor = color || "#233D2E";
+    const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/digital-card.html?id=${encodeURIComponent(studentID)}`;
+    
+    // Using google charts API as fallback
+    const qrCodeImageUrl = `https://chart.googleapis.com/chart?chs=${qrSize}x${qrSize}&cht=qr&chl=${encodeURIComponent(qrCodeUrl)}&choe=UTF-8`;
+    
+    return `<img src="${qrCodeImageUrl}" alt="QR Code" style="width:100%;height:100%;object-fit:contain;" />`;
 }
 
 // ============================================
