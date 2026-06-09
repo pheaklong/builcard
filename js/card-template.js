@@ -85,7 +85,7 @@ function generateQRCode(studentID, size, color) {
                  style="width:100%; height:auto; image-rendering:crisp-edges;"
                  loading="eager"
                  onerror="this.style.display='none'; this.parentElement.innerHTML+='<div style=\\'color:#999;font-size:9px;text-align:center;\\'>QR</div>'">
-            <div style="font-size:${Math.max(7, size/12)}px; color:#666; margin-top:4px; text-align:center; font-family:'Khmer',sans-serif;">ស្កេនកាត</div>
+            
         </div>
     `;
 }
