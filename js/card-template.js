@@ -67,33 +67,55 @@ function escapeHtml(str) {
 function cmToPx(cm) { return cm * 37.8; }
 
 // ============================================
-// QR CODE GENERATION WITH LINK
+// QR CODE GENERATION WITH LINK AND DEBUGGING
 // ============================================
 
 function generateQRCode(studentID, size, color) {
+    console.log('=== QR CODE GENERATION START ===');
+    console.log('Student ID:', studentID);
+    console.log('QR Size:', size);
+    console.log('QR Color:', color);
+    
     const qrSize = size || 45;
     const qrColor = color || "#233D2E";
     
     // Create the QR code URL with student ID
     const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/digital-card.html?id=${encodeURIComponent(studentID)}`;
+    console.log('QR Code URL:', qrCodeUrl);
+    
+    // Check if studentID is valid
+    if (!studentID || studentID === '_________') {
+        console.warn('⚠️ Warning: Student ID is empty or default value!');
+    }
     
     // Using a free QR code API (quickchart.io) that generates QR codes from URLs
-    // This creates an actual scannable QR code that will navigate to the link
     const qrCodeImageUrl = `https://quickchart.io/qr?text=${encodeURIComponent(qrCodeUrl)}&size=${qrSize}&dark=${qrColor.replace('#', '')}&light=ffffff`;
+    console.log('QR Code Image URL:', qrCodeImageUrl);
     
-    return `<img src="${qrCodeImageUrl}" alt="QR Code" style="width:100%;height:100%;object-fit:contain;" />`;
+    // Test if the QR code API is accessible
+    fetch(qrCodeImageUrl, { method: 'HEAD', mode: 'no-cors' })
+        .then(() => console.log('✅ QR Code API is accessible'))
+        .catch(err => console.error('❌ QR Code API error:', err));
+    
+    const qrHtml = `<img src="${qrCodeImageUrl}" alt="QR Code" style="width:100%;height:100%;object-fit:contain;" onerror="console.error('❌ Failed to load QR code image for student:', '${studentID}'); this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%23f0f0f0\\'/%3E%3Ctext x=\\'50\\' y=\\'50\\' text-anchor=\\'middle\\' dy=\\'.3em\\' fill=\\'%23999\\' font-size=\\'12\\'%3EQR Error%3C/text%3E%3C/svg%3E';" onload="console.log('✅ QR Code loaded successfully for student:', '${studentID}')" />`;
+    
+    console.log('QR Code HTML generated successfully');
+    console.log('=== QR CODE GENERATION END ===');
+    
+    return qrHtml;
 }
 
-// Alternative: Generate QR code using a different format (SVG fallback)
-function generateQRCodeSimple(studentID, size, color) {
+// Alternative: Generate QR code using Google Charts API
+function generateQRCodeGoogle(studentID, size, color) {
+    console.log('🔄 Using Google Charts API for QR code');
     const qrSize = size || 45;
-    const qrColor = color || "#233D2E";
     const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/digital-card.html?id=${encodeURIComponent(studentID)}`;
-    
-    // Using google charts API as fallback
     const qrCodeImageUrl = `https://chart.googleapis.com/chart?chs=${qrSize}x${qrSize}&cht=qr&chl=${encodeURIComponent(qrCodeUrl)}&choe=UTF-8`;
+    console.log('Google QR URL:', qrCodeImageUrl);
     
-    return `<img src="${qrCodeImageUrl}" alt="QR Code" style="width:100%;height:100%;object-fit:contain;" />`;
+    return `<img src="${qrCodeImageUrl}" alt="QR Code" style="width:100%;height:100%;object-fit:contain;" 
+            onerror="console.error('❌ Google QR failed for student:', '${studentID}');" 
+            onload="console.log('✅ Google QR loaded for student:', '${studentID}');" />`;
 }
 
 // ============================================
@@ -110,9 +132,11 @@ function getStampElement() {
     const stampHeight = getElementConfig('stamp', 'height', 1.6);
     const stampOpacity = getElementConfig('stamp', 'opacity', 0.85);
     
+    console.log('📌 Adding stamp element at position:', stampX, stampY);
+    
     return `
         <div style="position: absolute; left: ${cmToPx(stampX)}px; top: ${cmToPx(stampY)}px; width: ${cmToPx(stampWidth)}px; height: ${cmToPx(stampHeight)}px; opacity: ${stampOpacity}; z-index: 20; pointer-events: none;">
-            <img src="../tra.png" alt="ត្រា" style="width:100%;height:100%;object-fit:contain;">
+            <img src="../tra.png" alt="ត្រា" style="width:100%;height:100%;object-fit:contain;" onerror="console.warn('⚠️ Stamp image not found: ../tra.png')">
         </div>
     `;
 }
@@ -126,7 +150,7 @@ function getPhotoHTML(photoData) {
     if (!studentPhotoVisible) return '';
     
     const photoHtml = (photoData && photoData !== 'null' && photoData !== '') 
-        ? `<img src="${photoData}" alt="Student Photo" style="width:100%;height:100%;object-fit:cover;display:block;">`
+        ? `<img src="${photoData}" alt="Student Photo" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="console.warn('⚠️ Student photo not found:', '${photoData}')">`
         : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -152,7 +176,7 @@ function getSchoolLogo() {
     
     return `
         <div style="position: absolute; left: ${cmToPx(logoX)}px; top: ${cmToPx(logoY)}px; width: ${cmToPx(logoWidth)}px; height: ${cmToPx(logoHeight)}px; z-index: 1;">
-            <img src="../logomoeys.png" alt="School Logo" style="width:100%;height:100%;object-fit:contain;">
+            <img src="../logomoeys.png" alt="School Logo" style="width:100%;height:100%;object-fit:contain;" onerror="console.warn('⚠️ School logo not found: ../logomoeys.png')">
         </div>
     `;
 }
@@ -174,7 +198,7 @@ function getSignatureImage() {
         <div style="position: absolute; left: ${cmToPx(signatureX)}px; top: ${cmToPx(signatureY)}px; width: ${cmToPx(signatureWidth)}px; text-align: center; z-index: 1;">
             <div style="font-size: ${cmToPx(0.2)}px; font-weight: bold; color: #233D2E;">នាយកវិទ្យាល័យ</div>
             <div style="margin-top: 2px;">
-                <img src="../Signature.png" alt="Signature" style="width:100%;height:auto;max-height:${cmToPx(signatureHeight)}px;object-fit:contain;">
+                <img src="../Signature.png" alt="Signature" style="width:100%;height:auto;max-height:${cmToPx(signatureHeight)}px;object-fit:contain;" onerror="console.warn('⚠️ Signature image not found: ../Signature.png')">
             </div>
         </div>
     `;
@@ -196,7 +220,7 @@ function getWatermarkLogo() {
     
     return `
         <div style="position: absolute; left: ${cmToPx(watermarkX)}px; top: ${cmToPx(watermarkY)}px; width: ${cmToPx(watermarkWidth)}px; height: ${cmToPx(watermarkHeight)}px; opacity: ${watermarkOpacity}; pointer-events: none; z-index: 0;">
-            <img src="../logomoeys.png" alt="Watermark" style="width:100%;height:100%;object-fit:contain;">
+            <img src="../logomoeys.png" alt="Watermark" style="width:100%;height:100%;object-fit:contain;" onerror="console.warn('⚠️ Watermark image not found')">
         </div>
     `;
 }
@@ -206,6 +230,9 @@ function getWatermarkLogo() {
 // ============================================
 
 function generateCardHTML(data) {
+    console.log('🃏 Generating card for student:', data.name || 'Unknown');
+    console.log('Student data received:', data);
+    
     const cardWidthCm = getCardWidthCm();
     const cardHeightCm = getCardHeightCm();
     const fontFamily = getGlobalFontFamily();
@@ -216,7 +243,13 @@ function generateCardHTML(data) {
     const studentID = data.studentID || '_________';
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : '____/____/______';
     
+    console.log('Card dimensions:', cardWidthCm, 'cm x', cardHeightCm, 'cm');
+    console.log('Student ID for QR:', studentID);
+    
     // Get element configurations
+    const qrCodeVisible = getElementConfig('qrCode', 'visible', true);
+    console.log('QR Code visibility:', qrCodeVisible);
+    
     const royalTextVisible = getElementConfig('royalText', 'visible', true);
     const royalTextX = getElementConfig('royalText', 'x', 4.2);
     const royalTextY = getElementConfig('royalText', 'y', 0.4);
@@ -229,7 +262,6 @@ function generateCardHTML(data) {
     const ministryTextFontSize = getElementConfig('ministryText', 'fontSize', 0.2);
     const ministryTextColor = getElementConfig('ministryText', 'color', "#233D2E");
     
-    const qrCodeVisible = getElementConfig('qrCode', 'visible', true);
     const qrCodeX = getElementConfig('qrCode', 'x', 5.5);
     const qrCodeY = getElementConfig('qrCode', 'y', 1.3);
     const qrCodeSize = getElementConfig('qrCode', 'size', 1.1);
@@ -280,7 +312,10 @@ function generateCardHTML(data) {
     const principalTextColor = getElementConfig('principalText', 'color', "#D50000");
     const principalTextContent = getElementConfig('principalText', 'text', "ព្រះគ្រូ សុខ សុភក្ត្រា");
     
-    return `
+    const qrCodeHTML = qrCodeVisible ? generateQRCode(studentID, cmToPx(qrCodeSize), royalTextColor) : '';
+    console.log('QR Code HTML length:', qrCodeHTML.length);
+    
+    const finalHTML = `
         <div class="student-id-card" style="width: ${cmToPx(cardWidthCm)}px; height: ${cmToPx(cardHeightCm)}px; background: ${cardBgColor}; border: ${cardBorderWidth}px solid ${cardBorderColor}; border-radius: 4px; padding: 8px 10px; font-family: ${fontFamily}; position: relative; overflow: visible; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             
             ${getWatermarkLogo()}
@@ -298,9 +333,9 @@ function generateCardHTML(data) {
                 <div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div>
             </div>` : ''}
             
-            ${qrCodeVisible ? `<div style="position: absolute; left: ${cmToPx(qrCodeX)}px; top: ${cmToPx(qrCodeY)}px; width: ${cmToPx(qrCodeSize)}px; height: ${cmToPx(qrCodeSize)}px; z-index: 1;">
-                ${generateQRCode(studentID, cmToPx(qrCodeSize), royalTextColor)}
-            </div>` : ''}
+            ${qrCodeVisible ? `<div style="position: absolute; left: ${cmToPx(qrCodeX)}px; top: ${cmToPx(qrCodeY)}px; width: ${cmToPx(qrCodeSize)}px; height: ${cmToPx(qrCodeSize)}px; z-index: 1; background: white; border-radius: 4px; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                ${qrCodeHTML}
+            </div>` : '<div style="display:none;">QR Code disabled</div>'}
             
             ${titleTextVisible ? `<div style="position: absolute; left: ${cmToPx(titleTextX)}px; top: ${cmToPx(titleTextY)}px; transform: translateX(-50%); text-align: center; font-family: ${fontFamily}; font-size: ${cmToPx(titleTextFontSize)}px; font-weight: bold; color: ${titleTextColor}; z-index: 1;">
                 <div>បណ្ណសម្គាល់ខ្លួនសិស្ស</div>
@@ -336,8 +371,34 @@ function generateCardHTML(data) {
             
         </div>
     `;
+    
+    console.log('✅ Card HTML generated successfully');
+    console.log('Card contains QR Code:', finalHTML.includes('quickchart.io') || finalHTML.includes('chart.googleapis.com'));
+    
+    return finalHTML;
 }
 
 function generateSmallCardHTML(student) {
+    console.log('🃏 Generating small card for student:', student.name || 'Unknown');
     return generateCardHTML(student);
 }
+
+// Export functions for debugging in console
+window.debugQRCode = {
+    test: function(studentId = 'TEST001') {
+        console.log('Testing QR code generation for ID:', studentId);
+        const qrHtml = generateQRCode(studentId, 100, '#233D2E');
+        console.log('QR HTML:', qrHtml);
+        return qrHtml;
+    },
+    checkConfig: function() {
+        console.log('Current config:', customCardConfig);
+        console.log('QR Code visible:', getElementConfig('qrCode', 'visible', true));
+        console.log('QR Code position:', {
+            x: getElementConfig('qrCode', 'x', 5.5),
+            y: getElementConfig('qrCode', 'y', 1.3),
+            size: getElementConfig('qrCode', 'size', 1.1)
+        });
+        return customCardConfig;
+    }
+};
