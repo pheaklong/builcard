@@ -162,7 +162,7 @@
                 dateText: { x: 2.5, y: 7.0, fontSize: 0.16, color: "#233D2E", text: "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩", visible: true },
                 schoolLocation: { x: 2.5, y: 7.35, fontSize: 0.16, color: "#233D2E", text: "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥", visible: true },
                 signature: { x: 4.5, y: 7.7, width: 2.2, height: 0.8, src: null, visible: true },
-                principalText: { x: 4.5, y: 7.5, fontSize: 0.18, color: "#D50000", text: "​", visible: true },
+                principalText: { x: 4.5, y: 7.5, fontSize: 0.18, color: "#D50000", text: "ព្រះគ្រូ សុខ សុភក្ត្រា", visible: true },
                 watermark: { x: 3.25, y: 4.25, width: 4.0, height: 4.0, src: null, opacity: 0.1, visible: true }
             }
         };
@@ -225,7 +225,7 @@
             if (cardConfig.elements.ministryText.visible) {
                 let m = cardConfig.elements.ministryText;
                 html += `<div style="position: absolute; left:${cmToPx(m.x)}px; top:${cmToPx(m.y)}px; font-family:${fontFamily}; font-size:${cmToPx(m.fontSize)}px; line-height:1.3; color:${m.color}; z-index:1;">
-                            <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div><div>មន្ទីរអប់រំ យុវជន និងកីឡាខេត្តបាត់ដំបង</div>
+                            <div>ក្រសួងអប់រំ យុវជន និងកីឡា</div><div>មន្ទីរអប់រំ យុវជន និងកីឡា ភ្នំពេញ</div>
                             <div style="font-weight:bold; margin-top:2px;">វិទ្យាល័យកំរៀង</div>
                         </div>`;
             }
@@ -438,16 +438,97 @@
         document.getElementById('cardHeightCm').addEventListener('change', (e) => { cardConfig.cardHeightCm = parseFloat(e.target.value); renderCard(); });
         document.getElementById('globalFontFamily').addEventListener('change', (e) => { cardConfig.globalFontFamily = e.target.value; renderCard(); });
         
-        function exportConfig() { let data = JSON.stringify({ cardConfig, customImages }, null, 2); let blob = new Blob([data], {type:'application/json'}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'card-config.json'; a.click(); URL.revokeObjectURL(blob); }
-        function importConfig(file) { let r = new FileReader(); r.onload = (e) => { try { let c = JSON.parse(e.target.result); cardConfig = c.cardConfig; customImages = c.customImages || {}; document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm; document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm; document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily; renderCard(); alert('✅ បានផ្ទុកដោយជោគជ័យ!'); } catch(err) { alert('❌ កំហុសឯកសារ'); } }; r.readAsText(file); }
-        function applyToSystem() { localStorage.setItem('cardSystemConfig', JSON.stringify({ cardConfig, customImages })); alert('✅ បានរក្សាទុកទៅប្រព័ន្ធ!'); }
-        async function downloadPreview() { let card = document.querySelector('#cardPreviewContainer > div'); if(!card){ alert('គ្មានកាត'); return; } let canvas = await html2canvas(card, { scale: 3, backgroundColor: null }); let a = document.createElement('a'); a.download = 'student-card.png'; a.href = canvas.toDataURL(); a.click(); }
+        // ============================================
+        // EXPORT, IMPORT & APPLY FUNCTIONS (Fixed QuotaExceededError)
+        // ============================================
+        
+        function exportConfig() { 
+            // Export all including images
+            let dataToSave = { 
+                cardConfig: cardConfig, 
+                customImages: customImages 
+            };
+            let data = JSON.stringify(dataToSave, null, 2); 
+            let blob = new Blob([data], {type:'application/json'}); 
+            let a = document.createElement('a'); 
+            a.href = URL.createObjectURL(blob); 
+            a.download = 'card-config-full.json'; 
+            a.click(); 
+            URL.revokeObjectURL(blob); 
+            alert('✅ បានទាញយក Config រួមទាំងរូបភាព!');
+        }
+        
+        function importConfig(file) { 
+            let r = new FileReader(); 
+            r.onload = (e) => { 
+                try { 
+                    let c = JSON.parse(e.target.result); 
+                    cardConfig = c.cardConfig; 
+                    customImages = c.customImages || {}; 
+                    // Update UI
+                    document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm; 
+                    document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm; 
+                    document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily; 
+                    renderCard(); 
+                    alert('✅ បានផ្ទុកដោយជោគជ័យ!'); 
+                } catch(err) { 
+                    alert('❌ កំហុសឯកសារ: ' + err.message); 
+                } 
+            }; 
+            r.readAsText(file); 
+        }
+        
+        function applyToSystem() { 
+            try {
+                // Save only config without large images to avoid quota error
+                const configToSave = {
+                    cardConfig: cardConfig
+                };
+                localStorage.setItem('cardSystemConfig', JSON.stringify(configToSave));
+                alert('✅ បានរក្សាទុកការកំណត់ទៅប្រព័ន្ធ! (រូបភាពត្រូវការដាក់ថ្មី)');
+            } catch(e) {
+                if (e.name === 'QuotaExceededError') {
+                    alert('⚠️ localStorage ពេញ! សូមសម្អាត cache ឬទាញយក Config ជា file វិញ');
+                } else {
+                    alert('❌ កំហុស: ' + e.message);
+                }
+            }
+        }
+        
+        async function downloadPreview() { 
+            let card = document.querySelector('#cardPreviewContainer > div'); 
+            if(!card){ 
+                alert('គ្មានកាត'); 
+                return; 
+            } 
+            try {
+                let canvas = await html2canvas(card, { scale: 3, backgroundColor: null }); 
+                let a = document.createElement('a'); 
+                a.download = 'student-card.png'; 
+                a.href = canvas.toDataURL(); 
+                a.click(); 
+                alert('✅ បានទាញយកដោយជោគជ័យ!');
+            } catch(e) {
+                alert('កំហុស: ' + e.message);
+            }
+        }
         
         document.getElementById('exportConfigBtn').addEventListener('click', exportConfig);
         document.getElementById('importConfigTrigger').addEventListener('click', () => document.getElementById('importConfigBtn').click());
         document.getElementById('importConfigBtn').addEventListener('change', (e) => { if(e.target.files[0]) importConfig(e.target.files[0]); });
         document.getElementById('applyToSystemBtn').addEventListener('click', applyToSystem);
         document.getElementById('downloadPreviewBtn').addEventListener('click', downloadPreview);
+        
+        // Clean up old large data from localStorage on page load
+        try {
+            const saved = localStorage.getItem('cardSystemConfig');
+            if (saved && saved.length > 5000000) { // If larger than ~5MB
+                localStorage.removeItem('cardSystemConfig');
+                console.log('Cleared large localStorage data');
+            }
+        } catch(e) {
+            console.log('Storage check failed');
+        }
         
         renderCard();
     </script>
