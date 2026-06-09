@@ -11,6 +11,21 @@
     <!-- QR Code Library for high quality printing -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
 <style>
+   ​
+    /* Ensure QR code images render properly in print */
+    img[alt="QR Code"] {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        forced-color-adjust: none;
+    }
+    
+    @media print {
+        img[alt="QR Code"] {
+            display: block !important;
+            visibility: visible !important;
+        }
+    }
+​
         canvas {
             image-rendering: crisp-edges;
             image-rendering: pixelated;
