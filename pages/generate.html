@@ -22,34 +22,15 @@
             padding: 10px;
         }
         
-        /* Mobile optimizations */
         @media (max-width: 768px) {
-            body {
-                padding: 8px;
-            }
-            .main-panel {
-                padding: 16px !important;
-            }
-            .cards-grid {
-                gap: 12px !important;
-                max-height: 70vh !important;
-            }
-            .btn {
-                padding: 10px 16px !important;
-                font-size: 13px !important;
-            }
-            .title-section h2 {
-                font-size: 18px !important;
-            }
-            .controls-header {
-                gap: 12px !important;
-            }
+            body { padding: 8px; }
+            .main-panel { padding: 16px !important; }
+            .cards-grid { gap: 12px !important; max-height: 70vh !important; }
+            .btn { padding: 10px 16px !important; font-size: 13px !important; }
+            .title-section h2 { font-size: 18px !important; }
         }
         
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1400px; margin: 0 auto; }
         
         .nav-bar {
             background: white;
@@ -68,15 +49,11 @@
             text-decoration: none;
             padding: 8px 12px;
             border-radius: 8px;
-            transition: all 0.2s ease;
             font-family: 'Khmer', sans-serif;
             display: inline-block;
         }
         
-        .nav-links a:active {
-            background: #e0e0e0;
-            transform: scale(0.98);
-        }
+        .nav-links a:active { background: #e0e0e0; transform: scale(0.98); }
         
         .main-panel {
             background: white;
@@ -108,11 +85,7 @@
             margin-left: 6px;
         }
         
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
         
         .btn {
             padding: 8px 16px;
@@ -121,30 +94,14 @@
             font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
             font-family: 'Khmer', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
         
-        .btn:active {
-            transform: scale(0.97);
-        }
-        
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        
-        .btn-primary {
-            background: #10b981;
-            color: white;
-        }
-        
-        .btn-primary:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn:active { transform: scale(0.97); }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-primary { background: #10b981; color: white; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
         
         .cards-grid {
             display: flex;
@@ -163,9 +120,7 @@
             cursor: pointer;
         }
         
-        .card-wrapper:active {
-            transform: scale(0.99);
-        }
+        .card-wrapper:active { transform: scale(0.99); }
         
         .remove-card-btn {
             position: absolute;
@@ -181,17 +136,13 @@
             font-weight: bold;
             cursor: pointer;
             z-index: 10;
-            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             -webkit-tap-highlight-color: transparent;
         }
         
-        .remove-card-btn:active {
-            background: #b91c1c;
-            transform: scale(1.05);
-        }
+        .remove-card-btn:active { background: #b91c1c; transform: scale(1.05); }
         
         .empty-state {
             text-align: center;
@@ -200,12 +151,7 @@
             width: 100%;
         }
         
-        .empty-state svg {
-            width: 60px;
-            height: 60px;
-            margin-bottom: 12px;
-            opacity: 0.5;
-        }
+        .empty-state svg { width: 60px; height: 60px; margin-bottom: 12px; opacity: 0.5; }
         
         .modal {
             position: fixed;
@@ -269,23 +215,11 @@
             width: 100%;
         }
         
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
         
-        .cards-grid::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .cards-grid::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        
-        .cards-grid::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
+        .cards-grid::-webkit-scrollbar { width: 6px; }
+        .cards-grid::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .cards-grid::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         
         .info-box {
             background: #f0fdf4;
@@ -318,10 +252,7 @@
         }
         
         @media print {
-            img[alt="QR Code"] {
-                display: block !important;
-                visibility: visible !important;
-            }
+            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
             .nav-bar, .controls-header, .action-buttons, .info-box, .remove-card-btn, 
             .btn, #clearAllBtn, #generateCardsBtn, .no-print, .print-size-hint, .modal-header {
                 display: none !important;
@@ -345,9 +276,7 @@
                 <a href="../index.html" style="color: #233D2E;">← ត្រឡប់</a>
                 <a href="search.html" style="color: #304FFE; margin-left: 12px;">← ស្វែងរក</a>
             </div>
-            <div>
-                <span style="color: #233D2E; font-size: 13px; font-family: 'Khmer', sans-serif;">បង្កើតកាត</span>
-            </div>
+            <div><span style="color: #233D2E; font-size: 13px;">បង្កើតកាត</span></div>
         </div>
         
         <div class="main-panel">
@@ -363,9 +292,7 @@
             
             <div id="selectedStudentsList" class="cards-grid">
                 <div class="empty-state">
-                    <svg fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                    </svg>
+                    <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
                     <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
                     <p style="font-size: 12px; margin-top: 6px;">សូមចូលទៅ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a></p>
                 </div>
@@ -401,9 +328,7 @@
                 try {
                     selectedStudents = JSON.parse(stored);
                     displaySelectedStudents();
-                } catch(e) {
-                    console.error('Error parsing selected students:', e);
-                }
+                } catch(e) { console.error('Error parsing:', e); }
             } else {
                 displaySelectedStudents();
             }
@@ -447,22 +372,13 @@
             }
         });
         
-        // Touch event support
-        document.getElementById('clearAllBtn')?.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
-                selectedStudents = [];
-                localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
-                displaySelectedStudents();
-            }
-        });
-        
+        // Split cards into pages - 6 cards per page with correct structure
         function splitCardsIntoPages(cardsHTMLArray) {
             const pages = [];
             for (let i = 0; i < cardsHTMLArray.length; i += 6) {
                 const pageCards = cardsHTMLArray.slice(i, i + 6);
                 while (pageCards.length < 6) pageCards.push('<div style="width:0;height:0;visibility:hidden;"></div>');
-                pages.push(`<div class="print-grid" style="page-break-after: always;">${pageCards.map(card => `<div class="print-card-item">${card}</div>`).join('')}</div>`);
+                pages.push(`<div class="print-page">${pageCards.map(card => `<div class="print-card">${card}</div>`).join('')}</div>`);
             }
             return pages.join('');
         }
@@ -478,19 +394,7 @@
             document.getElementById('cardsModal').classList.remove('hidden');
         });
         
-        // Touch event for generate button
-        document.getElementById('generateCardsBtn')?.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!selectedStudents || selectedStudents.length === 0) { 
-                alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ'); 
-                return; 
-            }
-            const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
-            document.getElementById('cardsContainer').innerHTML = splitCardsIntoPages(cardsHTMLArray);
-            document.getElementById('cardsModal').classList.remove('hidden');
-        });
-        
-        // PRINT FUNCTION
+        // PRINT FUNCTION with correct card size
         document.getElementById('printAllCards')?.addEventListener('click', async (e) => {
             e.preventDefault();
             if (!selectedStudents || selectedStudents.length === 0) {
@@ -519,9 +423,16 @@
                         <link rel="stylesheet" href="../css/card-style.css">
                         <style>
                             * { margin: 0; padding: 0; box-sizing: border-box; }
-                            body { background: white; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
-                            @page { size: A4 landscape; margin: 0cm; }
-                            .print-grid {
+                            body { background: white; margin: 0; padding: 0; }
+                            @page { size: A4 landscape; margin: 0.2cm; }
+                            .print-page {
+                                display: block;
+                                page-break-after: always;
+                                margin: 0;
+                                padding: 0;
+                            }
+                            .print-page:last-child { page-break-after: auto; }
+                            .print-page {
                                 display: grid;
                                 grid-template-columns: repeat(3, 6.5cm);
                                 grid-template-rows: repeat(2, 8.5cm);
@@ -529,17 +440,32 @@
                                 justify-content: center;
                                 align-items: center;
                                 margin: 0 auto;
-                                page-break-after: always;
+                                width: fit-content;
                             }
-                            .print-grid:last-child { page-break-after: auto; }
-                            .print-card-item { display: flex; justify-content: center; align-items: center; width: 6.5cm; height: 8.5cm; }
-                            .student-id-card { width: 6.5cm !important; height: 8.5cm !important; margin: 0 !important; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; box-sizing: border-box; overflow: hidden; }
+                            .print-card {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                width: 6.5cm;
+                                height: 8.5cm;
+                            }
+                            .student-id-card {
+                                width: 6.5cm !important;
+                                height: 8.5cm !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                box-shadow: none !important;
+                                page-break-inside: avoid !important;
+                                break-inside: avoid !important;
+                                box-sizing: border-box;
+                                overflow: hidden;
+                            }
                             .remove-card-btn { display: none !important; }
                             img { max-width: 100%; height: auto; }
                             img[alt="QR Code"] { display: block !important; visibility: visible !important; }
                             @media print {
                                 body { margin: 0; padding: 0; }
-                                .print-grid { break-inside: avoid; page-break-after: always; margin: 0 auto; }
+                                .print-page { break-inside: avoid; page-break-after: always; }
                                 .student-id-card { break-inside: avoid; }
                                 img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                             }
@@ -573,103 +499,10 @@
                 </html>
             `);
             printWindow.document.close();
-            
-            setTimeout(() => { if (loadingDiv) loadingDiv.remove(); }, 2000);
-        });
-        
-        // Touch event for print button
-        document.getElementById('printAllCards')?.addEventListener('touchstart', async (e) => {
-            e.preventDefault();
-            if (!selectedStudents || selectedStudents.length === 0) {
-                alert('មិនមានសិស្សដើម្បីបោះពុម្ពទេ');
-                return;
-            }
-            
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'printLoading';
-            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;';
-            loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំ...</div></div>';
-            document.body.appendChild(loadingDiv);
-            
-            const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
-            const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
-            
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                    <head>
-                        <title>បោះពុម្ពកាតសិស្ស</title>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
-                        <link rel="stylesheet" href="../css/card-style.css">
-                        <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; }
-                            body { background: white; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
-                            @page { size: A4 landscape; margin: 0cm; }
-                            .print-grid {
-                                display: grid;
-                                grid-template-columns: repeat(3, 6.5cm);
-                                grid-template-rows: repeat(2, 8.5cm);
-                                gap: 3px;
-                                justify-content: center;
-                                align-items: center;
-                                margin: 0 auto;
-                                page-break-after: always;
-                            }
-                            .print-grid:last-child { page-break-after: auto; }
-                            .print-card-item { display: flex; justify-content: center; align-items: center; width: 6.5cm; height: 8.5cm; }
-                            .student-id-card { width: 6.5cm !important; height: 8.5cm !important; margin: 0 !important; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; box-sizing: border-box; overflow: hidden; }
-                            .remove-card-btn { display: none !important; }
-                            img { max-width: 100%; height: auto; }
-                            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
-                            @media print {
-                                body { margin: 0; padding: 0; }
-                                .print-grid { break-inside: avoid; page-break-after: always; margin: 0 auto; }
-                                .student-id-card { break-inside: avoid; }
-                                img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${pagesHTML}
-                        <script>
-                            window.onload = function() {
-                                const images = document.querySelectorAll('img');
-                                let loadedCount = 0;
-                                if (images.length === 0) { setTimeout(() => window.print(), 500); return; }
-                                images.forEach(img => {
-                                    if (img.complete) {
-                                        loadedCount++;
-                                        if (loadedCount === images.length) setTimeout(() => window.print(), 300);
-                                    } else {
-                                        img.addEventListener('load', () => {
-                                            loadedCount++;
-                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
-                                        });
-                                        img.addEventListener('error', () => {
-                                            loadedCount++;
-                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
-                                        });
-                                    }
-                                });
-                            };
-                        <\/script>
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-            
             setTimeout(() => { if (loadingDiv) loadingDiv.remove(); }, 2000);
         });
         
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
-            document.getElementById('cardsModal').classList.add('hidden');
-        });
-        
-        document.getElementById('closeModalBtn')?.addEventListener('touchstart', (e) => {
-            e.preventDefault();
             document.getElementById('cardsModal').classList.add('hidden');
         });
         
@@ -680,7 +513,7 @@
         });
         
         loadSelectedStudents();
-        console.log('✅ Generate page loaded - Mobile optimized');
+        console.log('✅ Generate page loaded');
     </script>
 </body>
 </html>
