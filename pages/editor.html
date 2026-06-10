@@ -2,10 +2,12 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>កែសម្រួលកាតសិស្ស - Advanced Card Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>កែសម្រួលកាតសិស្ស - ជាមួយ Supabase (ឆ្លងគ្រប់ឧបករណ៍)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
@@ -59,6 +61,52 @@
             background: #059669;
             transform: translateY(-2px);
         }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1f2937;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            z-index: 1000;
+            transition: opacity 0.3s;
+            opacity: 0;
+            pointer-events: none;
+            font-size: 14px;
+        }
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.5s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        @media (max-width: 768px) {
+            .preview-card { position: relative; top: 0; margin-bottom: 20px; }
+            .element-list-item { font-size: 11px; padding: 6px 8px; }
+            .cm-input { width: 100%; }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -67,10 +115,13 @@
             <a href="../index.html" class="text-blue-600 hover:text-blue-800">← ត្រឡប់ទៅមេនុយ</a>
         </div>
         
-        <h1 class="text-3xl font-bold text-center mb-8 text-blue-600">🎨 កែសម្រួលកាតសិស្ស (Advanced)</h1>
+        <h1 class="text-3xl font-bold text-center mb-4 text-blue-600">🎨 កែសម្រួលកាតសិស្ស (ជាមួយ Supabase)</h1>
+        
+        <!-- Status -->
+        <div id="supabaseStatus" class="text-center mb-4 hidden"></div>
         
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Left Panel: Elements List -->
+            <!-- Left Panel -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-4">
                 <h3 class="font-bold text-gray-700 mb-3">📦 ធាតុក្នុងកាត</h3>
                 <div id="elementsList" class="space-y-1">
@@ -92,13 +143,23 @@
                 </div>
                 
                 <div class="mt-6 pt-4 border-t">
+                    <div class="mb-2">
+                        <input type="text" id="configName" placeholder="ឈ្មោះការកំណត់ (default)" value="default" class="w-full border rounded p-2 text-sm">
+                    </div>
+                    <button id="saveToSupabaseBtn" class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-3 py-2 rounded-lg text-sm w-full mb-2">
+                        ☁️ រក្សាទុកជា Default Template
+                    </button>
+                    <button id="loadFromSupabaseBtn" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm w-full mb-2">
+                        📂 ផ្ទុក Default Template
+                    </button>
+                    <hr class="my-2">
                     <button id="exportConfigBtn" class="bg-green-600 text-white px-3 py-2 rounded-lg text-sm w-full mb-2">💾 ទាញយក Config</button>
                     <input type="file" id="importConfigBtn" accept=".json" class="hidden">
                     <button id="importConfigTrigger" class="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm w-full">📂 ផ្ទុក Config</button>
                 </div>
             </div>
             
-            <!-- Center Panel: Card Preview -->
+            <!-- Center Panel -->
             <div class="lg:col-span-6">
                 <div class="preview-card">
                     <h3 class="font-bold text-gray-700 mb-3 text-center">👁️ មើលជាមុន</h3>
@@ -107,16 +168,15 @@
                     </div>
                     <div class="mt-4 flex space-x-2">
                         <button id="downloadPreviewBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex-1">📥 ទាញយកជារូបភាព</button>
-                        <button id="applyToSystemBtn" class="btn-save text-white px-4 py-2 rounded-lg flex-1">💾 អនុវត្តទៅប្រព័ន្ធ</button>
+                        <button id="applyToSystemBtn" class="btn-save text-white px-4 py-2 rounded-lg flex-1">💾 កំណត់ជាកាតគំរូដើម</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Right Panel: Properties -->
+            <!-- Right Panel -->
             <div class="lg:col-span-4 bg-white rounded-xl shadow-lg p-4 property-panel">
                 <h3 class="font-bold text-gray-700 mb-3">⚙️ ការកំណត់ទូទៅ</h3>
                 
-                <!-- Card Size -->
                 <div class="mb-4 pb-3 border-b">
                     <h4 class="font-semibold text-gray-600 mb-2">📏 ទំហំកាត</h4>
                     <div class="grid grid-cols-2 gap-3">
@@ -125,7 +185,6 @@
                     </div>
                 </div>
                 
-                <!-- Font Settings -->
                 <div class="mb-4 pb-3 border-b">
                     <h4 class="font-semibold text-gray-600 mb-2">🔤 ពុម្ពអក្សរទូទៅ</h4>
                     <select id="globalFontFamily" class="w-full border rounded p-2 text-sm">
@@ -136,7 +195,6 @@
                     </select>
                 </div>
                 
-                <!-- Selected Element Properties -->
                 <div id="elementProperties">
                     <h4 class="font-semibold text-gray-600 mb-2">🎯 កំណត់ធាតុដែលបានជ្រើស</h4>
                     <div id="selectedElementInfo" class="text-sm text-gray-500 mb-3 p-2 bg-gray-50 rounded">សូមចុចជ្រើសរើសធាតុពីបញ្ជីខាងឆ្វេង</div>
@@ -146,9 +204,50 @@
         </div>
     </div>
     
+    <div id="toast" class="toast"></div>
+
     <script>
         // ============================================
-        // CONFIGURATION
+        // 🔵 SUPABASE CONFIGURATION
+        // ============================================
+        // 🔑 សូមប្តូរតម្លៃខាងក្រោមតាមគម្រោងរបស់លោកអ្នក!
+        // ចូលទៅ https://supabase.com → Sign up → New project → Project Settings → API
+        const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";     // <- ប្តូរទីនេះ
+        const SUPABASE_ANON_KEY = "YOUR_ANON_KEY";                  // <- ប្តូរទីនេះ
+        
+        let supabase = null;
+        let isSupabaseReady = false;
+        
+        // ពិនិត្យភ្ជាប់ Supabase
+        if (SUPABASE_URL !== "https://YOUR_PROJECT.supabase.co" && SUPABASE_ANON_KEY !== "YOUR_ANON_KEY") {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isSupabaseReady = true;
+                document.getElementById('supabaseStatus').innerHTML = '<span class="status-badge status-connected">✅ ភ្ជាប់ Supabase ដោយជោគជ័យ | កាតនឹងដូចគ្នាលើគ្រប់ឧបករណ៍</span>';
+                document.getElementById('supabaseStatus').classList.remove('hidden');
+                showToast("✅ ភ្ជាប់ Supabase! កាតនឹងដូចគ្នាលើគ្រប់ឧបករណ៍", false);
+            } catch(e) {
+                console.error("Supabase error:", e);
+                document.getElementById('supabaseStatus').innerHTML = '<span class="status-badge status-disconnected">⚠️ ភ្ជាប់ Supabase មិនបាន ប្រើតែ Local Storage</span>';
+                document.getElementById('supabaseStatus').classList.remove('hidden');
+                showToast("⚠️ ភ្ជាប់ Supabase មិនបាន ប្រើតែ Local Storage", true);
+            }
+        } else {
+            document.getElementById('supabaseStatus').innerHTML = '<span class="status-badge status-disconnected">⚠️ សូមកំណត់ SUPABASE_URL និង SUPABASE_ANON_KEY</span>';
+            document.getElementById('supabaseStatus').classList.remove('hidden');
+            showToast("⚠️ សូមកំណត់ Supabase credentials ក្នុងកូដ", true);
+        }
+        
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.style.backgroundColor = isError ? '#dc2626' : '#10b981';
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 4000);
+        }
+        
+        // ============================================
+        // CARD CONFIGURATION (ដូចដើម)
         // ============================================
         function cmToPx(cm) { return cm * 37.8; }
         
@@ -166,18 +265,16 @@
                 subtitleText: { x: 3.25, y: 3.15, fontSize: 0.22, color: "#3D8BFF", visible: true },
                 studentInfo: { x: 0.3, y: 3.6, fontSize: 0.19, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
                 studentPhoto: { x: 0.3, y: 5.8, width: 2.0, height: 2.5, visible: true },
-                stamp: { x: 2.5, y: 6.3, width: 1.6, height: 1.6, src: null, opacity: 0.85, visible: true },
+                stamp: { x: 2.5, y: 6.3, width: 1.6, height: 1.6, opacity: 0.85, visible: true },
                 dateText: { x: 2.5, y: 7.0, fontSize: 0.16, color: "#233D2E", text: "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩", visible: true },
                 schoolLocation: { x: 2.5, y: 7.35, fontSize: 0.16, color: "#233D2E", text: "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥", visible: true },
-                signature: { x: 4.5, y: 7.7, width: 2.2, height: 0.8, src: null, visible: true },
-                principalText: { x: 4.5, y: 7.5, fontSize: 0.18, color: "#D50000", text: "​", visible: true },
-                watermark: { x: 3.25, y: 4.25, width: 4.0, height: 4.0, src: null, opacity: 0.1, visible: true }
+                signature: { x: 4.5, y: 7.7, width: 2.2, height: 0.8, visible: true },
+                principalText: { x: 4.5, y: 7.5, fontSize: 0.18, color: "#D50000", text: "នាយក សុខា", visible: true },
+                watermark: { x: 3.25, y: 4.25, width: 4.0, height: 4.0, opacity: 0.1, visible: true }
             }
         };
         
-        let currentSelectedElement = null;
         let customImages = { logo: null, stamp: null, signature: null, watermark: null };
-        
         let previewStudent = {
             studentID: "STU-001", name: "សុខ សុភក្ត្រា", sex: "ប្រុស",
             date_of_birth: "2007-06-12", address: "ភ្នំពេញ", phonenumber: "012345678",
@@ -285,7 +382,7 @@
                 let d = cardConfig.elements.dateText;
                 html += `<div style="position: absolute; left:${cmToPx(d.x)}px; top:${cmToPx(d.y)}px; font-family:${fontFamily}; font-size:${cmToPx(d.fontSize)}px; color:${d.color}; z-index:1;">${d.text}</div>`;
             }
-            // School Location Text
+            // School Location
             if (cardConfig.elements.schoolLocation.visible) {
                 let sl = cardConfig.elements.schoolLocation;
                 html += `<div style="position: absolute; left:${cmToPx(sl.x)}px; top:${cmToPx(sl.y)}px; font-family:${fontFamily}; font-size:${cmToPx(sl.fontSize)}px; color:${sl.color}; z-index:1;">${sl.text}</div>`;
@@ -309,7 +406,7 @@
         }
         
         // ============================================
-        // PROPERTY FORM HANDLERS
+        // PROPERTY FORM (រក្សាទុកដូចដើម)
         // ============================================
         function loadElementProperties(elementName) {
             const el = cardConfig.elements[elementName];
@@ -447,14 +544,129 @@
         document.getElementById('globalFontFamily').addEventListener('change', (e) => { cardConfig.globalFontFamily = e.target.value; renderCard(); });
         
         // ============================================
-        // EXPORT, IMPORT & APPLY FUNCTIONS
+        // 🔵 SUPABASE FUNCTIONS
+        // ============================================
+        
+        async function saveToSupabase() {
+            if (!supabase) {
+                showToast("⚠️ សូមកំណត់ Supabase URL និង Anon Key ជាមុនសិន!", true);
+                return;
+            }
+            
+            const templateName = document.getElementById('configName').value.trim() || "default";
+            
+            const btn = document.getElementById('saveToSupabaseBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading"></span> កំពុងរក្សា...';
+            btn.disabled = true;
+            
+            try {
+                // ចម្លង config ដោយគ្មានរូបភាព
+                const configToSave = JSON.parse(JSON.stringify(cardConfig));
+                
+                // ពិនិត្យមើលថាមាន template ឈ្មោះនេះរួចហើយឬនៅ?
+                const { data: existing } = await supabase
+                    .from('card_templates')
+                    .select('id')
+                    .eq('template_name', templateName)
+                    .maybeSingle();
+                
+                let result;
+                if (existing) {
+                    result = await supabase
+                        .from('card_templates')
+                        .update({ 
+                            card_config: configToSave, 
+                            updated_at: new Date().toISOString(),
+                            is_default: (templateName === 'default')
+                        })
+                        .eq('id', existing.id);
+                } else {
+                    result = await supabase
+                        .from('card_templates')
+                        .insert([{ 
+                            template_name: templateName, 
+                            card_config: configToSave,
+                            is_default: (templateName === 'default')
+                        }]);
+                }
+                
+                if (result.error) throw result.error;
+                
+                // ប្រសិនបើឈ្មោះជា 'default' ក៏រក្សាទុកក្នុង localStorage
+                if (templateName === 'default') {
+                    localStorage.setItem('cardSystemConfig', JSON.stringify({ cardConfig: cardConfig }));
+                    localStorage.setItem('DEFAULT_CARD_TEMPLATE', JSON.stringify({
+                        cardConfig: cardConfig,
+                        savedAt: new Date().toISOString()
+                    }));
+                }
+                
+                showToast(`✅ បានរក្សាទុក "${templateName}" ជាកាតគំរូ! គ្រប់ឧបករណ៍អាចប្រើបាន`, false);
+                
+            } catch (error) {
+                showToast("❌ កំហុស: " + error.message, true);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        
+        async function loadFromSupabase() {
+            if (!supabase) {
+                showToast("⚠️ សូមកំណត់ Supabase URL និង Anon Key ជាមុនសិន!", true);
+                return;
+            }
+            
+            const btn = document.getElementById('loadFromSupabaseBtn');
+            btn.innerHTML = '<span class="loading"></span> កំពុងផ្ទុក...';
+            btn.disabled = true;
+            
+            try {
+                // ស្វែងរក default template
+                let { data, error } = await supabase
+                    .from('card_templates')
+                    .select('card_config, template_name')
+                    .eq('is_default', true)
+                    .maybeSingle();
+                
+                // បើគ្មាន default យក template ដំបូងគេ
+                if (!data) {
+                    const { data: firstTemplate } = await supabase
+                        .from('card_templates')
+                        .select('card_config, template_name')
+                        .limit(1)
+                        .maybeSingle();
+                    data = firstTemplate;
+                }
+                
+                if (error) throw error;
+                
+                if (data && data.card_config) {
+                    cardConfig = data.card_config;
+                    document.getElementById('cardWidthCm').value = cardConfig.cardWidthCm;
+                    document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm;
+                    document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily;
+                    document.getElementById('configName').value = data.template_name || 'default';
+                    renderCard();
+                    showToast(`✅ បានផ្ទុកកាតគំរូ "${data.template_name}" ពីប្រព័ន្ធកណ្តាល!`, false);
+                } else {
+                    showToast("⚠️ មិនទាន់មានកាតគំរូក្នុងប្រព័ន្ធ សូមរក្សាទុកជាមុនសិន", true);
+                }
+            } catch (error) {
+                showToast("❌ កំហុស: " + error.message, true);
+            } finally {
+                btn.innerHTML = '📂 ផ្ទុក Default Template';
+                btn.disabled = false;
+            }
+        }
+        
+        // ============================================
+        // LOCAL FUNCTIONS
         // ============================================
         
         function exportConfig() { 
-            let dataToSave = { 
-                cardConfig: cardConfig, 
-                customImages: customImages 
-            };
+            let dataToSave = { cardConfig: cardConfig, customImages: customImages };
             let data = JSON.stringify(dataToSave, null, 2); 
             let blob = new Blob([data], {type:'application/json'}); 
             let a = document.createElement('a'); 
@@ -462,7 +674,7 @@
             a.download = 'card-config-full.json'; 
             a.click(); 
             URL.revokeObjectURL(blob); 
-            alert('✅ បានទាញយក Config រួមទាំងរូបភាព!');
+            showToast('✅ បានទាញយក Config រួមទាំងរូបភាព!', false);
         }
         
         function importConfig(file) { 
@@ -476,9 +688,9 @@
                     document.getElementById('cardHeightCm').value = cardConfig.cardHeightCm; 
                     document.getElementById('globalFontFamily').value = cardConfig.globalFontFamily; 
                     renderCard(); 
-                    alert('✅ បានផ្ទុកដោយជោគជ័យ!'); 
+                    showToast('✅ បានផ្ទុកដោយជោគជ័យ!', false);
                 } catch(err) { 
-                    alert('❌ កំហុសឯកសារ: ' + err.message); 
+                    showToast('❌ កំហុសឯកសារ: ' + err.message, true);
                 } 
             }; 
             r.readAsText(file); 
@@ -486,36 +698,63 @@
         
         function applyToSystem() { 
             try {
-                // Save only config without large images to avoid quota error
-                const configToSave = {
-                    cardConfig: cardConfig
-                };
+                // រក្សាទុកក្នុង localStorage
+                const configToSave = { cardConfig: cardConfig };
                 localStorage.setItem('cardSystemConfig', JSON.stringify(configToSave));
-                alert('✅ បានរក្សាទុកការកំណត់ទៅប្រព័ន្ធដោយជោគជ័យ!\n\nសូមចូលទៅកាន់ទំព័រ Create Card ឬ Generate Card ដើម្បីមើលលទ្ធផល');
+                localStorage.setItem('DEFAULT_CARD_TEMPLATE', JSON.stringify({
+                    cardConfig: cardConfig,
+                    savedAt: new Date().toISOString()
+                }));
+                
+                // ប្រសិនបើមាន Supabase ក៏រក្សាទុកដោយស្វ័យប្រវត្តិ
+                if (supabase) {
+                    saveToSupabaseAuto();
+                }
+                
+                showToast("✅ បានកំណត់កាតនេះជាកាតគំរូដើម (Default Template)!", false);
+                
+                setTimeout(() => {
+                    alert("✅ កាតដែលអ្នកបានកែសម្រួល\nបានក្លាយជា \"កាតគំរូដើម (Default Template)\" ហើយ!\n\n" +
+                          (supabase ? "✓ រក្សាទុកក្នុងប្រព័ន្ធកណ្តាល (គ្រប់ឧបករណ៍ប្រើបាន)\n" : "✓ រក្សាទុកក្នុងឧបករណ៍នេះតែប៉ុណ្ណោះ\n") +
+                          "✓ ទំព័រ Create Card និង Generate Card នឹងប្រើទម្រង់នេះ");
+                }, 200);
+                
             } catch(e) {
                 if (e.name === 'QuotaExceededError') {
-                    alert('⚠️ localStorage ពេញ! សូមសម្អាត cache ឬទាញយក Config ជា file វិញ');
+                    showToast('⚠️ localStorage ពេញ! សូមប្រើ Supabase ឬទាញយក Config', true);
                 } else {
-                    alert('❌ កំហុស: ' + e.message);
+                    showToast('❌ កំហុស: ' + e.message, true);
                 }
             }
         }
         
+        async function saveToSupabaseAuto() {
+            try {
+                const configToSave = JSON.parse(JSON.stringify(cardConfig));
+                await supabase
+                    .from('card_templates')
+                    .upsert({ 
+                        template_name: 'default', 
+                        card_config: configToSave,
+                        is_default: true,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'template_name' });
+                console.log("✅ Auto-saved to Supabase");
+            } catch(e) { console.error(e); }
+        }
+        
         async function downloadPreview() { 
             let card = document.querySelector('#cardPreviewContainer > div'); 
-            if(!card){ 
-                alert('គ្មានកាត'); 
-                return; 
-            } 
+            if(!card){ showToast('គ្មានកាត', true); return; } 
             try {
                 let canvas = await html2canvas(card, { scale: 3, backgroundColor: null }); 
                 let a = document.createElement('a'); 
                 a.download = 'student-card.png'; 
                 a.href = canvas.toDataURL(); 
                 a.click(); 
-                alert('✅ បានទាញយកដោយជោគជ័យ!');
+                showToast('✅ បានទាញយកដោយជោគជ័យ!', false);
             } catch(e) {
-                alert('កំហុស: ' + e.message);
+                showToast('កំហុស: ' + e.message, true);
             }
         }
         
@@ -524,16 +763,12 @@
         document.getElementById('importConfigBtn').addEventListener('change', (e) => { if(e.target.files[0]) importConfig(e.target.files[0]); });
         document.getElementById('applyToSystemBtn').addEventListener('click', applyToSystem);
         document.getElementById('downloadPreviewBtn').addEventListener('click', downloadPreview);
+        document.getElementById('saveToSupabaseBtn').addEventListener('click', saveToSupabase);
+        document.getElementById('loadFromSupabaseBtn').addEventListener('click', loadFromSupabase);
         
-        // Clean up old large data from localStorage on page load
-        try {
-            const saved = localStorage.getItem('cardSystemConfig');
-            if (saved && saved.length > 5000000) {
-                localStorage.removeItem('cardSystemConfig');
-                console.log('Cleared large localStorage data');
-            }
-        } catch(e) {
-            console.log('Storage check failed');
+        // ពេលចូលទំព័រ សាកល្បងផ្ទុក default template ពី Supabase
+        if (supabase) {
+            setTimeout(() => { loadFromSupabase(); }, 500);
         }
         
         renderCard();
