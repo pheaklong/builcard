@@ -258,8 +258,8 @@ function generateCardHTML(data) {
     const dateTextVisible = getElementConfig('dateText', 'visible', true);
     const dateTextX = getElementConfig('dateText', 'x', 1.9);
     const dateTextY = getElementConfig('dateText', 'y', 5.7);
-    const studentPhotoWidth = getElementConfig('dateText', 'width', 3.3);
-    const studentPhotoHeight = getElementConfig('dateText', 'height', 3.5);
+    const dateTextPhotoWight = getElementConfig('dateText', 'width', 3.3);
+    const dateTextPhotoHeight = getElementConfig('dateText', 'height', 3.5);
     
     const dateTextFontSize = getElementConfig('dateText', 'fontSize', 0.16);
     const dateTextColor = getElementConfig('dateText', 'color', "#233D2E");
