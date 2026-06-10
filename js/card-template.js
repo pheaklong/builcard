@@ -71,7 +71,7 @@ function cmToPx(cm) { return cm * 37.8; }
 // ============================================
 
 function generateQRCode(studentID, size, color) {
-    const qrCodeUrl = `https://pheaklong.github.io/builcard/pages/digital-card.html?id=${encodeURIComponent(studentID)}`;
+    const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/digital-card.html?id=${encodeURIComponent(studentID)}`;
     const qrSize = Math.max(85, size);
     const darkColor = color ? color.replace('#', '') : '233D2E';
     
