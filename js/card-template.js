@@ -274,7 +274,7 @@ function generateCardHTML(data) {
     const principalTextY = getElementConfig('principalText', 'y', 7.5);
     const principalTextFontSize = getElementConfig('principalText', 'fontSize', 0.18);
     const principalTextColor = getElementConfig('principalText', 'color', "#D50000");
-    const principalTextContent = getElementConfig('principalText', 'text', "ព្រះគ្រូ សុខ សុភក្ត្រា");
+    const principalTextContent = getElementConfig('principalText', 'text', "​​​ ");
     
     // Generate QR code HTML
     const qrCodePxSize = Math.max(70, cmToPx(qrCodeSize));
