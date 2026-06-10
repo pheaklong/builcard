@@ -8,14 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/card-style.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -24,13 +18,7 @@
             align-items: center;
             justify-content: center;
         }
-        
-        .digital-container {
-            max-width: 500px;
-            width: 100%;
-            margin: 0 auto;
-        }
-        
+        .digital-container { max-width: 500px; width: 100%; margin: 0 auto; }
         .card-preview {
             background: white;
             border-radius: 20px;
@@ -38,84 +26,26 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             animation: fadeIn 0.5s ease;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .loading-state {
-            text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 20px;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #4A86E8;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error-state {
-            text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 20px;
-        }
-        
-        .btn-download {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-download:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
-        
-        .btn-back {
-            background: #6b7280;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-back:hover {
-            background: #4b5563;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        @media (max-width: 480px) {
-            .card-preview {
-                padding: 12px;
-            }
-            .btn-download, .btn-back {
-                padding: 10px 16px;
-                font-size: 13px;
-            }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-state { text-align: center; padding: 40px; background: white; border-radius: 20px; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #4A86E8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error-state { text-align: center; padding: 40px; background: white; border-radius: 20px; }
+        .btn-download { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all 0.3s ease; }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .btn-back { background: #6b7280; transition: all 0.3s ease; }
+        .btn-back:hover { background: #4b5563; }
+        .hidden { display: none; }
+        @media (max-width: 480px) { .card-preview { padding: 12px; } .btn-download, .btn-back { padding: 10px 16px; font-size: 13px; } }
     </style>
 </head>
 <body>
     <div class="digital-container">
-        <!-- Loading State -->
         <div id="loadingState" class="loading-state">
             <div class="spinner"></div>
             <p class="text-gray-600">កំពុងផ្ទុកទិន្នន័យសិស្ស...</p>
         </div>
         
-        <!-- Error State -->
         <div id="errorState" class="error-state hidden">
             <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
@@ -125,24 +55,16 @@
             <a href="../index.html" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">← ត្រឡប់ទៅដើម</a>
         </div>
         
-        <!-- Card State -->
         <div id="cardState" class="hidden">
             <div class="card-preview">
-                <div id="studentCardContainer" class="flex justify-center mb-4">
-                    <!-- Card will be generated here -->
-                </div>
-                
+                <div id="studentCardContainer" class="flex justify-center mb-4"></div>
                 <div class="flex gap-3 mt-4">
                     <button id="downloadCardBtn" class="btn-download flex-1 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         ទាញយករូបភាព
                     </button>
                     <a href="../index.html" class="btn-back flex-1 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         ត្រឡប់
                     </a>
                 </div>
@@ -150,7 +72,6 @@
         </div>
     </div>
     
-    <script src="../js/card-template.js"></script>
     <script>
         // ============================================
         // SUPABASE CONFIGURATION
@@ -161,120 +82,291 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'table_student';
         
-        // Get student ID from URL
-        function getStudentId() {
+        // ============================================
+        // FIXED CARD CONFIGURATION (បង្កប់ក្នុងកូដ - ប្តូរតាមការកំណត់របស់អ្នក)
+        // ============================================
+        // ចម្លងតម្លៃពី editor.html មកទីនេះ!!!
+        const FIXED_CARD_CONFIG = {
+            cardWidthCm: 6.5,
+            cardHeightCm: 8.5,
+            globalFontFamily: "'Khmer', 'Khmer OS Moul Light', sans-serif",
+            elements: {
+                cardBg: { bgColor: "#f5f5f0", borderColor: "#4A86E8", borderWidth: 1 },
+                logo: { x: 0.3, y: 0.3, width: 0.9, height: 0.9, visible: true },
+                royalText: { x: 4.2, y: 0.4, fontSize: 0.22, color: "#233D2E", visible: true },
+                ministryText: { x: 0.3, y: 1.5, fontSize: 0.2, color: "#233D2E", visible: true },
+                qrCode: { x: 5.5, y: 1.3, size: 1.6, visible: true },
+                titleText: { x: 3.25, y: 2.8, fontSize: 0.32, color: "#D28A17", visible: true },
+                subtitleText: { x: 3.25, y: 3.15, fontSize: 0.22, color: "#3D8BFF", visible: true },
+                studentInfo: { x: 0.3, y: 3.6, fontSize: 0.19, labelColor: "#233D2E", valueColor: "#304FFE", visible: true },
+                studentPhoto: { x: 0.3, y: 5.8, width: 2.0, height: 2.5, visible: true },
+                stamp: { x: 2.5, y: 6.3, width: 1.6, height: 1.6, opacity: 0.85, visible: true },
+                dateText: { x: 2.5, y: 7.0, fontSize: 0.16, color: "#233D2E", text: "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩", visible: true },
+                schoolLocation: { x: 2.5, y: 7.35, fontSize: 0.16, color: "#233D2E", text: "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥", visible: true },
+                signature: { x: 4.5, y: 7.7, width: 2.2, height: 0.8, visible: true },
+                principalText: { x: 4.5, y: 7.5, fontSize: 0.18, color: "#D50000", text: "ព្រះគ្រូ សុខ សុភក្ត្រា", visible: true },
+                watermark: { x: 3.25, y: 4.25, width: 4.0, height: 4.0, opacity: 0.1, visible: true }
+            }
+        };
+        
+        // ============================================
+        // CARD GENERATION FUNCTIONS
+        // ============================================
+        function cmToPx(cm) { return cm * 37.8; }
+        
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        function getElementConfig(elementName, property, defaultValue) {
+            if (FIXED_CARD_CONFIG.elements[elementName] && FIXED_CARD_CONFIG.elements[elementName][property] !== undefined) {
+                return FIXED_CARD_CONFIG.elements[elementName][property];
+            }
+            return defaultValue;
+        }
+        
+        function generateQRCode(studentID, size, color) {
+            const qrCodeUrl = `https://pheaklong.github.io/IDcard-Project/pages/digital-card.html?id=${encodeURIComponent(studentID)}`;
+            const qrSize = Math.max(85, size);
+            const darkColor = color ? color.replace('#', '') : '233D2E';
+            const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrCodeUrl)}&color=${darkColor}&bgcolor=ffffff&margin=4`;
+            return `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;"><img src="${apiUrl}" alt="QR Code" style="width:100%; height:auto; image-rendering:crisp-edges;" loading="eager" onerror="this.style.display='none';"></div>`;
+        }
+        
+        function getSchoolLogo() {
+            const logoVisible = getElementConfig('logo', 'visible', true);
+            if (!logoVisible) return '';
+            const logoX = getElementConfig('logo', 'x', 0.3);
+            const logoY = getElementConfig('logo', 'y', 0.3);
+            const logoWidth = getElementConfig('logo', 'width', 0.9);
+            const logoHeight = getElementConfig('logo', 'height', 0.9);
+            return `<div style="position: absolute; left: ${cmToPx(logoX)}px; top: ${cmToPx(logoY)}px; width: ${cmToPx(logoWidth)}px; height: ${cmToPx(logoHeight)}px; z-index: 1;"><img src="../logomoeys.png" alt="School Logo" style="width:100%;height:100%;object-fit:contain;"></div>`;
+        }
+        
+        function getStampElement() {
+            const stampVisible = getElementConfig('stamp', 'visible', true);
+            if (!stampVisible) return '';
+            const stampX = getElementConfig('stamp', 'x', 2.5);
+            const stampY = getElementConfig('stamp', 'y', 6.3);
+            const stampWidth = getElementConfig('stamp', 'width', 1.6);
+            const stampHeight = getElementConfig('stamp', 'height', 1.6);
+            const stampOpacity = getElementConfig('stamp', 'opacity', 0.85);
+            return `<div style="position: absolute; left: ${cmToPx(stampX)}px; top: ${cmToPx(stampY)}px; width: ${cmToPx(stampWidth)}px; height: ${cmToPx(stampHeight)}px; opacity: ${stampOpacity}; z-index: 20; pointer-events: none;"><img src="../tra.png" alt="ត្រា" style="width:100%;height:100%;object-fit:contain;"></div>`;
+        }
+        
+        function getSignatureImage() {
+            const signatureVisible = getElementConfig('signature', 'visible', true);
+            if (!signatureVisible) return '';
+            const signatureX = getElementConfig('signature', 'x', 4.5);
+            const signatureY = getElementConfig('signature', 'y', 7.7);
+            const signatureWidth = getElementConfig('signature', 'width', 2.2);
+            const signatureHeight = getElementConfig('signature', 'height', 0.8);
+            return `<div style="position: absolute; left: ${cmToPx(signatureX)}px; top: ${cmToPx(signatureY)}px; width: ${cmToPx(signatureWidth)}px; text-align: center; z-index: 1;">
+                        <div style="font-size: ${cmToPx(0.2)}px; font-weight: bold; color: #233D2E;">នាយកវិទ្យាល័យ</div>
+                        <div style="margin-top: 2px;"><img src="../Signature.png" alt="Signature" style="width:100%;height:auto;max-height:${cmToPx(signatureHeight)}px;object-fit:contain;"></div>
+                    </div>`;
+        }
+        
+        function getWatermarkLogo() {
+            const watermarkVisible = getElementConfig('watermark', 'visible', true);
+            if (!watermarkVisible) return '';
+            const watermarkX = getElementConfig('watermark', 'x', 3.25);
+            const watermarkY = getElementConfig('watermark', 'y', 4.25);
+            const watermarkWidth = getElementConfig('watermark', 'width', 4.0);
+            const watermarkHeight = getElementConfig('watermark', 'height', 4.0);
+            const watermarkOpacity = getElementConfig('watermark', 'opacity', 0.1);
+            return `<div style="position: absolute; left: ${cmToPx(watermarkX)}px; top: ${cmToPx(watermarkY)}px; width: ${cmToPx(watermarkWidth)}px; height: ${cmToPx(watermarkHeight)}px; opacity: ${watermarkOpacity}; pointer-events: none; z-index: 0;"><img src="../logomoeys.png" alt="Watermark" style="width:100%;height:100%;object-fit:contain;"></div>`;
+        }
+        
+        function getPhotoHTML(photoData) {
+            const studentPhotoVisible = getElementConfig('studentPhoto', 'visible', true);
+            if (!studentPhotoVisible) return '';
+            const photoHtml = (photoData && photoData !== 'null' && photoData !== '') 
+                ? `<img src="${photoData}" alt="Student Photo" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" fill="#aaa"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span style="font-size:10px;margin-top:5px;">រូបថត</span></div>`;
+            return photoHtml;
+        }
+        
+        function generateCardHTML(data) {
+            const cardWidthCm = FIXED_CARD_CONFIG.cardWidthCm;
+            const cardHeightCm = FIXED_CARD_CONFIG.cardHeightCm;
+            const fontFamily = FIXED_CARD_CONFIG.globalFontFamily;
+            const cardBgColor = getElementConfig('cardBg', 'bgColor', "#f5f5f0");
+            const cardBorderColor = getElementConfig('cardBg', 'borderColor', "#4A86E8");
+            const cardBorderWidth = getElementConfig('cardBg', 'borderWidth', 1);
+            
+            const studentID = data.studentID || '_________';
+            const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : '____/____/______';
+            
+            const qrCodeVisible = getElementConfig('qrCode', 'visible', true);
+            const qrCodeX = getElementConfig('qrCode', 'x', 5.5);
+            const qrCodeY = getElementConfig('qrCode', 'y', 1.3);
+            const qrCodeSize = getElementConfig('qrCode', 'size', 1.6);
+            
+            const royalTextVisible = getElementConfig('royalText', 'visible', true);
+            const royalTextX = getElementConfig('royalText', 'x', 4.2);
+            const royalTextY = getElementConfig('royalText', 'y', 0.4);
+            const royalTextFontSize = getElementConfig('royalText', 'fontSize', 0.22);
+            const royalTextColor = getElementConfig('royalText', 'color', "#233D2E");
+            
+            const ministryTextVisible = getElementConfig('ministryText', 'visible', true);
+            const ministryTextX = getElementConfig('ministryText', 'x', 0.3);
+            const ministryTextY = getElementConfig('ministryText', 'y', 1.5);
+            const ministryTextFontSize = getElementConfig('ministryText', 'fontSize', 0.2);
+            const ministryTextColor = getElementConfig('ministryText', 'color', "#233D2E");
+            
+            const titleTextVisible = getElementConfig('titleText', 'visible', true);
+            const titleTextX = getElementConfig('titleText', 'x', 3.25);
+            const titleTextY = getElementConfig('titleText', 'y', 2.8);
+            const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.32);
+            const titleTextColor = getElementConfig('titleText', 'color', "#D28A17");
+            
+            const subtitleTextVisible = getElementConfig('subtitleText', 'visible', true);
+            const subtitleTextX = getElementConfig('subtitleText', 'x', 3.25);
+            const subtitleTextY = getElementConfig('subtitleText', 'y', 3.15);
+            const subtitleTextFontSize = getElementConfig('subtitleText', 'fontSize', 0.22);
+            const subtitleTextColor = getElementConfig('subtitleText', 'color', "#3D8BFF");
+            
+            const studentInfoVisible = getElementConfig('studentInfo', 'visible', true);
+            const studentInfoX = getElementConfig('studentInfo', 'x', 0.3);
+            const studentInfoY = getElementConfig('studentInfo', 'y', 3.6);
+            const studentInfoFontSize = getElementConfig('studentInfo', 'fontSize', 0.19);
+            const studentInfoLabelColor = getElementConfig('studentInfo', 'labelColor', "#233D2E");
+            const studentInfoValueColor = getElementConfig('studentInfo', 'valueColor', "#304FFE");
+            
+            const studentPhotoVisible = getElementConfig('studentPhoto', 'visible', true);
+            const studentPhotoX = getElementConfig('studentPhoto', 'x', 0.3);
+            const studentPhotoY = getElementConfig('studentPhoto', 'y', 5.8);
+            const studentPhotoWidth = getElementConfig('studentPhoto', 'width', 2.0);
+            const studentPhotoHeight = getElementConfig('studentPhoto', 'height', 2.5);
+            
+            const dateTextVisible = getElementConfig('dateText', 'visible', true);
+            const dateTextX = getElementConfig('dateText', 'x', 2.5);
+            const dateTextY = getElementConfig('dateText', 'y', 7.0);
+            const dateTextFontSize = getElementConfig('dateText', 'fontSize', 0.16);
+            const dateTextColor = getElementConfig('dateText', 'color', "#233D2E");
+            const dateTextContent = getElementConfig('dateText', 'text', "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩");
+            
+            const schoolLocationVisible = getElementConfig('schoolLocation', 'visible', true);
+            const schoolLocationX = getElementConfig('schoolLocation', 'x', 2.5);
+            const schoolLocationY = getElementConfig('schoolLocation', 'y', 7.35);
+            const schoolLocationFontSize = getElementConfig('schoolLocation', 'fontSize', 0.16);
+            const schoolLocationColor = getElementConfig('schoolLocation', 'color', "#233D2E");
+            const schoolLocationContent = getElementConfig('schoolLocation', 'text', "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥");
+            
+            const principalTextVisible = getElementConfig('principalText', 'visible', true);
+            const principalTextX = getElementConfig('principalText', 'x', 4.5);
+            const principalTextY = getElementConfig('principalText', 'y', 7.5);
+            const principalTextFontSize = getElementConfig('principalText', 'fontSize', 0.18);
+            const principalTextColor = getElementConfig('principalText', 'color', "#D50000");
+            const principalTextContent = getElementConfig('principalText', 'text', "ព្រះគ្រូ សុខ សុភក្ត្រា");
+            
+            const qrCodePxSize = Math.max(70, cmToPx(qrCodeSize));
+            const qrCodeHTML = qrCodeVisible ? generateQRCode(studentID, qrCodePxSize, royalTextColor) : '';
+            
+            return `
+                <div class="student-id-card" style="width: ${cmToPx(cardWidthCm)}px; height: ${cmToPx(cardHeightCm)}px; background: ${cardBgColor}; border: ${cardBorderWidth}px solid ${cardBorderColor}; border-radius: 8px; padding: 8px 10px; font-family: ${fontFamily}; position: relative; overflow: visible; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                    ${getWatermarkLogo()}
+                    ${getSchoolLogo()}
+                    ${getStampElement()}
+                    ${royalTextVisible ? `<div style="position: absolute; left: ${cmToPx(royalTextX)}px; top: ${cmToPx(royalTextY)}px; text-align: right; font-size: ${cmToPx(royalTextFontSize)}px; color: ${royalTextColor}; z-index: 1;"><div>ព្រះរាជាណាចក្រកម្ពុជា</div><div>ជាតិ សាសនា ព្រះមហាក្សត្រ</div></div>` : ''}
+                    ${ministryTextVisible ? `<div style="position: absolute; left: ${cmToPx(ministryTextX)}px; top: ${cmToPx(ministryTextY)}px; font-size: ${cmToPx(ministryTextFontSize)}px; line-height: 1.3; color: ${ministryTextColor}; z-index: 1;"><div>ក្រសួងអប់រំ យុវជន និងកីឡា</div><div>មន្ទីរអប់រំ យុវជន និងកីឡាខេត្តបាត់ដំបង</div><div style="font-weight: bold; margin-top: 2px;">វិទ្យាល័យកំរៀង</div></div>` : ''}
+                    ${qrCodeVisible ? `<div style="position: absolute; left: ${cmToPx(qrCodeX)}px; top: ${cmToPx(qrCodeY)}px; width: ${cmToPx(qrCodeSize)}px; height: ${cmToPx(qrCodeSize)}px; z-index: 10; background: white; border-radius: 6px; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;">${qrCodeHTML}</div>` : ''}
+                    ${titleTextVisible ? `<div style="position: absolute; left: ${cmToPx(titleTextX)}px; top: ${cmToPx(titleTextY)}px; transform: translateX(-50%); text-align: center; font-size: ${cmToPx(titleTextFontSize)}px; font-weight: bold; color: ${titleTextColor}; z-index: 1;"><div>បណ្ណសម្គាល់ខ្លួនសិស្ស</div></div>` : ''}
+                    ${subtitleTextVisible ? `<div style="position: absolute; left: ${cmToPx(subtitleTextX)}px; top: ${cmToPx(subtitleTextY)}px; transform: translateX(-50%); text-align: center; font-size: ${cmToPx(subtitleTextFontSize)}px; color: ${subtitleTextColor}; z-index: 1;"><div>ឆ្នាំសិក្សា ២០២៥-២០២៦</div></div>` : ''}
+                    <div style="position: absolute; left: ${cmToPx(studentPhotoX)}px; top: ${cmToPx(studentPhotoY)}px; width: ${cmToPx(studentPhotoWidth)}px; height: ${cmToPx(studentPhotoHeight)}px; border: 1px solid ${cardBorderColor}; border-radius: 6px; background: #e5e7eb; overflow: hidden; z-index: 1;">${getPhotoHTML(data.photo)}</div>
+                    ${studentInfoVisible ? `<div style="position: absolute; left: ${cmToPx(studentInfoX)}px; top: ${cmToPx(studentInfoY)}px; font-size: ${cmToPx(studentInfoFontSize)}px; line-height: 1.4; z-index: 1;">
+                        <div><span style="color: ${studentInfoLabelColor};">គោត្តនាម និងនាម:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.name) || '___________________'}</span>
+                        <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ភេទ:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.sex) || '_____'}</span></span></div>
+                        <div><span style="color: ${studentInfoLabelColor};">ថ្ងៃខែឆ្នាំកំណើត:</span> <span style="color: ${studentInfoValueColor};">${birthDate}</span>
+                        <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ថ្នាក់:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.class) || '_____'}</span></span></div>
+                        <div><span style="color: ${studentInfoLabelColor};">ទីកន្លែងកំណើត:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.address) || '_____________________________'}</span></div>
+                        <div><span style="color: ${studentInfoLabelColor};">លេខទូរស័ព្ទ:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.phonenumber) || '_______________'}</span>
+                        <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ឈ្មោះឪពុក:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.fathername) || '_____________'}</span></span></div>
+                        <div><span style="color: ${studentInfoLabelColor};">អត្តលេខ:</span> <span style="color: ${studentInfoValueColor};">${studentID}</span>
+                        <span style="margin-left: 15px;"><span style="color: ${studentInfoLabelColor};">ឈ្មោះម្តាយ:</span> <span style="color: ${studentInfoValueColor};">${escapeHtml(data.mothername) || '_____________'}</span></span></div>
+                    </div>` : ''}
+                    ${dateTextVisible ? `<div style="position: absolute; left: ${cmToPx(dateTextX)}px; top: ${cmToPx(dateTextY)}px; font-size: ${cmToPx(dateTextFontSize)}px; color: ${dateTextColor}; z-index: 1;">${dateTextContent}</div>` : ''}
+                    ${schoolLocationVisible ? `<div style="position: absolute; left: ${cmToPx(schoolLocationX)}px; top: ${cmToPx(schoolLocationY)}px; font-size: ${cmToPx(schoolLocationFontSize)}px; color: ${schoolLocationColor}; z-index: 1;">${schoolLocationContent}</div>` : ''}
+                    ${getSignatureImage()}
+                    ${principalTextVisible ? `<div style="position: absolute; left: ${cmToPx(principalTextX)}px; top: ${cmToPx(principalTextY)}px; font-size: ${cmToPx(principalTextFontSize)}px; color: ${principalTextColor}; font-weight: bold; text-align: center; z-index: 1;">${principalTextContent}</div>` : ''}
+                </div>
+            `;
+        }
+        
+        // ============================================
+        // MAIN FUNCTIONS
+        // ============================================
+        async function getStudentId() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('id');
         }
         
-        // Load student data
         async function loadStudent() {
-            const studentId = getStudentId();
-            
+            const studentId = await getStudentId();
             if (!studentId) {
                 showError('មិនមានអត្តលេខសិស្សក្នុង URL');
                 return null;
             }
-            
             try {
-                const { data, error } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .eq('studentID', studentId)
-                    .maybeSingle();
-                
+                const { data, error } = await supabaseClient.from(TABLE_NAME).select('*').eq('studentID', studentId).maybeSingle();
                 if (error) throw error;
-                
-                if (!data) {
-                    showError(`រកមិនឃើញសិស្សដែលមានអត្តលេខ: ${studentId}`);
-                    return null;
-                }
-                
+                if (!data) { showError(`រកមិនឃើញសិស្សដែលមានអត្តលេខ: ${studentId}`); return null; }
                 return data;
             } catch (error) {
-                console.error('Error:', error);
                 showError('កំហុសក្នុងការផ្ទុកទិន្នន័យ: ' + error.message);
                 return null;
             }
         }
         
-        // Display card using generateSmallCardHTML from card-template.js
         function displayCard(student) {
             const container = document.getElementById('studentCardContainer');
-            if (container && window.generateSmallCardHTML) {
-                container.innerHTML = window.generateSmallCardHTML(student);
-            } else {
-                console.error('generateSmallCardHTML not available');
-            }
+            if (container) container.innerHTML = generateCardHTML(student);
         }
         
-        // Download card as image
-        async function downloadCard() {
-            const cardElement = document.querySelector('#studentCardContainer .student-id-card');
-            if (!cardElement) {
-                alert('មិនមានកាតដើម្បីទាញយក');
-                return;
-            }
-            
-            try {
-                const btn = document.getElementById('downloadCardBtn');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '⏳ កំពុងដំណើរការ...';
-                btn.disabled = true;
-                
-                const canvas = await html2canvas(cardElement, {
-                    scale: 3,
-                    backgroundColor: null,
-                    logging: false
-                });
-                
-                const link = document.createElement('a');
-                const studentId = getStudentId() || 'card';
-                link.download = `student_card_${studentId}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                alert('✅ បានទាញយកដោយជោគជ័យ!');
-            } catch (error) {
-                console.error('Download error:', error);
-                alert('កើតមានបញ្ហា: ' + error.message);
-                const btn = document.getElementById('downloadCardBtn');
-                if (btn) {
-                    btn.innerHTML = '📥 ទាញយករូបភាព';
-                    btn.disabled = false;
-                }
-            }
-        }
-        
-        // Show error
         function showError(message) {
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('errorState').classList.remove('hidden');
             document.getElementById('errorMessage').innerText = message;
         }
         
-        // Show card
         function showCard() {
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('cardState').classList.remove('hidden');
         }
         
-        // Initialize
-        async function init() {
-            const student = await loadStudent();
-            if (student) {
-                displayCard(student);
-                showCard();
-                document.title = `កាតសិស្ស - ${student.name || student.studentID}`;
-            }
+        async function downloadCard() {
+            const cardElement = document.querySelector('#studentCardContainer .student-id-card');
+            if (!cardElement) { alert('មិនមានកាតដើម្បីទាញយក'); return; }
+            try {
+                const btn = document.getElementById('downloadCardBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ កំពុងដំណើរការ...';
+                btn.disabled = true;
+                const canvas = await html2canvas(cardElement, { scale: 3, backgroundColor: null, logging: false });
+                const link = document.createElement('a');
+                const studentId = await getStudentId();
+                link.download = `student_card_${studentId || 'card'}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('✅ បានទាញយកដោយជោគជ័យ!');
+            } catch (error) { alert('កើតមានបញ្ហា: ' + error.message); }
         }
         
-        // Event listeners
-        document.getElementById('downloadCardBtn')?.addEventListener('click', downloadCard);
+        async function init() {
+            const student = await loadStudent();
+            if (student) { displayCard(student); showCard(); document.title = `កាតសិស្ស - ${student.name || student.studentID}`; }
+        }
         
-        // Start
+        document.getElementById('downloadCardBtn')?.addEventListener('click', downloadCard);
         init();
     </script>
 </body>
