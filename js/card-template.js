@@ -227,37 +227,40 @@ function generateCardHTML(data) {
     const ministryTextColor = getElementConfig('ministryText', 'color', "#233D2E");
     
     const qrCodeX = getElementConfig('qrCode', 'x', 5.0);
-    const qrCodeY = getElementConfig('qrCode', 'y', 1.3);
+    const qrCodeY = getElementConfig('qrCode', 'y', 1.8);
     const qrCodeSize = getElementConfig('qrCode', 'size', 1.8);
     
     const titleTextVisible = getElementConfig('titleText', 'visible', true);
-    const titleTextX = getElementConfig('titleText', 'x', 3.25);
-    const titleTextY = getElementConfig('titleText', 'y', 2.8);
-    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.32);
+    const titleTextX = getElementConfig('titleText', 'x', 3.6);
+    const titleTextY = getElementConfig('titleText', 'y', 2.75);
+    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.34);
     const titleTextColor = getElementConfig('titleText', 'color', "#D28A17");
     
     const subtitleTextVisible = getElementConfig('subtitleText', 'visible', true);
-    const subtitleTextX = getElementConfig('subtitleText', 'x', 3.25);
-    const subtitleTextY = getElementConfig('subtitleText', 'y', 3.15);
-    const subtitleTextFontSize = getElementConfig('subtitleText', 'fontSize', 0.22);
+    const subtitleTextX = getElementConfig('subtitleText', 'x', 3.65);
+    const subtitleTextY = getElementConfig('subtitleText', 'y', 3.35);
+    const subtitleTextFontSize = getElementConfig('subtitleText', 'fontSize', 0.24);
     const subtitleTextColor = getElementConfig('subtitleText', 'color', "#3D8BFF");
     
     const studentInfoVisible = getElementConfig('studentInfo', 'visible', true);
-    const studentInfoX = getElementConfig('studentInfo', 'x', 0.3);
-    const studentInfoY = getElementConfig('studentInfo', 'y', 3.6);
-    const studentInfoFontSize = getElementConfig('studentInfo', 'fontSize', 0.19);
+    const studentInfoX = getElementConfig('studentInfo', 'x', 0.15);
+    const studentInfoY = getElementConfig('studentInfo', 'y', 3.8);
+    const studentInfoFontSize = getElementConfig('studentInfo', 'fontSize', 0.28);
     const studentInfoLabelColor = getElementConfig('studentInfo', 'labelColor', "#233D2E");
     const studentInfoValueColor = getElementConfig('studentInfo', 'valueColor', "#304FFE");
     
     const studentPhotoVisible = getElementConfig('studentPhoto', 'visible', true);
     const studentPhotoX = getElementConfig('studentPhoto', 'x', 0.3);
-    const studentPhotoY = getElementConfig('studentPhoto', 'y', 5.8);
+    const studentPhotoY = getElementConfig('studentPhoto', 'y', 6.75);
     const studentPhotoWidth = getElementConfig('studentPhoto', 'width', 2.0);
     const studentPhotoHeight = getElementConfig('studentPhoto', 'height', 2.5);
     
     const dateTextVisible = getElementConfig('dateText', 'visible', true);
-    const dateTextX = getElementConfig('dateText', 'x', 2.5);
-    const dateTextY = getElementConfig('dateText', 'y', 7.0);
+    const dateTextX = getElementConfig('dateText', 'x', 1.9);
+    const dateTextY = getElementConfig('dateText', 'y', 5.7);
+    const studentPhotoWidth = getElementConfig('dateText', 'width', 3.3);
+    const studentPhotoHeight = getElementConfig('dateText', 'height', 3.5);
+    
     const dateTextFontSize = getElementConfig('dateText', 'fontSize', 0.16);
     const dateTextColor = getElementConfig('dateText', 'color', "#233D2E");
     const dateTextContent = getElementConfig('dateText', 'text', "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩");
