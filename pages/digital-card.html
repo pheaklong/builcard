@@ -92,7 +92,13 @@
     // ============================================================
     const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Fix: Use a different variable name or check if supabase already exists
+    let supabaseClient;
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } else {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
     const TABLE_NAME = 'table_student';
 
     // ============================================================
@@ -307,7 +313,7 @@
             return null;
         }
         try {
-            const { data, error } = await supabase.from(TABLE_NAME).select('*').eq('studentID', studentId).maybeSingle();
+            const { data, error } = await supabaseClient.from(TABLE_NAME).select('*').eq('studentID', studentId).maybeSingle();
             if (error) throw error;
             if (!data) {
                 showErrorMessage(`រកមិនឃើញសិស្សដែលមានអត្តលេខ: ${studentId}`);
