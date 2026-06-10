@@ -161,8 +161,8 @@ function getSignatureImage() {
     
     const signatureX = getElementConfig('signature', 'x', 4.65);
     const signatureY = getElementConfig('signature', 'y', 7.6);
-    const signatureWidth = getElementConfig('signature', 'width', 2.25);
-    const signatureHeight = getElementConfig('signature', 'height', 0.8);
+    const signatureWidth = getElementConfig('signature', 'width', 2.5);
+    const signatureHeight = getElementConfig('signature', 'height', 1.4);
     
     return `
         <div style="position: absolute; left: ${cmToPx(signatureX)}px; top: ${cmToPx(signatureY)}px; width: ${cmToPx(signatureWidth)}px; text-align: center; z-index: 1;">
