@@ -9,45 +9,291 @@
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/card-style.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .nav-bar { background: white; border-radius: 12px; padding: 12px 24px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .nav-links a { text-decoration: none; padding: 8px 16px; border-radius: 8px; transition: all 0.3s ease; font-family: 'Khmer', sans-serif; }
-        .nav-links a:hover { background: #f0f0f0; }
-        .main-panel { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .controls-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e5e7eb; }
-        .title-section h2 { font-size: 20px; color: #233D2E; font-family: 'Khmer', sans-serif; }
-        .title-section span { font-size: 14px; color: #304FFE; margin-left: 8px; }
-        .action-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
-        .btn { padding: 8px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.3s ease; font-family: 'Khmer', sans-serif; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; transform: translateY(-2px); }
-        .btn-primary { background: #10b981; color: white; }
-        .btn-primary:hover { background: #059669; transform: translateY(-2px); }
-        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
-        .cards-grid { display: flex; flex-wrap: wrap; justify-content: flex-start; gap: 24px; max-height: 600px; overflow-y: auto; padding: 8px; }
-        .card-wrapper { position: relative; transition: all 0.3s ease; }
-        .card-wrapper:hover { transform: translateY(-4px); }
-        .remove-card-btn { position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; background: #dc2626; color: white; border: none; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; z-index: 10; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
-        .remove-card-btn:hover { background: #b91c1c; transform: scale(1.1); }
-        .empty-state { text-align: center; padding: 60px 20px; color: #6b7280; width: 100%; }
-        .empty-state svg { width: 80px; height: 80px; margin-bottom: 16px; opacity: 0.5; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
-        .modal-content { background: white; border-radius: 16px; max-width: 95%; max-height: 90%; overflow-y: auto; padding: 20px; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e5e7eb; flex-wrap: wrap; gap: 12px; }
-        .modal-header h3 { font-family: 'Khmer', sans-serif; color: #233D2E; }
-        .print-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; justify-items: center; align-items: center; page-break-after: always; }
-        .print-grid:last-child { page-break-after: auto; }
-        .print-card-item { display: flex; justify-content: center; align-items: center; }
-        .hidden { display: none; }
-        .cards-grid::-webkit-scrollbar { width: 8px; }
-        .cards-grid::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        .cards-grid::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
-        .info-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px 16px; margin-top: 20px; display: flex; align-items: center; gap: 12px; font-size: 13px; color: #166534; font-family: 'Khmer', sans-serif; }
-        .print-size-hint { margin-top: 16px; padding: 10px; background: #fef3c7; border-radius: 8px; font-size: 12px; color: #92400e; text-align: center; }
-        img[alt="QR Code"] { print-color-adjust: exact; -webkit-print-color-adjust: exact; forced-color-adjust: none; }
-        @media print { img[alt="QR Code"] { display: block !important; visibility: visible !important; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .nav-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-family: 'Khmer', sans-serif;
+        }
+        
+        .nav-links a:hover {
+            background: #f0f0f0;
+        }
+        
+        .main-panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .title-section h2 {
+            font-size: 20px;
+            color: #233D2E;
+            font-family: 'Khmer', sans-serif;
+        }
+        
+        .title-section span {
+            font-size: 14px;
+            color: #304FFE;
+            margin-left: 8px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Khmer', sans-serif;
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .cards-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            gap: 24px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .card-wrapper {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .card-wrapper:hover {
+            transform: translateY(-4px);
+        }
+        
+        .remove-card-btn {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 28px;
+            height: 28px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .remove-card-btn:hover {
+            background: #b91c1c;
+            transform: scale(1.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+            width: 100%;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 95%;
+            max-height: 90%;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .modal-header h3 {
+            font-family: 'Khmer', sans-serif;
+            color: #233D2E;
+        }
+        
+        .print-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            justify-items: center;
+            align-items: center;
+            page-break-after: always;
+        }
+        
+        .print-grid:last-child {
+            page-break-after: auto;
+        }
+        
+        .print-card-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .cards-grid::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .cards-grid::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .cards-grid::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        
+        .info-box {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #166534;
+            font-family: 'Khmer', sans-serif;
+        }
+        
+        .print-size-hint {
+            margin-top: 16px;
+            padding: 10px;
+            background: #fef3c7;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #92400e;
+            text-align: center;
+        }
+        
+        img[alt="QR Code"] {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+            forced-color-adjust: none;
+        }
+        
+        @media print {
+            img[alt="QR Code"] {
+                display: block !important;
+                visibility: visible !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -57,7 +303,9 @@
                 <a href="../index.html" style="color: #233D2E;">← ត្រឡប់ទៅមេនុយ</a>
                 <a href="search.html" style="color: #304FFE; margin-left: 16px;">← ត្រឡប់ទៅស្វែងរក</a>
             </div>
-            <div><span style="color: #233D2E; font-size: 14px; font-family: 'Khmer', sans-serif;">ប្រព័ន្ធបង្កើតកាតសិស្ស</span></div>
+            <div>
+                <span style="color: #233D2E; font-size: 14px; font-family: 'Khmer', sans-serif;">ប្រព័ន្ធបង្កើតកាតសិស្ស</span>
+            </div>
         </div>
         
         <div class="main-panel">
@@ -73,7 +321,9 @@
             
             <div id="selectedStudentsList" class="cards-grid">
                 <div class="empty-state">
-                    <svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg>
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                    </svg>
                     <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
                     <p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
                 </div>
@@ -84,7 +334,7 @@
                 <span>កាតសិស្សមានទំហំ 6.5cm × 8.5cm (បញ្ឈរ)។ ពេលបោះពុម្ព កាតនឹងរៀបចំជា 4 ជួរ × 2 ជួរដេក = 8 កាតក្នុង 1 ទំព័រ A4 Portrait ។</span>
             </div>
             <div class="print-size-hint">
-                📄 ណែនាំ៖ នៅពេលបោះពុម្ព សូមជ្រើសរើស "ទំហំ A4 Portrait" និង "គ្មានស៊ុម" (Borderless) ដើម្បីបានលទ្ធផលល្អបំផុត។
+                📄 ណែនាំ៖ នៅពេលបោះពុម្ព សូមជ្រើសរើស "ទំហំ A4 Portrait" និង "គ្មានស៊ុម" (Borderless) និងកំណត់មាត្រដ្ឋាន 100%។
             </div>
         </div>
     </div>
@@ -153,7 +403,7 @@
             }
         });
         
-        // 8 cards per page
+        // Split cards into pages - 8 cards per page
         function splitCardsIntoPages(cardsHTMLArray) {
             const pages = [];
             for (let i = 0; i < cardsHTMLArray.length; i += 8) {
@@ -171,22 +421,27 @@
             document.getElementById('cardsModal').classList.remove('hidden');
         });
         
-        // PRINT FUNCTION - 8 cards per page (A4 Portrait)
+        // ============================================
+        // PRINT FUNCTION - 8 cards per page (A4 Portrait) with EXACT SIZE
+        // ============================================
         document.getElementById('printAllCards')?.addEventListener('click', async () => {
             if (!selectedStudents || selectedStudents.length === 0) {
                 alert('មិនមានសិស្សដើម្បីបោះពុម្ពទេ');
                 return;
             }
             
+            // Show loading message
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'printLoading';
             loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;';
             loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំកាតសម្រាប់បោះពុម្ព... សូមរងចាំ</div></div>';
             document.body.appendChild(loadingDiv);
             
+            // Generate all cards
             const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
             const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
             
+            // Create print window with exact size CSS
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -198,7 +453,13 @@
                         <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
                         <link rel="stylesheet" href="../css/card-style.css">
                         <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            /* RESET */
+                            * {
+                                margin: 0;
+                                padding: 0;
+                                box-sizing: border-box;
+                            }
+                            
                             body { 
                                 background: white; 
                                 margin: 0; 
@@ -209,48 +470,112 @@
                                 align-items: center;
                                 min-height: 100vh;
                             }
+                            
+                            /* CRITICAL: Exact page size with no margins */
                             @page { 
-                                size: A4 portrait; 
-                                margin: 0.3cm; 
+                                size: A4 landscape; 
+                                margin: 0cm;
                             }
+                            
+                            /* 8 cards per page grid - EXACT DIMENSIONS */
                             .print-grid {
                                 display: grid;
                                 grid-template-columns: repeat(4, 6.5cm);
                                 grid-template-rows: repeat(2, 8.5cm);
-                                gap: 5px;
+                                gap: 2px;
                                 justify-content: center;
                                 align-items: center;
+                                margin: 0 auto;
                                 page-break-after: always;
-                                margin: auto;
                             }
-                            .print-grid:last-child { page-break-after: auto; }
-                            .print-card-item { display: flex; justify-content: center; align-items: center; width: 6.5cm; height: 8.5cm; }
-                            .student-id-card { width: 6.5cm !important; height: 8.5cm !important; margin: 0 !important; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; }
-                            .remove-card-btn { display: none !important; }
-                            img { max-width: 100%; height: auto; }
-                            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
+                            
+                            .print-grid:last-child {
+                                page-break-after: auto;
+                            }
+                            
+                            .print-card-item {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                width: 6.5cm;
+                                height: 8.5cm;
+                            }
+                            
+                            /* FORCE EXACT CARD SIZE */
+                            .student-id-card {
+                                width: 6.5cm !important;
+                                height: 8.5cm !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                box-shadow: none !important;
+                                page-break-inside: avoid !important;
+                                break-inside: avoid !important;
+                                box-sizing: border-box;
+                                overflow: hidden;
+                            }
+                            
+                            /* Hide remove buttons in print */
+                            .remove-card-btn {
+                                display: none !important;
+                            }
+                            
+                            /* Ensure images render properly */
+                            img {
+                                max-width: 100%;
+                                height: auto;
+                            }
+                            
+                            img[alt="QR Code"] {
+                                display: block !important;
+                                visibility: visible !important;
+                            }
+                            
+                            /* Print-specific overrides */
                             @media print {
-                                body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; }
-                                .print-grid { break-inside: avoid; page-break-after: always; margin: auto; }
-                                .student-id-card { break-inside: avoid; }
-                                img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                                body {
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                .print-grid {
+                                    break-inside: avoid;
+                                    page-break-after: always;
+                                    margin: 0 auto;
+                                }
+                                .student-id-card {
+                                    break-inside: avoid;
+                                    page-break-inside: avoid;
+                                }
+                                img {
+                                    print-color-adjust: exact;
+                                    -webkit-print-color-adjust: exact;
+                                }
                             }
                         </style>
                     </head>
                     <body>
                         ${pagesHTML}
                         <script>
+                            // Wait for all images to load before printing
                             window.onload = function() {
                                 const images = document.querySelectorAll('img');
                                 let loadedCount = 0;
-                                if (images.length === 0) { setTimeout(() => window.print(), 500); return; }
+                                if (images.length === 0) {
+                                    setTimeout(() => window.print(), 500);
+                                    return;
+                                }
                                 images.forEach(img => {
                                     if (img.complete) {
                                         loadedCount++;
                                         if (loadedCount === images.length) setTimeout(() => window.print(), 300);
                                     } else {
-                                        img.addEventListener('load', () => { loadedCount++; if (loadedCount === images.length) setTimeout(() => window.print(), 300); });
-                                        img.addEventListener('error', () => { loadedCount++; if (loadedCount === images.length) setTimeout(() => window.print(), 300); });
+                                        img.addEventListener('load', () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                        });
+                                        img.addEventListener('error', () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                        });
                                     }
                                 });
                             };
@@ -259,7 +584,11 @@
                 </html>
             `);
             printWindow.document.close();
-            setTimeout(() => { if (loadingDiv) loadingDiv.remove(); }, 2000);
+            
+            // Remove loading message
+            setTimeout(() => {
+                if (loadingDiv) loadingDiv.remove();
+            }, 2000);
         });
         
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
@@ -273,7 +602,7 @@
         });
         
         loadSelectedStudents();
-        console.log('✅ Generate page loaded - 8 cards per A4 portrait');
+        console.log('✅ Generate page loaded - 8 cards per A4 portrait with exact 6.5x8.5cm size');
     </script>
 </body>
 </html>
