@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>កាតសិស្សឌីជីថល - Digital Student ID Card</title>
+    <title>កាតសិស្សឌីជីថល - Digital Student Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -19,43 +19,36 @@
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
         }
         
-        .digital-card-container {
+        .digital-container {
             max-width: 500px;
             width: 100%;
             margin: 0 auto;
         }
         
-        .card-wrapper {
+        .card-preview {
             background: white;
             border-radius: 20px;
             padding: 20px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            animation: fadeInUp 0.5s ease;
+            animation: fadeIn 0.5s ease;
         }
         
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        .loading-spinner {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 400px;
+        .loading-state {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
         }
         
         .spinner {
@@ -65,6 +58,7 @@
             border-top: 4px solid #4A86E8;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
         
         @keyframes spin {
@@ -72,65 +66,85 @@
             100% { transform: rotate(360deg); }
         }
         
-        .error-message {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
+        .error-state {
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
         }
         
-        .download-btn {
+        .btn-download {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             transition: all 0.3s ease;
         }
         
-        .download-btn:hover {
+        .btn-download:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
         
-        .back-btn {
+        .btn-back {
             background: #6b7280;
             transition: all 0.3s ease;
         }
         
-        .back-btn:hover {
+        .btn-back:hover {
             background: #4b5563;
-            transform: translateY(-2px);
+        }
+        
+        .hidden {
+            display: none;
         }
         
         @media (max-width: 480px) {
-            .card-wrapper {
+            .card-preview {
                 padding: 12px;
             }
-            .download-btn, .back-btn {
+            .btn-download, .btn-back {
                 padding: 10px 16px;
-                font-size: 14px;
+                font-size: 13px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="digital-card-container">
-        <div id="loadingState" class="loading-spinner">
+    <div class="digital-container">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
             <div class="spinner"></div>
-            <p class="text-white mt-4 text-lg">កំពុងផ្ទុកទិន្នន័យសិស្ស...</p>
+            <p class="text-gray-600">កំពុងផ្ទុកទិន្នន័យសិស្ស...</p>
         </div>
         
-        <div id="errorState" class="error-message hidden">
-            <svg class="w-20 h-20 mx-auto text-red-500 mb-4" fill="currentColor" viewBox="0 0 20 20">
+        <!-- Error State -->
+        <div id="errorState" class="error-state hidden">
+            <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
             </svg>
             <h3 class="text-xl font-bold text-gray-800 mb-2">កើតមានបញ្ហា</h3>
             <p id="errorMessage" class="text-gray-600 mb-4">មិនអាចផ្ទុកទិន្នន័យសិស្សបានទេ</p>
-            <a href="../index.html" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">← ត្រឡប់ទៅទំព័រដើម</a>
+            <a href="../index.html" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">← ត្រឡប់ទៅដើម</a>
         </div>
         
+        <!-- Card State -->
         <div id="cardState" class="hidden">
-            <div class="card-wrapper">
+            <div class="card-preview">
                 <div id="studentCardContainer" class="flex justify-center mb-4">
-                    <!-- Card will be displayed here -->
+                    <!-- Card will be generated here -->
+                </div>
+                
+                <div class="flex gap-3 mt-4">
+                    <button id="downloadCardBtn" class="btn-download flex-1 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        ទាញយករូបភាព
+                    </button>
+                    <a href="../index.html" class="btn-back flex-1 text-white px-4 py-3 rounded-xl font-medium flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        ត្រឡប់
+                    </a>
                 </div>
             </div>
         </div>
@@ -147,17 +161,19 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'table_student';
         
-        // Get student ID from URL parameter
-        function getStudentIdFromUrl() {
+        // Get student ID from URL
+        function getStudentId() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('id');
         }
         
         // Load student data
-        async function loadStudentData(studentId) {
+        async function loadStudent() {
+            const studentId = getStudentId();
+            
             if (!studentId) {
                 showError('មិនមានអត្តលេខសិស្សក្នុង URL');
-                return false;
+                return null;
             }
             
             try {
@@ -171,22 +187,24 @@
                 
                 if (!data) {
                     showError(`រកមិនឃើញសិស្សដែលមានអត្តលេខ: ${studentId}`);
-                    return false;
+                    return null;
                 }
                 
                 return data;
             } catch (error) {
-                console.error('Error loading student:', error);
-                showError('កំហុសក្នុងការផ្ទុកទិន្នន័យសិស្ស: ' + error.message);
-                return false;
+                console.error('Error:', error);
+                showError('កំហុសក្នុងការផ្ទុកទិន្នន័យ: ' + error.message);
+                return null;
             }
         }
         
-        // Display card
-        function displayCard(studentData) {
+        // Display card using generateSmallCardHTML from card-template.js
+        function displayCard(student) {
             const container = document.getElementById('studentCardContainer');
-            if (container && generateCardHTML) {
-                container.innerHTML = generateCardHTML(studentData);
+            if (container && window.generateSmallCardHTML) {
+                container.innerHTML = window.generateSmallCardHTML(student);
+            } else {
+                console.error('generateSmallCardHTML not available');
             }
         }
         
@@ -199,158 +217,62 @@
             }
             
             try {
-                // Show loading indicator on button
-                const downloadBtn = document.getElementById('downloadCardBtn');
-                const originalText = downloadBtn.innerHTML;
-                downloadBtn.innerHTML = '<div class="spinner-small"></div> កំពុងដំណើរការ...';
-                downloadBtn.disabled = true;
-                
-                // Add small spinner style
-                const style = document.createElement('style');
-                style.textContent = `
-                    .spinner-small {
-                        width: 16px;
-                        height: 16px;
-                        border: 2px solid #f3f3f3;
-                        border-top: 2px solid white;
-                        border-radius: 50%;
-                        animation: spin 0.8s linear infinite;
-                        display: inline-block;
-                        margin-right: 8px;
-                    }
-                    @keyframes spin {
-                        0% { transform: rotate(0deg); }
-                        100% { transform: rotate(360deg); }
-                    }
-                `;
-                document.head.appendChild(style);
+                const btn = document.getElementById('downloadCardBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ កំពុងដំណើរការ...';
+                btn.disabled = true;
                 
                 const canvas = await html2canvas(cardElement, {
                     scale: 3,
                     backgroundColor: null,
-                    logging: false,
-                    useCORS: true
-                });
-                
-                const link = document.createElement('a');
-                const studentId = document.getElementById('studentID')?.value || 
-                                  new URLSearchParams(window.location.search).get('id') || 
-                                  'student-card';
-                link.download = `digital_student_card_${studentId}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                
-                // Restore button
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
-                
-                // Show success message
-                alert('✅ បានទាញយករូបភាពកាតដោយជោគជ័យ!');
-            } catch (error) {
-                console.error('Download error:', error);
-                alert('កើតមានបញ្ហាក្នុងការទាញយករូបភាព: ' + error.message);
-                const downloadBtn = document.getElementById('downloadCardBtn');
-                if (downloadBtn) {
-                    downloadBtn.innerHTML = '📥 ទាញយករូបភាពកាត';
-                    downloadBtn.disabled = false;
-                }
-            }
-        }
-        
-        // Share card
-        async function shareCard() {
-            const cardElement = document.querySelector('#studentCardContainer .student-id-card');
-            if (!cardElement) {
-                alert('មិនមានកាតដើម្បីចែករំលែក');
-                return;
-            }
-            
-            try {
-                const shareBtn = document.getElementById('shareCardBtn');
-                shareBtn.innerHTML = 'កំពុងដំណើរការ...';
-                shareBtn.disabled = true;
-                
-                const canvas = await html2canvas(cardElement, {
-                    scale: 2,
-                    backgroundColor: null,
                     logging: false
                 });
                 
-                // Convert canvas to blob
-                canvas.toBlob(async (blob) => {
-                    const file = new File([blob], 'student-card.png', { type: 'image/png' });
-                    
-                    if (navigator.share) {
-                        try {
-                            await navigator.share({
-                                title: 'កាតសិស្សឌីជីថល',
-                                text: 'នេះជាកាតសិស្សឌីជីថល',
-                                files: [file]
-                            });
-                        } catch (shareError) {
-                            if (shareError.name !== 'AbortError') {
-                                alert('មិនអាចចែករំលែកបានទេ: ' + shareError.message);
-                            }
-                        }
-                    } else {
-                        // Fallback: download instead
-                        const link = document.createElement('a');
-                        link.download = 'student-card.png';
-                        link.href = canvas.toDataURL();
-                        link.click();
-                        alert('ប្រព័ន្ធរបស់អ្នកមិនគាំទ្រការចែករំលែកទេ។ បានរក្សាទុករូបភាពដោយស្វ័យប្រវត្តិ។');
-                    }
-                    
-                    shareBtn.innerHTML = '📤 ចែករំលែក';
-                    shareBtn.disabled = false;
-                }, 'image/png');
+                const link = document.createElement('a');
+                const studentId = getStudentId() || 'card';
+                link.download = `student_card_${studentId}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                alert('✅ បានទាញយកដោយជោគជ័យ!');
             } catch (error) {
-                console.error('Share error:', error);
-                alert('កើតមានបញ្ហាក្នុងការចែករំលែក: ' + error.message);
-                const shareBtn = document.getElementById('shareCardBtn');
-                if (shareBtn) {
-                    shareBtn.innerHTML = '📤 ចែករំលែក';
-                    shareBtn.disabled = false;
+                console.error('Download error:', error);
+                alert('កើតមានបញ្ហា: ' + error.message);
+                const btn = document.getElementById('downloadCardBtn');
+                if (btn) {
+                    btn.innerHTML = '📥 ទាញយករូបភាព';
+                    btn.disabled = false;
                 }
             }
         }
         
-        // Show error state
+        // Show error
         function showError(message) {
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('errorState').classList.remove('hidden');
             document.getElementById('errorMessage').innerText = message;
         }
         
-        // Show card state
-        function showCardState() {
+        // Show card
+        function showCard() {
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('cardState').classList.remove('hidden');
         }
         
-        // Initialize page
+        // Initialize
         async function init() {
-            const studentId = getStudentIdFromUrl();
-            console.log('Digital Card - Student ID:', studentId);
-            
-            if (!studentId) {
-                showError('សូមបញ្ចូលអត្តលេខសិស្សតាមរយៈ URL ( ?id=STU-001 )');
-                return;
-            }
-            
-            const studentData = await loadStudentData(studentId);
-            if (studentData) {
-                displayCard(studentData);
-                showCardState();
-                
-                // Update page title with student name
-                document.title = `កាតសិស្សឌីជីថល - ${studentData.name || studentId}`;
+            const student = await loadStudent();
+            if (student) {
+                displayCard(student);
+                showCard();
+                document.title = `កាតសិស្ស - ${student.name || student.studentID}`;
             }
         }
         
         // Event listeners
         document.getElementById('downloadCardBtn')?.addEventListener('click', downloadCard);
-        document.getElementById('shareCardBtn')?.addEventListener('click', shareCard);
         
         // Start
         init();
