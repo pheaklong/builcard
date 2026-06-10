@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>អត្តសញ្ញាណប័ណ្ណសិស្សឌីជីថល | Digital Student ID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+    <!-- ប្រើ card-template.js ដើម្បីឲ្យទម្រង់កាតដូចគ្នា -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/card-template.js"></script>
+    <style>
+        * {
+            font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .digital-card-container {
+            max-width: 400px;
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+        }
+        .loading-spinner {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+        .error-message {
+            background: #fee2e2;
+            border-left: 4px solid #dc2626;
+            padding: 16px;
+            border-radius: 8px;
+            color: #991b1b;
+            text-align: center;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+        .back-link:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="digital-card-container" id="digitalCardContainer">
+        <div class="loading-spinner">
+            <svg class="animate-spin h-10 w-10 text-white mx-auto mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p>កំពុងផ្ទុកទិន្នន័យសិស្ស...</p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // SUPABASE CONFIGURATION (ត្រូវតែដូចគ្នានឹង config ក្នុងឯកសារដទៃ)
+        // ============================================
+        const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const TABLE_NAME = 'table_student';
+
+        // អនុគមន៍សម្រាប់ទាញយក Student ID ពី URL
+        function getStudentIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id'); // ឧទាហរណ៍: digital-card.html?id=STU001
+        }
+
+        // អនុគមន៍សម្រាប់បង្ហាញកំហុស
+        function showError(message) {
+            const container = document.getElementById('digitalCardContainer');
+            container.innerHTML = `
+                <div class="error-message">
+                    <svg class="w-12 h-12 mx-auto mb-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="font-bold mb-2">កើតមានបញ្ហា</p>
+                    <p>${message}</p>
+                    <a href="../index.html" class="inline-block mt-4 text-blue-600 underline">← ត្រឡប់ទៅទំព័រដើម</a>
+                </div>
+            `;
+        }
+
+        // អនុគមន៍សំខាន់: ផ្ទុកទិន្នន័យសិស្ស និងបង្ហាញកាត
+        async function loadAndDisplayDigitalCard() {
+            const studentId = getStudentIdFromUrl();
+            
+            // ពិនិត្យមើលថាមាន Student ID ក្នុង URL ដែរឬទេ
+            if (!studentId) {
+                showError('មិនមានអត្តលេខសិស្ស (Student ID) ត្រូវបានផ្តល់ឲ្យក្នុងតំណភ្ជាប់ទេ។');
+                return;
+            }
+
+            try {
+                // 1. ទាញទិន្នន័យសិស្សពី Supabase ដោយប្រើ studentId
+                const { data: student, error } = await supabaseClient
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .eq('studentID', studentId)
+                    .single();
+
+                if (error) {
+                    console.error("Supabase error:", error);
+                    throw new Error('មិនអាចស្វែងរកទិន្នន័យសិស្សបានទេ។');
+                }
+
+                if (!student) {
+                    throw new Error(`រកមិនឃើញសិស្សដែលមានអត្តលេខ ${studentId} ទេ។`);
+                }
+
+                // 2. ពិនិត្យមើលថាមុខងារ `generateSmallCardHTML` មាន (វាមកពី card-template.js)
+                if (typeof generateSmallCardHTML !== 'function') {
+                    throw new Error('ប្រព័ន្ធកំពុងដំណើរការ សូមចុច F5 ដើម្បីផ្ទុកទំព័រឡើងវិញ។');
+                }
+
+                // 3. បង្កើត HTML សម្រាប់កាតឌីជីថល (ប្រើ template ដូចគ្នានឹងកាតបោះពុម្ព)
+                const cardHTML = generateSmallCardHTML(student);
+                
+                // 4. បង្ហាញកាតក្នុង container
+                const container = document.getElementById('digitalCardContainer');
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl p-4 shadow-2xl">
+                        ${cardHTML}
+                        <div class="mt-6 pt-4 border-t border-gray-200 text-center">
+                            <p class="text-gray-500 text-sm">នេះជាអត្តសញ្ញាណប័ណ្ណសិស្សឌីជីថលផ្លូវការ</p>
+                            <a href="../index.html" class="inline-block mt-3 text-blue-600 hover:text-blue-800 text-sm">← ត្រឡប់ទៅទំព័រដើម</a>
+                        </div>
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error(err);
+                showError(err.message || 'កើតមានបញ្ហាមិនប្រក្រតី សូមព្យាយាមម្តងទៀតក្រោយ។');
+            }
+        }
+
+        // ចាប់ផ្តើមដំណើរការ
+        loadAndDisplayDigitalCard();
+    </script>
+</body>
+</html>
