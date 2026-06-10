@@ -43,8 +43,8 @@ function getElementConfig(elementName, property, defaultValue) {
     return defaultValue;
 }
 
-function getCardWidthCm() { return getCustomConfigValue('cardWidthCm', 6.5); }
-function getCardHeightCm() { return getCustomConfigValue('cardHeightCm', 8.5); }
+function getCardWidthCm() { return getCustomConfigValue('cardWidthCm', 7.5); }
+function getCardHeightCm() { return getCustomConfigValue('cardHeightCm', 9.5); }
 function getGlobalFontFamily() { return getCustomConfigValue('globalFontFamily', "'Khmer', 'Khmer OS Moul Light', sans-serif"); }
 function getCardBgColor() { return getElementConfig('cardBg', 'bgColor', "#f5f5f0"); }
 function getCardBorderColor() { return getElementConfig('cardBg', 'borderColor', "#4A86E8"); }
