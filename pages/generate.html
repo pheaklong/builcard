@@ -208,13 +208,6 @@
             align-items: center;
         }
         
-        .print-card-item {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-        
         .hidden { display: none; }
         
         .cards-grid::-webkit-scrollbar { width: 6px; }
@@ -372,7 +365,7 @@
             }
         });
         
-        // Split cards into pages - 6 cards per page with correct structure
+        // Split cards into pages - 6 cards per page
         function splitCardsIntoPages(cardsHTMLArray) {
             const pages = [];
             for (let i = 0; i < cardsHTMLArray.length; i += 6) {
@@ -394,7 +387,9 @@
             document.getElementById('cardsModal').classList.remove('hidden');
         });
         
-        // PRINT FUNCTION with correct card size
+        // ============================================
+        // PRINT FUNCTION - 6 cards per page (7.2cm x 9.5cm)
+        // ============================================
         document.getElementById('printAllCards')?.addEventListener('click', async (e) => {
             e.preventDefault();
             if (!selectedStudents || selectedStudents.length === 0) {
@@ -402,15 +397,18 @@
                 return;
             }
             
+            // Show loading message
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'printLoading';
             loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;';
             loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំ...</div></div>';
             document.body.appendChild(loadingDiv);
             
+            // Generate all cards
             const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
             const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
             
+            // Create print window with EXACT 7.2cm x 9.5cm card size
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -420,64 +418,300 @@
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
                         <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
-                        <link rel="stylesheet" href="../css/card-style.css">
                         <style>
-                            * { margin: 0; padding: 0; box-sizing: border-box; }
-                            body { background: white; margin: 0; padding: 0; }
-                            @page { size: A4 landscape; margin: 0.2cm; }
+                            /* ========== COMPLETE CARD STYLES - 7.2cm x 9.5cm ========== */
+                            * {
+                                margin: 0;
+                                padding: 0;
+                                box-sizing: border-box;
+                            }
+                            
+                            body { 
+                                background: white; 
+                                margin: 0; 
+                                padding: 0;
+                            }
+                            
+                            @page { 
+                                size: A4 landscape; 
+                                margin: 0.2cm;
+                            }
+                            
+                            /* Page container */
                             .print-page {
                                 display: block;
                                 page-break-after: always;
                                 margin: 0;
                                 padding: 0;
                             }
-                            .print-page:last-child { page-break-after: auto; }
+                            
+                            .print-page:last-child {
+                                page-break-after: auto;
+                            }
+                            
+                            /* 6 cards grid (3 columns x 2 rows) - 7.2cm x 9.5cm */
                             .print-page {
                                 display: grid;
-                                grid-template-columns: repeat(3, 6.5cm);
-                                grid-template-rows: repeat(2, 8.5cm);
-                                gap: 3px;
+                                grid-template-columns: repeat(3, 7.2cm);
+                                grid-template-rows: repeat(2, 9.5cm);
+                                gap: 4px;
                                 justify-content: center;
                                 align-items: center;
                                 margin: 0 auto;
                                 width: fit-content;
                             }
+                            
                             .print-card {
                                 display: flex;
                                 justify-content: center;
                                 align-items: center;
-                                width: 6.5cm;
-                                height: 8.5cm;
+                                width: 7.2cm;
+                                height: 9.5cm;
                             }
+                            
+                            /* Student ID Card Styles - 7.2cm x 9.5cm */
                             .student-id-card {
-                                width: 6.5cm !important;
-                                height: 8.5cm !important;
+                                width: 7.2cm !important;
+                                height: 9.5cm !important;
+                                background: #f5f5f0;
+                                border: 1px solid #4A86E8;
+                                border-radius: 8px;
+                                padding: 8px 10px;
+                                font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
+                                position: relative;
+                                overflow: visible;
+                                box-shadow: none;
                                 margin: 0 !important;
-                                padding: 0 !important;
-                                box-shadow: none !important;
-                                page-break-inside: avoid !important;
-                                break-inside: avoid !important;
+                                page-break-inside: avoid;
+                                break-inside: avoid;
                                 box-sizing: border-box;
-                                overflow: hidden;
                             }
-                            .remove-card-btn { display: none !important; }
-                            img { max-width: 100%; height: auto; }
-                            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
+                            
+                            /* Watermark */
+                            .watermark-bg {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                width: 140px;
+                                height: 140px;
+                                opacity: 0.1;
+                                pointer-events: none;
+                                z-index: 0;
+                            }
+                            
+                            /* Header */
+                            .card-header {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                margin-bottom: 5px;
+                                position: relative;
+                                z-index: 1;
+                            }
+                            
+                            .logo-area img {
+                                width: 32px;
+                                height: 32px;
+                                object-fit: contain;
+                            }
+                            
+                            .royal-text {
+                                text-align: right;
+                            }
+                            
+                            .royal-line-1, .royal-line-2 {
+                                font-size: 7.5px;
+                                color: #233D2E;
+                            }
+                            
+                            /* Ministry Section */
+                            .ministry-section {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: flex-start;
+                                margin-bottom: 6px;
+                                position: relative;
+                                z-index: 1;
+                            }
+                            
+                            .ministry-text {
+                                flex: 1;
+                            }
+                            
+                            .ministry-text div {
+                                font-size: 6.5px;
+                                color: #233D2E;
+                                line-height: 1.25;
+                            }
+                            
+                            .school-name-card {
+                                font-size: 7.5px;
+                                font-weight: bold;
+                                color: #233D2E;
+                                margin-top: 2px;
+                            }
+                            
+                            .qr-area svg, .qr-area img {
+                                width: 45px;
+                                height: 45px;
+                            }
+                            
+                            /* Title Section */
+                            .title-section-card {
+                                text-align: center;
+                                margin-bottom: 8px;
+                                position: relative;
+                                z-index: 1;
+                            }
+                            
+                            .card-title-text {
+                                font-size: 11px;
+                                font-weight: bold;
+                                color: #D28A17;
+                            }
+                            
+                            .academic-year-card {
+                                font-size: 7.5px;
+                                color: #3D8BFF;
+                                margin-top: 2px;
+                            }
+                            
+                            /* Info Grid */
+                            .info-grid {
+                                position: relative;
+                                z-index: 1;
+                                margin-bottom: 8px;
+                            }
+                            
+                            .info-row-grid {
+                                display: grid;
+                                grid-template-columns: 55px 1fr 40px 1fr;
+                                gap: 4px;
+                                margin-bottom: 4px;
+                                font-size: 7px;
+                                line-height: 1.3;
+                            }
+                            
+                            .info-label-grid {
+                                color: #233D2E;
+                                font-weight: 500;
+                            }
+                            
+                            .info-value-grid {
+                                color: #304FFE;
+                                font-weight: bold;
+                            }
+                            
+                            /* Bottom Section */
+                            .bottom-section-card {
+                                display: flex;
+                                gap: 10px;
+                                position: relative;
+                                z-index: 1;
+                                margin-top: 5px;
+                            }
+                            
+                            .photo-frame-card {
+                                width: 65px;
+                                height: 75px;
+                                border: 1px solid #4A86E8;
+                                border-radius: 4px;
+                                background: #e5e7eb;
+                                overflow: hidden;
+                                position: relative;
+                            }
+                            
+                            .info-section-card {
+                                flex: 1;
+                            }
+                            
+                            .date-text {
+                                font-size: 5.5px;
+                                color: #233D2E;
+                                line-height: 1.3;
+                                margin-bottom: 3px;
+                            }
+                            
+                            .school-detail-text {
+                                font-size: 5.5px;
+                                color: #233D2E;
+                                margin-bottom: 4px;
+                            }
+                            
+                            .principal-section {
+                                text-align: right;
+                            }
+                            
+                            .principal-title {
+                                font-size: 6.5px;
+                                font-weight: bold;
+                                color: #233D2E;
+                                margin-bottom: 2px;
+                            }
+                            
+                            .signature-image img {
+                                width: 80px;
+                                height: auto;
+                                max-height: 28px;
+                                object-fit: contain;
+                            }
+                            
+                            .principal-name-red {
+                                font-size: 6.5px;
+                                color: #D50000;
+                                font-weight: bold;
+                                margin-top: 2px;
+                            }
+                            
+                            /* Hide remove buttons */
+                            .remove-card-btn {
+                                display: none !important;
+                            }
+                            
+                            /* Images */
+                            img {
+                                max-width: 100%;
+                                height: auto;
+                            }
+                            
+                            img[alt="QR Code"] {
+                                display: block !important;
+                                visibility: visible !important;
+                            }
+                            
+                            /* Print overrides */
                             @media print {
-                                body { margin: 0; padding: 0; }
-                                .print-page { break-inside: avoid; page-break-after: always; }
-                                .student-id-card { break-inside: avoid; }
-                                img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                                body {
+                                    margin: 0;
+                                    padding: 0;
+                                }
+                                .print-page {
+                                    break-inside: avoid;
+                                    page-break-after: always;
+                                }
+                                .student-id-card {
+                                    break-inside: avoid;
+                                    box-shadow: none;
+                                }
+                                img {
+                                    print-color-adjust: exact;
+                                    -webkit-print-color-adjust: exact;
+                                }
                             }
                         </style>
                     </head>
                     <body>
                         ${pagesHTML}
                         <script>
+                            // Wait for all images to load before printing
                             window.onload = function() {
                                 const images = document.querySelectorAll('img');
                                 let loadedCount = 0;
-                                if (images.length === 0) { setTimeout(() => window.print(), 500); return; }
+                                if (images.length === 0) {
+                                    setTimeout(() => window.print(), 500);
+                                    return;
+                                }
                                 images.forEach(img => {
                                     if (img.complete) {
                                         loadedCount++;
@@ -499,7 +733,11 @@
                 </html>
             `);
             printWindow.document.close();
-            setTimeout(() => { if (loadingDiv) loadingDiv.remove(); }, 2000);
+            
+            // Remove loading message
+            setTimeout(() => {
+                if (loadingDiv) loadingDiv.remove();
+            }, 2000);
         });
         
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
@@ -513,7 +751,7 @@
         });
         
         loadSelectedStudents();
-        console.log('✅ Generate page loaded');
+        console.log('✅ Generate page loaded - 6 cards per A4 landscape (7.2cm x 9.5cm)');
     </script>
 </body>
 </html>
