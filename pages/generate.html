@@ -2,7 +2,7 @@
 <html lang="km">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>បង្កើតកាតសិស្សច្រើននាក់ - Generate Cards</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -13,12 +13,37 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
             background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 10px;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+            .main-panel {
+                padding: 16px !important;
+            }
+            .cards-grid {
+                gap: 12px !important;
+                max-height: 70vh !important;
+            }
+            .btn {
+                padding: 10px 16px !important;
+                font-size: 13px !important;
+            }
+            .title-section h2 {
+                font-size: 18px !important;
+            }
+            .controls-header {
+                gap: 12px !important;
+            }
         }
         
         .container {
@@ -29,32 +54,34 @@
         .nav-bar {
             background: white;
             border-radius: 12px;
-            padding: 12px 24px;
-            margin-bottom: 24px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .nav-links a {
             text-decoration: none;
-            padding: 8px 16px;
+            padding: 8px 12px;
             border-radius: 8px;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-family: 'Khmer', sans-serif;
+            display: inline-block;
         }
         
-        .nav-links a:hover {
-            background: #f0f0f0;
+        .nav-links a:active {
+            background: #e0e0e0;
+            transform: scale(0.98);
         }
         
         .main-panel {
             background: white;
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         
@@ -63,39 +90,44 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
             border-bottom: 2px solid #e5e7eb;
         }
         
         .title-section h2 {
-            font-size: 20px;
+            font-size: 18px;
             color: #233D2E;
             font-family: 'Khmer', sans-serif;
         }
         
         .title-section span {
-            font-size: 14px;
+            font-size: 13px;
             color: #304FFE;
-            margin-left: 8px;
+            margin-left: 6px;
         }
         
         .action-buttons {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
         }
         
         .btn {
-            padding: 8px 20px;
+            padding: 8px 16px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-family: 'Khmer', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
         }
         
         .btn-danger {
@@ -103,19 +135,9 @@
             color: white;
         }
         
-        .btn-danger:hover {
-            background: #b91c1c;
-            transform: translateY(-2px);
-        }
-        
         .btn-primary {
             background: #10b981;
             color: white;
-        }
-        
-        .btn-primary:hover {
-            background: #059669;
-            transform: translateY(-2px);
         }
         
         .btn-primary:disabled {
@@ -127,26 +149,28 @@
         .cards-grid {
             display: flex;
             flex-wrap: wrap;
-            justify-content: flex-start;
-            gap: 24px;
-            max-height: 600px;
+            justify-content: center;
+            gap: 16px;
+            max-height: 60vh;
             overflow-y: auto;
             padding: 8px;
+            -webkit-overflow-scrolling: touch;
         }
         
         .card-wrapper {
             position: relative;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
         
-        .card-wrapper:hover {
-            transform: translateY(-4px);
+        .card-wrapper:active {
+            transform: scale(0.99);
         }
         
         .remove-card-btn {
             position: absolute;
-            top: -12px;
-            right: -12px;
+            top: -10px;
+            right: -10px;
             width: 28px;
             height: 28px;
             background: #dc2626;
@@ -161,24 +185,25 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        .remove-card-btn:hover {
+        .remove-card-btn:active {
             background: #b91c1c;
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
         
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px 20px;
             color: #6b7280;
             width: 100%;
         }
         
         .empty-state svg {
-            width: 80px;
-            height: 80px;
-            margin-bottom: 16px;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 12px;
             opacity: 0.5;
         }
         
@@ -194,50 +219,54 @@
             align-items: center;
             justify-content: center;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .modal-content {
             background: white;
             border-radius: 16px;
+            width: 95%;
             max-width: 95%;
             max-height: 90%;
             overflow-y: auto;
-            padding: 20px;
+            padding: 16px;
+            -webkit-overflow-scrolling: touch;
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             padding-bottom: 12px;
             border-bottom: 2px solid #e5e7eb;
             flex-wrap: wrap;
-            gap: 12px;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
         }
         
         .modal-header h3 {
             font-family: 'Khmer', sans-serif;
             color: #233D2E;
+            font-size: 18px;
         }
         
         .print-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
             justify-items: center;
             align-items: center;
-            page-break-after: always;
-        }
-        
-        .print-grid:last-child {
-            page-break-after: auto;
         }
         
         .print-card-item {
             display: flex;
             justify-content: center;
             align-items: center;
+            width: 100%;
         }
         
         .hidden {
@@ -245,7 +274,7 @@
         }
         
         .cards-grid::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
         
         .cards-grid::-webkit-scrollbar-track {
@@ -262,22 +291,22 @@
             background: #f0fdf4;
             border: 1px solid #86efac;
             border-radius: 8px;
-            padding: 12px 16px;
-            margin-top: 20px;
+            padding: 10px 12px;
+            margin-top: 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 13px;
+            gap: 10px;
+            font-size: 12px;
             color: #166534;
             font-family: 'Khmer', sans-serif;
         }
         
         .print-size-hint {
-            margin-top: 16px;
-            padding: 10px;
+            margin-top: 12px;
+            padding: 8px;
             background: #fef3c7;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 11px;
             color: #92400e;
             text-align: center;
         }
@@ -293,6 +322,19 @@
                 display: block !important;
                 visibility: visible !important;
             }
+            .nav-bar, .controls-header, .action-buttons, .info-box, .remove-card-btn, 
+            .btn, #clearAllBtn, #generateCardsBtn, .no-print, .print-size-hint, .modal-header {
+                display: none !important;
+            }
+            .modal {
+                position: relative !important;
+                background: white !important;
+                display: block !important;
+            }
+            .modal-content {
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
         }
     </style>
 </head>
@@ -300,22 +342,22 @@
     <div class="container">
         <div class="nav-bar">
             <div class="nav-links">
-                <a href="../index.html" style="color: #233D2E;">← ត្រឡប់ទៅមេនុយ</a>
-                <a href="search.html" style="color: #304FFE; margin-left: 16px;">← ត្រឡប់ទៅស្វែងរក</a>
+                <a href="../index.html" style="color: #233D2E;">← ត្រឡប់</a>
+                <a href="search.html" style="color: #304FFE; margin-left: 12px;">← ស្វែងរក</a>
             </div>
             <div>
-                <span style="color: #233D2E; font-size: 14px; font-family: 'Khmer', sans-serif;">ប្រព័ន្ធបង្កើតកាតសិស្ស</span>
+                <span style="color: #233D2E; font-size: 13px; font-family: 'Khmer', sans-serif;">បង្កើតកាត</span>
             </div>
         </div>
         
         <div class="main-panel">
             <div class="controls-header">
                 <div class="title-section">
-                    <h2>👥 បញ្ជីសិស្សដែលបានជ្រើសរើស <span id="selectedCount">(0 នាក់)</span></h2>
+                    <h2>👥 បញ្ជីសិស្ស <span id="selectedCount">(0)</span></h2>
                 </div>
                 <div class="action-buttons">
-                    <button id="clearAllBtn" class="btn btn-danger">🗑️ លុបទាំងអស់</button>
-                    <button id="generateCardsBtn" class="btn btn-primary" disabled>🖨️ បង្កើតកាតសិស្ស (0)</button>
+                    <button id="clearAllBtn" class="btn btn-danger">🗑️ លុប</button>
+                    <button id="generateCardsBtn" class="btn btn-primary" disabled>🖨️ បង្កើតកាត</button>
                 </div>
             </div>
             
@@ -325,16 +367,13 @@
                         <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
                     </svg>
                     <p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p>
-                    <p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p>
+                    <p style="font-size: 12px; margin-top: 6px;">សូមចូលទៅ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a></p>
                 </div>
             </div>
             
             <div class="info-box">
                 <span>💡</span>
-                <span>កាតសិស្សមានទំហំ 6.5cm × 8.5cm (បញ្ឈរ)។ ពេលបោះពុម្ព កាតនឹងរៀបចំជា 3 ជួរ × 2 ជួរដេក = 6 កាតក្នុង 1 ទំព័រ A4 Portrait ។</span>
-            </div>
-            <div class="print-size-hint">
-                📄 ណែនាំ៖ នៅពេលបោះពុម្ព សូមជ្រើសរើស "ទំហំ A4 Portrait" និង "គ្មានស៊ុម" (Borderless) និងកំណត់មាត្រដ្ឋាន 100%។
+                <span>ជ្រើសរើសសិស្សពីទំព័រស្វែងរក រួចចុចបង្កើតកាត</span>
             </div>
         </div>
     </div>
@@ -342,9 +381,9 @@
     <div id="cardsModal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 style="font-size: 20px;">🪪 កាតសិស្សទាំងអស់ (បោះពុម្ព 6 កាត/ទំព័រ)</h3>
-                <div style="display: flex; gap: 12px;">
-                    <button id="printAllCards" class="btn" style="background: #8b5cf6; color: white;">🖨️ បោះពុម្ពទាំងអស់ (6 កាត/ទំព័រ)</button>
+                <h3>🪪 កាតសិស្សទាំងអស់</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button id="printAllCards" class="btn" style="background: #8b5cf6; color: white;">🖨️ បោះពុម្ព</button>
                     <button id="closeModalBtn" class="btn" style="background: #dc2626; color: white;">✖ បិទ</button>
                 </div>
             </div>
@@ -359,8 +398,12 @@
         function loadSelectedStudents() {
             const stored = localStorage.getItem('selectedStudents');
             if (stored) {
-                selectedStudents = JSON.parse(stored);
-                displaySelectedStudents();
+                try {
+                    selectedStudents = JSON.parse(stored);
+                    displaySelectedStudents();
+                } catch(e) {
+                    console.error('Error parsing selected students:', e);
+                }
             } else {
                 displaySelectedStudents();
             }
@@ -372,14 +415,14 @@
             const generateBtn = document.getElementById('generateCardsBtn');
             
             if (!selectedStudents || selectedStudents.length === 0) {
-                container.innerHTML = `<div class="empty-state"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg><p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p><p style="font-size: 12px; margin-top: 8px;">សូមចូលទៅកាន់ទំព័រ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a> ដើម្បីជ្រើសរើសសិស្ស</p></div>`;
-                if (countSpan) countSpan.innerHTML = '(0 នាក់)';
-                if (generateBtn) { generateBtn.innerHTML = '🖨️ បង្កើតកាតសិស្ស (0)'; generateBtn.disabled = true; }
+                container.innerHTML = `<div class="empty-state"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/></svg><p>មិនមានសិស្សដែលបានជ្រើសរើសទេ</p><p style="font-size: 12px; margin-top: 6px;">សូមចូលទៅ <a href="search.html" style="color: #304FFE;">ស្វែងរកសិស្ស</a></p></div>`;
+                if (countSpan) countSpan.innerHTML = '(0)';
+                if (generateBtn) { generateBtn.innerHTML = '🖨️ បង្កើតកាត'; generateBtn.disabled = true; }
                 return;
             }
             
-            if (countSpan) countSpan.innerHTML = `(${selectedStudents.length} នាក់)`;
-            if (generateBtn) { generateBtn.innerHTML = `🖨️ បង្កើតកាតសិស្ស (${selectedStudents.length})`; generateBtn.disabled = false; }
+            if (countSpan) countSpan.innerHTML = `(${selectedStudents.length})`;
+            if (generateBtn) { generateBtn.innerHTML = `🖨️ បង្កើតកាត (${selectedStudents.length})`; generateBtn.disabled = false; }
             
             container.innerHTML = selectedStudents.map(student => `
                 <div class="card-wrapper">
@@ -395,7 +438,8 @@
             displaySelectedStudents();
         };
         
-        document.getElementById('clearAllBtn')?.addEventListener('click', () => {
+        document.getElementById('clearAllBtn')?.addEventListener('click', (e) => {
+            e.preventDefault();
             if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
                 selectedStudents = [];
                 localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
@@ -403,7 +447,16 @@
             }
         });
         
-        // Split cards into pages - 8 cards per page
+        // Touch event support
+        document.getElementById('clearAllBtn')?.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (confirm('តើអ្នកចង់លុបសិស្សទាំងអស់មែនទេ?')) {
+                selectedStudents = [];
+                localStorage.setItem('selectedStudents', JSON.stringify(selectedStudents));
+                displaySelectedStudents();
+            }
+        });
+        
         function splitCardsIntoPages(cardsHTMLArray) {
             const pages = [];
             for (let i = 0; i < cardsHTMLArray.length; i += 6) {
@@ -414,34 +467,46 @@
             return pages.join('');
         }
         
-        document.getElementById('generateCardsBtn')?.addEventListener('click', () => {
-            if (!selectedStudents || selectedStudents.length === 0) { alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ'); return; }
+        document.getElementById('generateCardsBtn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!selectedStudents || selectedStudents.length === 0) { 
+                alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ'); 
+                return; 
+            }
             const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
             document.getElementById('cardsContainer').innerHTML = splitCardsIntoPages(cardsHTMLArray);
             document.getElementById('cardsModal').classList.remove('hidden');
         });
         
-        // ============================================
-        // PRINT FUNCTION - 6 cards per page (A4 Portrait) with EXACT SIZE
-        // ============================================
-        document.getElementById('printAllCards')?.addEventListener('click', async () => {
+        // Touch event for generate button
+        document.getElementById('generateCardsBtn')?.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!selectedStudents || selectedStudents.length === 0) { 
+                alert('មិនមានសិស្សដើម្បីបង្កើតកាតទេ'); 
+                return; 
+            }
+            const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
+            document.getElementById('cardsContainer').innerHTML = splitCardsIntoPages(cardsHTMLArray);
+            document.getElementById('cardsModal').classList.remove('hidden');
+        });
+        
+        // PRINT FUNCTION
+        document.getElementById('printAllCards')?.addEventListener('click', async (e) => {
+            e.preventDefault();
             if (!selectedStudents || selectedStudents.length === 0) {
                 alert('មិនមានសិស្សដើម្បីបោះពុម្ពទេ');
                 return;
             }
             
-            // Show loading message
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'printLoading';
-            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;';
-            loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំកាតសម្រាប់បោះពុម្ព... សូមរងចាំ</div></div>';
+            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;';
+            loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំ...</div></div>';
             document.body.appendChild(loadingDiv);
             
-            // Generate all cards
             const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
             const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
             
-            // Create print window with exact size CSS
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
@@ -453,116 +518,40 @@
                         <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
                         <link rel="stylesheet" href="../css/card-style.css">
                         <style>
-                            /* RESET */
-                            * {
-                                margin: 0;
-                                padding: 0;
-                                box-sizing: border-box;
-                            }
-                            
-                            body { 
-                                background: white; 
-                                margin: 0; 
-                                padding: 0;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: center;
-                                min-height: 100vh;
-                            }
-                            
-                            /* CRITICAL: Exact page size with no margins */
-                            @page { 
-                                size: A4 landscape; 
-                                margin: 0cm;
-                            }
-                            
-                            /* 6 cards per page grid - EXACT DIMENSIONS */
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { background: white; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
+                            @page { size: A4 landscape; margin: 0cm; }
                             .print-grid {
                                 display: grid;
-                                grid-template-columns: repeat(3, 7.2cm);
-                                grid-template-rows: repeat(2, 9.5cm);
-                                gap: 6px;
+                                grid-template-columns: repeat(3, 6.5cm);
+                                grid-template-rows: repeat(2, 8.5cm);
+                                gap: 3px;
                                 justify-content: center;
                                 align-items: center;
                                 margin: 0 auto;
                                 page-break-after: always;
                             }
-                            
-                            .print-grid:last-child {
-                                page-break-after: auto;
-                            }
-                            
-                            .print-card-item {
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                width: 7.2cm;
-                                height: 9.5cm;
-                            }
-                            
-                            /* FORCE EXACT CARD SIZE */
-                            .student-id-card {
-                                width: 7.2cm !important;
-                                height: 9.5cm !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                box-shadow: none !important;
-                                page-break-inside: avoid !important;
-                                break-inside: avoid !important;
-                                box-sizing: border-box;
-                                overflow: hidden;
-                            }
-                            
-                            /* Hide remove buttons in print */
-                            .remove-card-btn {
-                                display: none !important;
-                            }
-                            
-                            /* Ensure images render properly */
-                            img {
-                                max-width: 100%;
-                                height: auto;
-                            }
-                            
-                            img[alt="QR Code"] {
-                                display: block !important;
-                                visibility: visible !important;
-                            }
-                            
-                            /* Print-specific overrides */
+                            .print-grid:last-child { page-break-after: auto; }
+                            .print-card-item { display: flex; justify-content: center; align-items: center; width: 6.5cm; height: 8.5cm; }
+                            .student-id-card { width: 6.5cm !important; height: 8.5cm !important; margin: 0 !important; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; box-sizing: border-box; overflow: hidden; }
+                            .remove-card-btn { display: none !important; }
+                            img { max-width: 100%; height: auto; }
+                            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
                             @media print {
-                                body {
-                                    margin: 0;
-                                    padding: 0;
-                                }
-                                .print-grid {
-                                    break-inside: avoid;
-                                    page-break-after: always;
-                                    margin: 0 auto;
-                                }
-                                .student-id-card {
-                                    break-inside: avoid;
-                                    page-break-inside: avoid;
-                                }
-                                img {
-                                    print-color-adjust: exact;
-                                    -webkit-print-color-adjust: exact;
-                                }
+                                body { margin: 0; padding: 0; }
+                                .print-grid { break-inside: avoid; page-break-after: always; margin: 0 auto; }
+                                .student-id-card { break-inside: avoid; }
+                                img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                             }
                         </style>
                     </head>
                     <body>
                         ${pagesHTML}
                         <script>
-                            // Wait for all images to load before printing
                             window.onload = function() {
                                 const images = document.querySelectorAll('img');
                                 let loadedCount = 0;
-                                if (images.length === 0) {
-                                    setTimeout(() => window.print(), 500);
-                                    return;
-                                }
+                                if (images.length === 0) { setTimeout(() => window.print(), 500); return; }
                                 images.forEach(img => {
                                     if (img.complete) {
                                         loadedCount++;
@@ -585,13 +574,102 @@
             `);
             printWindow.document.close();
             
-            // Remove loading message
-            setTimeout(() => {
-                if (loadingDiv) loadingDiv.remove();
-            }, 2000);
+            setTimeout(() => { if (loadingDiv) loadingDiv.remove(); }, 2000);
+        });
+        
+        // Touch event for print button
+        document.getElementById('printAllCards')?.addEventListener('touchstart', async (e) => {
+            e.preventDefault();
+            if (!selectedStudents || selectedStudents.length === 0) {
+                alert('មិនមានសិស្សដើម្បីបោះពុម្ពទេ');
+                return;
+            }
+            
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'printLoading';
+            loadingDiv.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;';
+            loadingDiv.innerHTML = '<div style="text-align:center"><div style="font-size:24px;margin-bottom:10px;">⏳</div><div>កំពុងរៀបចំ...</div></div>';
+            document.body.appendChild(loadingDiv);
+            
+            const cardsHTMLArray = selectedStudents.map(student => generateSmallCardHTML(student));
+            const pagesHTML = splitCardsIntoPages(cardsHTMLArray);
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <title>បោះពុម្ពកាតសិស្ស</title>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+                        <link rel="stylesheet" href="../css/card-style.css">
+                        <style>
+                            * { margin: 0; padding: 0; box-sizing: border-box; }
+                            body { background: white; margin: 0; padding: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; }
+                            @page { size: A4 landscape; margin: 0cm; }
+                            .print-grid {
+                                display: grid;
+                                grid-template-columns: repeat(3, 6.5cm);
+                                grid-template-rows: repeat(2, 8.5cm);
+                                gap: 3px;
+                                justify-content: center;
+                                align-items: center;
+                                margin: 0 auto;
+                                page-break-after: always;
+                            }
+                            .print-grid:last-child { page-break-after: auto; }
+                            .print-card-item { display: flex; justify-content: center; align-items: center; width: 6.5cm; height: 8.5cm; }
+                            .student-id-card { width: 6.5cm !important; height: 8.5cm !important; margin: 0 !important; box-shadow: none !important; page-break-inside: avoid !important; break-inside: avoid !important; box-sizing: border-box; overflow: hidden; }
+                            .remove-card-btn { display: none !important; }
+                            img { max-width: 100%; height: auto; }
+                            img[alt="QR Code"] { display: block !important; visibility: visible !important; }
+                            @media print {
+                                body { margin: 0; padding: 0; }
+                                .print-grid { break-inside: avoid; page-break-after: always; margin: 0 auto; }
+                                .student-id-card { break-inside: avoid; }
+                                img { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${pagesHTML}
+                        <script>
+                            window.onload = function() {
+                                const images = document.querySelectorAll('img');
+                                let loadedCount = 0;
+                                if (images.length === 0) { setTimeout(() => window.print(), 500); return; }
+                                images.forEach(img => {
+                                    if (img.complete) {
+                                        loadedCount++;
+                                        if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                    } else {
+                                        img.addEventListener('load', () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                        });
+                                        img.addEventListener('error', () => {
+                                            loadedCount++;
+                                            if (loadedCount === images.length) setTimeout(() => window.print(), 300);
+                                        });
+                                    }
+                                });
+                            };
+                        <\/script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            
+            setTimeout(() => { if (loadingDiv) loadingDiv.remove(); }, 2000);
         });
         
         document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+            document.getElementById('cardsModal').classList.add('hidden');
+        });
+        
+        document.getElementById('closeModalBtn')?.addEventListener('touchstart', (e) => {
+            e.preventDefault();
             document.getElementById('cardsModal').classList.add('hidden');
         });
         
@@ -602,7 +680,7 @@
         });
         
         loadSelectedStudents();
-        console.log('✅ Generate page loaded - 6 cards per A4 portrait with exact 7.5x9.5cm size');
+        console.log('✅ Generate page loaded - Mobile optimized');
     </script>
 </body>
 </html>
