@@ -7,26 +7,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/style.css">
 
-    <script src="js/auth.js"></script>
-    <script>
-        // Protect this page
-        if (!isLoggedIn()) {
-            window.location.href = 'login.html';
-        }
-    </script>
-    <script src="../js/auth.js"></script>
-    <script>
-        // Protect page
-        if (typeof window.protectPage !== 'undefined') {
-            window.protectPage();
-        }
-        
-        // Display user info
-        const user = window.getCurrentUser ? window.getCurrentUser() : null;
-        if (user && document.getElementById('username')) {
-            document.getElementById('username').innerText = user.username;
-        }
-    </script>
+   <script src="js/auth.js"></script>
+<script>
+    // Protect page
+    if (typeof window.protectPage !== 'undefined') {
+        window.protectPage();
+    }
+    
+    // Display user info in navbar if element exists
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (user && document.getElementById('userInfo')) {
+        document.getElementById('userInfo').innerHTML = `
+            <span class="text-sm text-gray-600">👤 ${user.username}</span>
+            <button onclick="window.logout()" class="ml-3 text-red-600 hover:text-red-800 text-sm">🚪 ចាកចេញ</button>
+        `;
+    }
+</script>
 </head>
 <body class="bg-gray-100">
     <script src="js/auth.js"></script>
