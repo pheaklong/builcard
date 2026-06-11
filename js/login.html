@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ចូលប្រព័ន្ធ - Student ID Card System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: fadeInUp 0.5s ease;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .login-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .login-icon svg {
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .info-text {
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .demo-credentials {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #374151;
+        }
+        .demo-credentials p {
+            margin: 5px 0;
+        }
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="login-icon">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800">សូមស្វាគមន៍</h2>
+            <p class="text-gray-500 text-sm mt-1">ប្រព័ន្ធគ្រប់គ្រងកាតសិស្ស</p>
+        </div>
+        
+        <div id="errorMessage" class="error-message">
+            ⚠️ ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ
+        </div>
+        
+        <form id="loginForm">
+            <div class="input-group">
+                <label>👤 ឈ្មោះអ្នកប្រើប្រាស់</label>
+                <input type="text" id="username" placeholder="បញ្ចូលឈ្មោះអ្នកប្រើ..." autocomplete="off">
+            </div>
+            
+            <div class="input-group">
+                <label>🔒 ពាក្យសម្ងាត់</label>
+                <input type="password" id="password" placeholder="បញ្ចូលពាក្យសម្ងាត់...">
+            </div>
+            
+            <button type="submit" class="login-btn">ចូលប្រព័ន្ធ →</button>
+        </form>
+        
+        <div class="demo-credentials">
+            <p class="font-semibold">📝 គណនីសាកល្បង៖</p>
+            <p>👤 ឈ្មោះ: <span class="font-mono">admin</span> | 🔑 ពាក្យសម្ងាត់: <span class="font-mono">admin123</span></p>
+            <p>👤 ឈ្មោះ: <span class="font-mono">user</span> | 🔑 ពាក្យសម្ងាត់: <span class="font-mono">user123</span></p>
+            <p>👤 ឈ្មោះ: <span class="font-mono">keovriev</span> | 🔑 ពាក្យសម្ងាត់: <span class="font-mono">school2024</span></p>
+        </div>
+        
+        <div class="info-text">
+            <p>© 2024 ប្រព័ន្ធបោះពុម្ពកាតសិស្ស</p>
+            <p class="text-xs mt-1">ព្រះរាជាណាចក្រកម្ពុជា ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
+        </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script>
+        // Check if already logged in, redirect to index
+        if (isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            
+            if (!username || !password) {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = '⚠️ សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់';
+                return;
+            }
+            
+            if (login(username, password)) {
+                // Get redirect URL if exists
+                const redirectUrl = localStorage.getItem('redirectAfterLogin');
+                localStorage.removeItem('redirectAfterLogin');
+                
+                if (redirectUrl && redirectUrl.includes('pages/')) {
+                    window.location.href = redirectUrl;
+                } else {
+                    window.location.href = 'index.html';
+                }
+            } else {
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = '⚠️ ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ';
+            }
+        });
+        
+        // Enter key support
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
