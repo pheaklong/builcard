@@ -148,10 +148,11 @@
         </div>
     </div>
     
+    <!-- Load auth.js after supabase is loaded -->
     <script src="js/auth.js"></script>
     <script>
         // Check if already logged in
-        if (typeof isLoggedIn !== 'undefined' && isLoggedIn()) {
+        if (typeof window.isLoggedIn !== 'undefined' && window.isLoggedIn()) {
             window.location.href = 'index.html';
         }
         
@@ -169,12 +170,20 @@
                 return;
             }
             
+            // Check if login function exists
+            if (typeof window.login !== 'function') {
+                console.error('Login function not loaded yet');
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = '⚠️ កំពុងផ្ទុកប្រព័ន្ធ សូមព្យាយាមម្តងទៀត';
+                return;
+            }
+            
             // Show loading state
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="loading-spinner"></span>កំពុងផ្ទៀងផ្ទាត់...';
             
             try {
-                const success = await login(username, password);
+                const success = await window.login(username, password);
                 
                 if (success) {
                     const redirectUrl = localStorage.getItem('redirectAfterLogin');
@@ -206,6 +215,8 @@
                 document.getElementById('loginForm').dispatchEvent(new Event('submit'));
             }
         });
+        
+        console.log('Login page loaded');
     </script>
 </body>
 </html>
