@@ -1,17 +1,13 @@
 // ============================================
-// AUTHENTICATION SYSTEM WITH SUPABASE
+// AUTHENTICATION SYSTEM - SIMPLE VERSION
 // ============================================
 
-// Check if supabaseClient is already defined to avoid duplication
-if (typeof window.supabaseClient === 'undefined') {
-    const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
-    
-    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
-
-const supabase = window.supabaseClient;
-const TABLE_NAME = 'users';
+// Users database (in production, move to backend)
+const USERS = [
+    { username: 'admin', password: 'admin123', role: 'admin' },
+    { username: 'user', password: 'user123', role: 'user' },
+    { username: 'keovriev', password: 'school2024', role: 'admin' }
+];
 
 // Session timeout (8 hours)
 const SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
@@ -47,42 +43,19 @@ function getCurrentUser() {
     }
 }
 
-// Login function with Supabase
-async function login(username, password) {
-    try {
-        console.log('Attempting login for:', username);
-        
-        const { data, error } = await supabase
-            .from(TABLE_NAME)
-            .select('username, role')
-            .eq('username', username)
-            .eq('password', password)
-            .maybeSingle();
-        
-        if (error) {
-            console.error('Supabase query error:', error);
-            return false;
-        }
-        
-        if (!data) {
-            console.log('User not found or password incorrect');
-            return false;
-        }
-        
-        console.log('Login successful for:', data.username);
-        
-        // Create session
+// Login function
+function login(username, password) {
+    const user = USERS.find(u => u.username === username && u.password === password);
+    
+    if (user) {
         const session = {
-            user: { username: data.username, role: data.role },
+            user: { username: user.username, role: user.role },
             loginTime: Date.now()
         };
         localStorage.setItem('userSession', JSON.stringify(session));
         return true;
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        return false;
     }
+    return false;
 }
 
 // Logout function
@@ -90,6 +63,7 @@ function logout() {
     localStorage.removeItem('userSession');
     localStorage.removeItem('redirectAfterLogin');
     
+    // Redirect based on current path
     const currentPath = window.location.pathname;
     if (currentPath.includes('/pages/')) {
         window.location.href = '../login.html';
@@ -120,11 +94,11 @@ function protectPage() {
     return true;
 }
 
-// Make functions global
+// Make functions globally available
 window.isLoggedIn = isLoggedIn;
 window.getCurrentUser = getCurrentUser;
 window.login = login;
 window.logout = logout;
 window.protectPage = protectPage;
 
-console.log('✅ Auth system with Supabase loaded');
+console.log('✅ Auth system loaded');
