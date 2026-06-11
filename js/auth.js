@@ -2,7 +2,13 @@
 // AUTHENTICATION SYSTEM
 // ============================================
 
-// Users database (រក្សាទុកក្នុង backend ក្នុងការអនុវត្តជាក់ស្តែង)
+// --- កំណត់ Base Path សម្រាប់ GitHub Pages ---
+// ឧបមាថា URL មូលដ្ឋានរបស់អ្នកគឺ https://pheaklong.github.io/builcard/
+// យើងនឹងប្រើអថេរនេះសម្រាប់ប្តូរទីតាំងទាំងអស់ទៅកាន់ login.html
+const BASE_PATH = '/builcard/'; // ត្រូវតែបញ្ចប់ដោយ "/"
+const LOGIN_URL = `${window.location.origin}${BASE_PATH}login.html`;
+
+// Users database
 const USERS = [
     { username: 'admin', password: 'admin123', role: 'admin' },
     { username: 'user', password: 'user123', role: 'user' },
@@ -58,11 +64,12 @@ function login(username, password) {
     return false;
 }
 
-// Logout function
+// --- កែប្រែមុខងារ logout ---
 function logout() {
     localStorage.removeItem('userSession');
     localStorage.removeItem('redirectAfterLogin');
-    window.location.href = 'login.html';
+    // ប្តូរទីតាំងទៅកាន់ login.html ដោយប្រើ LOGIN_URL ដែលបានកំណត់
+    window.location.href = LOGIN_URL;
 }
 
 // Check if current page is public
@@ -72,11 +79,13 @@ function isPublicPage() {
     return publicPages.includes(currentPage);
 }
 
-// Protect page
+// --- កែប្រែមុខងារ protectPage ---
 function protectPage() {
     if (!isPublicPage() && !isLoggedIn()) {
+        // រក្សាទុក URL ដើមដែលចង់ចូល ដើម្បីប្តូរទីតាំងត្រឡប់ក្រោយពេលកត់ឈ្មោះចូល
         localStorage.setItem('redirectAfterLogin', window.location.href);
-        window.location.href = 'login.html';
+        // ប្តូរទីតាំងទៅកាន់ login.html
+        window.location.href = LOGIN_URL;
         return false;
     }
     return true;
@@ -90,3 +99,4 @@ window.logout = logout;
 window.protectPage = protectPage;
 
 console.log('✅ Auth system loaded');
+console.log('Login page URL:', LOGIN_URL);
