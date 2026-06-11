@@ -1,12 +1,12 @@
 // ============================================
-// AUTHENTICATION SYSTEM
+// AUTHENTICATION SYSTEM WITH SUPABASE
 // ============================================
 
-// Users database
-const USERS = [
-    { username: 'admin', password: 'admin123', role: 'admin' },
-    
-];
+const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const TABLE_NAME = 'users';
 
 // Session timeout (8 hours)
 const SESSION_TIMEOUT = 8 * 60 * 60 * 1000;
@@ -21,12 +21,10 @@ function isLoggedIn() {
         const loginTime = sessionData.loginTime;
         const currentTime = Date.now();
         
-        // Check if session expired
         if (currentTime - loginTime > SESSION_TIMEOUT) {
             logout();
             return false;
         }
-        
         return true;
     } catch(e) {
         return false;
@@ -37,65 +35,68 @@ function isLoggedIn() {
 function getCurrentUser() {
     const session = localStorage.getItem('userSession');
     if (!session) return null;
-    
     try {
-        const sessionData = JSON.parse(session);
-        return sessionData.user;
+        return JSON.parse(session).user;
     } catch(e) {
         return null;
     }
 }
 
-// Login function
-function login(username, password) {
-    const user = USERS.find(u => u.username === username && u.password === password);
-    
-    if (user) {
+// Login function with Supabase
+async function login(username, password) {
+    try {
+        // Query user from Supabase
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .select('username, role')
+            .eq('username', username)
+            .eq('password', password)
+            .single();
+        
+        if (error || !data) {
+            console.error('Login error:', error);
+            return false;
+        }
+        
+        // Create session
         const session = {
-            user: { username: user.username, role: user.role },
+            user: { username: data.username, role: data.role },
             loginTime: Date.now()
         };
         localStorage.setItem('userSession', JSON.stringify(session));
         return true;
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        return false;
     }
-    return false;
 }
 
-// Logout function - redirect to login.html
+// Logout function
 function logout() {
-    // Clear session from localStorage
     localStorage.removeItem('userSession');
-    
-    // Clear any redirect URL to prevent auto-login loop
     localStorage.removeItem('redirectAfterLogin');
     
-    // Redirect to login page
-    // Need to determine correct path based on current location
+    // Redirect based on current path
     const currentPath = window.location.pathname;
-    
     if (currentPath.includes('/pages/')) {
-        // If we're in a subdirectory (pages folder)
         window.location.href = '../login.html';
     } else {
-        // If we're in root directory
         window.location.href = 'login.html';
     }
 }
 
-// Check if current page is public (no login required)
+// Check if current page is public
 function isPublicPage() {
     const publicPages = ['digital-card.html', 'login.html'];
     const currentPage = window.location.pathname.split('/').pop();
     return publicPages.includes(currentPage);
 }
 
-// Protect page - redirect to login if not authenticated
+// Protect page
 function protectPage() {
     if (!isPublicPage() && !isLoggedIn()) {
-        // Save the attempted URL to redirect back after login
         localStorage.setItem('redirectAfterLogin', window.location.href);
-        
-        // Redirect to login page
         const currentPath = window.location.pathname;
         if (currentPath.includes('/pages/')) {
             window.location.href = '../login.html';
@@ -107,23 +108,11 @@ function protectPage() {
     return true;
 }
 
-// Display user info in navbar (optional)
-function displayUserInfo() {
-    const user = getCurrentUser();
-    if (user && document.getElementById('userInfo')) {
-        document.getElementById('userInfo').innerHTML = `
-            <span class="text-sm text-gray-600">👤 ${user.username}</span>
-            <button onclick="logout()" class="ml-3 text-red-600 hover:text-red-800 text-sm">🚪 ចាកចេញ</button>
-        `;
-    }
-}
-
-// Make functions globally available
+// Make functions global
 window.isLoggedIn = isLoggedIn;
 window.getCurrentUser = getCurrentUser;
 window.login = login;
 window.logout = logout;
 window.protectPage = protectPage;
-window.displayUserInfo = displayUserInfo;
 
-console.log('✅ Auth system loaded');
+console.log('✅ Auth system with Supabase loaded');
