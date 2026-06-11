@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>ចូលប្រព័ន្ធ - Student ID Card System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
@@ -110,6 +109,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .demo-credentials {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #374151;
+        }
+        .demo-credentials p {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -142,13 +152,19 @@
             <button type="submit" id="loginBtn" class="login-btn">ចូលប្រព័ន្ធ →</button>
         </form>
         
+        <div class="demo-credentials">
+            <p class="font-semibold">📝 គណនីសាកល្បង៖</p>
+            <p>👤 admin | 🔑 admin123</p>
+            <p>👤 user | 🔑 user123</p>
+            <p>👤 keovriev | 🔑 school2024</p>
+        </div>
+        
         <div class="info-text">
             <p>© 2024 ប្រព័ន្ធបោះពុម្ពកាតសិស្ស</p>
             <p class="text-xs mt-1">ព្រះរាជាណាចក្រកម្ពុជា ជាតិ សាសនា ព្រះមហាក្សត្រ</p>
         </div>
     </div>
     
-    <!-- Load auth.js after supabase is loaded -->
     <script src="js/auth.js"></script>
     <script>
         // Check if already logged in
@@ -156,7 +172,7 @@
             window.location.href = 'index.html';
         }
         
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
             const username = document.getElementById('username').value.trim();
@@ -172,7 +188,6 @@
             
             // Check if login function exists
             if (typeof window.login !== 'function') {
-                console.error('Login function not loaded yet');
                 errorDiv.style.display = 'block';
                 errorDiv.innerHTML = '⚠️ កំពុងផ្ទុកប្រព័ន្ធ សូមព្យាយាមម្តងទៀត';
                 return;
@@ -182,8 +197,9 @@
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="loading-spinner"></span>កំពុងផ្ទៀងផ្ទាត់...';
             
-            try {
-                const success = await window.login(username, password);
+            // Simulate slight delay for better UX
+            setTimeout(() => {
+                const success = window.login(username, password);
                 
                 if (success) {
                     const redirectUrl = localStorage.getItem('redirectAfterLogin');
@@ -200,13 +216,7 @@
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = 'ចូលប្រព័ន្ធ →';
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                errorDiv.style.display = 'block';
-                errorDiv.innerHTML = '⚠️ កើតមានបញ្ហាក្នុងការចូលប្រព័ន្ធ សូមព្យាយាមម្តងទៀត';
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = 'ចូលប្រព័ន្ធ →';
-            }
+            }, 500);
         });
         
         // Enter key support
