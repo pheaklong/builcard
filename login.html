@@ -109,17 +109,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .demo-credentials {
-            background: #f3f4f6;
-            border-radius: 12px;
-            padding: 12px;
-            margin-top: 20px;
-            font-size: 12px;
-            color: #374151;
-        }
-        .demo-credentials p {
-            margin: 5px 0;
-        }
+        /* លុប .demo-credentials ចេញទាំងស្រុង */
     </style>
 </head>
 <body>
@@ -151,8 +141,6 @@
             
             <button type="submit" id="loginBtn" class="login-btn">ចូលប្រព័ន្ធ →</button>
         </form>
-        
-         
         
         <div class="info-text">
             <p>© 2024 ប្រព័ន្ធបោះពុម្ពកាតសិស្ស</p>
@@ -192,7 +180,6 @@
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="loading-spinner"></span>កំពុងផ្ទៀងផ្ទាត់...';
             
-            // Simulate slight delay for better UX
             setTimeout(() => {
                 const success = window.login(username, password);
                 
