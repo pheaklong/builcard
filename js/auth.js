@@ -95,6 +95,10 @@ function checkSession() {
             if (Date.now() - sessionData.loginTime > SESSION_TIMEOUT) {
                 logout();
             }
+
+
+// Make logout available globally
+window.logout = logout;
         }
     }
 }
