@@ -22,13 +22,19 @@
         @media print { .no-print { display: none; } }
     </style>
 
-    <script src="js/auth.js"></script>
-    <script>
-        // Protect this page
-        if (!isLoggedIn()) {
-            window.location.href = 'login.html';
-        }
-    </script>
+   <script src="../js/auth.js"></script>
+<script>
+    // Protect page
+    if (typeof window.protectPage !== 'undefined') {
+        window.protectPage();
+    }
+    
+    // Display username if element exists
+    const user = window.getCurrentUser ? window.getCurrentUser() : null;
+    if (user && document.getElementById('username')) {
+        document.getElementById('username').innerText = user.username;
+    }
+</script>
 </head>
 <body class="bg-gradient-to-br from-amber-100 to-yellow-100">
     <div class="container mx-auto px-4 py-8">
