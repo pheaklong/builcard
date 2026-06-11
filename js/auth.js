@@ -1,8 +1,8 @@
 // ============================================
-// AUTHENTICATION SYSTEM - SIMPLE VERSION
+// AUTHENTICATION SYSTEM
 // ============================================
 
-// Users database (in production, move to backend)
+// Users database (រក្សាទុកក្នុង backend ក្នុងការអនុវត្តជាក់ស្តែង)
 const USERS = [
     { username: 'admin', password: 'admin123', role: 'admin' },
     { username: 'user', password: 'user123', role: 'user' },
@@ -62,14 +62,7 @@ function login(username, password) {
 function logout() {
     localStorage.removeItem('userSession');
     localStorage.removeItem('redirectAfterLogin');
-    
-    // Redirect based on current path
-    const currentPath = window.location.pathname;
-    if (currentPath.includes('/pages/')) {
-        window.location.href = '../login.html';
-    } else {
-        window.location.href = 'login.html';
-    }
+    window.location.href = 'login.html';
 }
 
 // Check if current page is public
@@ -83,12 +76,7 @@ function isPublicPage() {
 function protectPage() {
     if (!isPublicPage() && !isLoggedIn()) {
         localStorage.setItem('redirectAfterLogin', window.location.href);
-        const currentPath = window.location.pathname;
-        if (currentPath.includes('/pages/')) {
-            window.location.href = '../login.html';
-        } else {
-            window.location.href = 'login.html';
-        }
+        window.location.href = 'login.html';
         return false;
     }
     return true;
