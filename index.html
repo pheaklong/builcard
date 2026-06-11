@@ -16,7 +16,32 @@
     </script>
 </head>
 <body class="bg-gray-100">
-    <button onclick="logout()" class="text-red-600 hover:text-red-800 ml-4">🚪 ចាកចេញ</button>
+    <!-- បន្ថែមបន្ទាប់ពីភ្ជាប់ auth.js -->
+    <script src="js/auth.js"></script>
+    <script>
+        // Protect page
+        if (!isLoggedIn()) {
+            window.location.href = 'login.html';
+        }
+    </script>
+    
+    <!-- បន្ថែមប៊ូតុង Logout ក្នុង header -->
+    <div class="flex justify-end mb-4">
+        <div id="userInfo" class="flex items-center space-x-3">
+            <span class="text-sm text-gray-600">👤 <span id="username"></span></span>
+            <button onclick="logout()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                🚪 ចាកចេញ
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Display username
+        const user = getCurrentUser();
+        if (user) {
+            document.getElementById('username').innerText = user.username;
+        }
+    </script>
     <div class="container mx-auto px-4 py-8">
         <h1 class="text-4xl font-bold text-center mb-8 text-blue-600">🏫 ប្រព័ន្ធគ្រប់គ្រងកាតសិស្ស</h1>
         
