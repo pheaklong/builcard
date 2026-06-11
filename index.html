@@ -16,12 +16,17 @@
     </script>
 </head>
 <body class="bg-gray-100">
-    <!-- បន្ថែមបន្ទាប់ពីភ្ជាប់ auth.js -->
     <script src="js/auth.js"></script>
     <script>
         // Protect page
         if (!isLoggedIn()) {
             window.location.href = 'login.html';
+        }
+        
+        // Display username in navbar if element exists
+        const user = getCurrentUser();
+        if (user && document.getElementById('username')) {
+            document.getElementById('username').innerText = user.username;
         }
     </script>
     
