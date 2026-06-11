@@ -2,10 +2,15 @@
 // AUTHENTICATION SYSTEM WITH SUPABASE
 // ============================================
 
-const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+// Check if supabaseClient is already defined to avoid duplication
+if (typeof window.supabaseClient === 'undefined') {
+    const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+    
+    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabaseClient;
 const TABLE_NAME = 'users';
 
 // Session timeout (8 hours)
@@ -45,18 +50,26 @@ function getCurrentUser() {
 // Login function with Supabase
 async function login(username, password) {
     try {
-        // Query user from Supabase
+        console.log('Attempting login for:', username);
+        
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('username, role')
             .eq('username', username)
             .eq('password', password)
-            .single();
+            .maybeSingle();
         
-        if (error || !data) {
-            console.error('Login error:', error);
+        if (error) {
+            console.error('Supabase query error:', error);
             return false;
         }
+        
+        if (!data) {
+            console.log('User not found or password incorrect');
+            return false;
+        }
+        
+        console.log('Login successful for:', data.username);
         
         // Create session
         const session = {
@@ -77,7 +90,6 @@ function logout() {
     localStorage.removeItem('userSession');
     localStorage.removeItem('redirectAfterLogin');
     
-    // Redirect based on current path
     const currentPath = window.location.pathname;
     if (currentPath.includes('/pages/')) {
         window.location.href = '../login.html';
