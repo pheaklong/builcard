@@ -227,7 +227,7 @@ function generateCardHTML(data) {
     const ministryTextColor = getElementConfig('ministryText', 'color', "#233D2E");
     
     const qrCodeX = getElementConfig('qrCode', 'x', 5.25);
-    const qrCodeY = getElementConfig('qrCode', 'y', 0.9);
+    const qrCodeY = getElementConfig('qrCode', 'y', 1.1);
     const qrCodeSize = getElementConfig('qrCode', 'size', 1.8);
     
     const titleTextVisible = getElementConfig('titleText', 'visible', true);
