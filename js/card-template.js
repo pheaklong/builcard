@@ -233,7 +233,7 @@ function generateCardHTML(data) {
     const titleTextVisible = getElementConfig('titleText', 'visible', true);
     const titleTextX = getElementConfig('titleText', 'x', 3.26);
     const titleTextY = getElementConfig('titleText', 'y', 2.75);
-    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.32);
+    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.29);
     const titleTextColor = getElementConfig('titleText', 'color', "#D28A17");
     
     const subtitleTextVisible = getElementConfig('subtitleText', 'visible', true);
