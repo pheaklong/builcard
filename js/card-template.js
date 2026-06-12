@@ -159,10 +159,10 @@ function getSignatureImage() {
     const signatureVisible = getElementConfig('signature', 'visible', true);
     if (!signatureVisible) return '';
     
-    const signatureX = getElementConfig('signature', 'x', 4.65);
-    const signatureY = getElementConfig('signature', 'y', 7.6);
-    const signatureWidth = getElementConfig('signature', 'width', 2.5);
-    const signatureHeight = getElementConfig('signature', 'height', 1.4);
+    const signatureX = getElementConfig('signature', 'x', 3.85);
+    const signatureY = getElementConfig('signature', 'y', 6.85);
+    const signatureWidth = getElementConfig('signature', 'width', 2.4);
+    const signatureHeight = getElementConfig('signature', 'height', 1.25);
     
     return `
         <div style="position: absolute; left: ${cmToPx(signatureX)}px; top: ${cmToPx(signatureY)}px; width: ${cmToPx(signatureWidth)}px; text-align: center; z-index: 1;">
@@ -182,10 +182,10 @@ function getWatermarkLogo() {
     const watermarkVisible = getElementConfig('watermark', 'visible', true);
     if (!watermarkVisible) return '';
     
-    const watermarkX = getElementConfig('watermark', 'x', 0.85);
-    const watermarkY = getElementConfig('watermark', 'y', 2.22);
-    const watermarkWidth = getElementConfig('watermark', 'width', 6.05);
-    const watermarkHeight = getElementConfig('watermark', 'height', 6.02);
+    const watermarkX = getElementConfig('watermark', 'x', 0.8);
+    const watermarkY = getElementConfig('watermark', 'y', 1.8);
+    const watermarkWidth = getElementConfig('watermark', 'width', 5);
+    const watermarkHeight = getElementConfig('watermark', 'height', 5);
     const watermarkOpacity = getElementConfig('watermark', 'opacity', 0.1);
     
     return `
@@ -215,7 +215,7 @@ function generateCardHTML(data) {
     // Get element configurations
     const qrCodeVisible = getElementConfig('qrCode', 'visible', true);
     const royalTextVisible = getElementConfig('royalText', 'visible', true);
-    const royalTextX = getElementConfig('royalText', 'x', 4.2);
+    const royalTextX = getElementConfig('royalText', 'x', 3.4);
     const royalTextY = getElementConfig('royalText', 'y', 0.4);
     const royalTextFontSize = getElementConfig('royalText', 'fontSize', 0.22);
     const royalTextColor = getElementConfig('royalText', 'color', "#233D2E");
@@ -226,45 +226,45 @@ function generateCardHTML(data) {
     const ministryTextFontSize = getElementConfig('ministryText', 'fontSize', 0.2);
     const ministryTextColor = getElementConfig('ministryText', 'color', "#233D2E");
     
-    const qrCodeX = getElementConfig('qrCode', 'x', 5.25);
-    const qrCodeY = getElementConfig('qrCode', 'y', 1.1);
+    const qrCodeX = getElementConfig('qrCode', 'x', 4.6);
+    const qrCodeY = getElementConfig('qrCode', 'y', 1.05);
     const qrCodeSize = getElementConfig('qrCode', 'size', 1.8);
     
     const titleTextVisible = getElementConfig('titleText', 'visible', true);
-    const titleTextX = getElementConfig('titleText', 'x', 3.6);
+    const titleTextX = getElementConfig('titleText', 'x', 3.26);
     const titleTextY = getElementConfig('titleText', 'y', 2.75);
-    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.34);
+    const titleTextFontSize = getElementConfig('titleText', 'fontSize', 0.32);
     const titleTextColor = getElementConfig('titleText', 'color', "#D28A17");
     
     const subtitleTextVisible = getElementConfig('subtitleText', 'visible', true);
-    const subtitleTextX = getElementConfig('subtitleText', 'x', 3.65);
-    const subtitleTextY = getElementConfig('subtitleText', 'y', 3.35);
-    const subtitleTextFontSize = getElementConfig('subtitleText', 'fontSize', 0.24);
+    const subtitleTextX = getElementConfig('subtitleText', 'x', 3.25);
+    const subtitleTextY = getElementConfig('subtitleText', 'y', 3.25);
+    const subtitleTextFontSize = getElementConfig('subtitleText', 'fontSize', 0.22);
     const subtitleTextColor = getElementConfig('subtitleText', 'color', "#3D8BFF");
     
     const studentInfoVisible = getElementConfig('studentInfo', 'visible', true);
-    const studentInfoX = getElementConfig('studentInfo', 'x', 0.15);
-    const studentInfoY = getElementConfig('studentInfo', 'y', 3.8);
-    const studentInfoFontSize = getElementConfig('studentInfo', 'fontSize', 0.28);
+    const studentInfoX = getElementConfig('studentInfo', 'x', 0.3);
+    const studentInfoY = getElementConfig('studentInfo', 'y', 3.6);
+    const studentInfoFontSize = getElementConfig('studentInfo', 'fontSize', 0.23);
     const studentInfoLabelColor = getElementConfig('studentInfo', 'labelColor', "#233D2E");
     const studentInfoValueColor = getElementConfig('studentInfo', 'valueColor', "#304FFE");
     
     const studentPhotoVisible = getElementConfig('studentPhoto', 'visible', true);
     const studentPhotoX = getElementConfig('studentPhoto', 'x', 0.3);
-    const studentPhotoY = getElementConfig('studentPhoto', 'y', 6.75);
+    const studentPhotoY = getElementConfig('studentPhoto', 'y', 5.85);
     const studentPhotoWidth = getElementConfig('studentPhoto', 'width', 2.0);
     const studentPhotoHeight = getElementConfig('studentPhoto', 'height', 2.5);
     
     const dateTextVisible = getElementConfig('dateText', 'visible', true);
-    const dateTextX = getElementConfig('dateText', 'x', 3.35);
-    const dateTextY = getElementConfig('dateText', 'y', 7);
-    const dateTextFontSize = getElementConfig('dateText', 'fontSize', 0.18);
+    const dateTextX = getElementConfig('dateText', 'x', 3);
+    const dateTextY = getElementConfig('dateText', 'y', 6.2);
+    const dateTextFontSize = getElementConfig('dateText', 'fontSize', 0.16);
     const dateTextColor = getElementConfig('dateText', 'color', "#233D2E");
     const dateTextContent = getElementConfig('dateText', 'text', "ថ្ងៃសៅរ៍ ១១កើត ខែកត្តិក ឆ្នាំម្សាញ់ ព.ស ២៥៦៩");
     
     const schoolLocationVisible = getElementConfig('schoolLocation', 'visible', true);
-    const schoolLocationX = getElementConfig('schoolLocation', 'x', 4.35);
-    const schoolLocationY = getElementConfig('schoolLocation', 'y', 7.3);
+    const schoolLocationX = getElementConfig('schoolLocation', 'x', 3.7);
+    const schoolLocationY = getElementConfig('schoolLocation', 'y', 6.5);
     const schoolLocationFontSize = getElementConfig('schoolLocation', 'fontSize', 0.16);
     const schoolLocationColor = getElementConfig('schoolLocation', 'color', "#233D2E");
     const schoolLocationContent = getElementConfig('schoolLocation', 'text', "វិ.កំរៀង , ថ្ងៃទី១ ខែវិច្ឆិកា ឆ្នាំ២០២៥");
