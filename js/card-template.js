@@ -101,7 +101,7 @@ function getStampElement() {
     const stampX = getElementConfig('stamp', 'x', 1.9);
     const stampY = getElementConfig('stamp', 'y', 5);
     const stampWidth = getElementConfig('stamp', 'width', 3.3);
-    const stampHeight = getElementConfig('stamp', 'height', 3.75);
+    const stampHeight = getElementConfig('stamp', 'height', 3.55);
     const stampOpacity = getElementConfig('stamp', 'opacity', 0.85);
     
     return `
