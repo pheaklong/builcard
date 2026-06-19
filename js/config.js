@@ -5,7 +5,6 @@
     // ពិនិត្យមើលថា window.supabase មានឬនៅ
     if (typeof window.supabase === 'undefined') {
         console.error('❌ window.supabase is undefined. Make sure Supabase library is loaded first!');
-        // ប្រើ try-catch ដើម្បីកុំឱ្យកូដឈប់ដំណើរការ
         if (typeof window.SupabaseConfig === 'undefined') {
             window.SupabaseConfig = {
                 error: 'Supabase library not loaded',
@@ -15,11 +14,15 @@
         return;
     }
     
+    // ====== កែតម្រូវនៅទីនេះ ======
+    // URL ត្រឹមត្រូវគឺ: https://xmowdtwlidnwnxrkrysj.supabase.co
+    // មិនមែន: https://xmowtdwldnwnxrkrrysj.supabase.co (អក្សរខុស)
     const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
     console.log('🔧 Creating Supabase client...');
     console.log('📡 URL:', SUPABASE_URL);
+    console.log('🔑 ANON KEY length:', SUPABASE_ANON_KEY.length);
     
     // Initialize Supabase client
     let supabaseClient;
@@ -46,18 +49,23 @@
     // មុខងារសម្រាប់ទាញយកថ្នាក់ទាំងអស់
     async function fetchAllClasses() {
         try {
+            console.log('🔍 Fetching all classes...');
             const { data, error } = await supabaseClient
                 .from(TABLE_NAME)
                 .select('class')
                 .order('class');
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Error from Supabase:', error);
+                throw error;
+            }
             
             // យកតែថ្នាក់ដែលមានតែមួយ (unique)
             const uniqueClasses = [...new Set(data.map(item => item.class).filter(c => c && c.trim() !== ''))];
+            console.log('✅ Classes found:', uniqueClasses);
             return uniqueClasses.sort();
         } catch (error) {
-            console.error('Error fetching classes:', error);
+            console.error('❌ Error fetching classes:', error);
             return [];
         }
     }
@@ -65,16 +73,21 @@
     // មុខងារសម្រាប់ទាញយកសិស្សតាមថ្នាក់
     async function fetchStudentsByClass(className) {
         try {
+            console.log('🔍 Fetching students for class:', className);
             const { data, error } = await supabaseClient
                 .from(TABLE_NAME)
                 .select('id, studentID, name, sex, date_of_birth, class, photo, phonenumber, address, fathername, fatherphone, fatherjob, mothername, motherphone, motherjob')
                 .eq('class', className)
                 .order('name');
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Error from Supabase:', error);
+                throw error;
+            }
+            console.log('✅ Students found:', data ? data.length : 0);
             return data || [];
         } catch (error) {
-            console.error('Error fetching students:', error);
+            console.error('❌ Error fetching students:', error);
             return [];
         }
     }
@@ -90,12 +103,12 @@
                 .eq('date', dateVal);
             
             if (error) {
-                console.warn('Attendance table not found or error:', error);
+                console.warn('⚠️ Attendance table not found or error:', error);
                 return null;
             }
             return data || [];
         } catch (error) {
-            console.error('Error fetching attendance:', error);
+            console.error('❌ Error fetching attendance:', error);
             return null;
         }
     }
@@ -116,7 +129,7 @@
                 .eq('date', attendanceRecords[0]?.date);
             
             if (deleteError) {
-                console.warn('Error deleting old records:', deleteError);
+                console.warn('⚠️ Error deleting old records:', deleteError);
             }
             
             // បញ្ចូលកំណត់ត្រាថ្មី
@@ -127,13 +140,13 @@
             if (error) throw error;
             return data;
         } catch (error) {
-            console.error('Error saving attendance to Supabase:', error);
+            console.error('❌ Error saving attendance to Supabase:', error);
             // Fallback to localStorage
             try {
                 localStorage.setItem('attendanceData_backup', JSON.stringify(attendanceRecords));
-                console.log('Saved to localStorage as backup');
+                console.log('💾 Saved to localStorage as backup');
             } catch (e) {
-                console.error('Error saving to localStorage:', e);
+                console.error('❌ Error saving to localStorage:', e);
             }
             return null;
         }
@@ -142,15 +155,20 @@
     // មុខងារសម្រាប់ពិនិត្យការតភ្ជាប់
     async function checkConnection() {
         try {
+            console.log('🔍 Checking connection to Supabase...');
             const { data, error } = await supabaseClient
                 .from(TABLE_NAME)
                 .select('count')
                 .limit(1);
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Connection check failed:', error);
+                return false;
+            }
+            console.log('✅ Connection successful!');
             return true;
         } catch (error) {
-            console.error('Connection check failed:', error);
+            console.error('❌ Connection check failed:', error);
             return false;
         }
     }
@@ -257,7 +275,6 @@
     }
 
     // ============ EXPORT ============
-    // ពិនិត្យមើលថា SupabaseConfig ត្រូវបានប្រកាសរួចហើយឬនៅ
     if (typeof window.SupabaseConfig === 'undefined') {
         window.SupabaseConfig = {
             supabase: supabaseClient,
