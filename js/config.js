@@ -5,8 +5,8 @@
     const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
-    // Initialize Supabase client
-    const supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase client - ប្រើ window.supabase (មិនមែន window.supabaseClient)
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // Table names
     const TABLE_NAME = 'table_student';
