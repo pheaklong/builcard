@@ -2,8 +2,8 @@
 const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
-// Initialize Supabase client
-const supabase = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase client - ប្រើអថេរផ្សេងដើម្បីកុំឱ្យប៉ះទង្គិច
+const supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Table names
 const TABLE_NAME = 'table_student';
@@ -14,7 +14,7 @@ const ATTENDANCE_TABLE = 'attendance';
 // មុខងារសម្រាប់ទាញយកថ្នាក់ទាំងអស់
 async function fetchAllClasses() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('class')
             .order('class');
@@ -33,7 +33,7 @@ async function fetchAllClasses() {
 // មុខងារសម្រាប់ទាញយកសិស្សតាមថ្នាក់
 async function fetchStudentsByClass(className) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('id, studentID, name, sex, date_of_birth, class, photo, phonenumber, address, fathername, fatherphone, fatherjob, mothername, motherphone, motherjob')
             .eq('class', className)
@@ -50,7 +50,7 @@ async function fetchStudentsByClass(className) {
 // មុខងារសម្រាប់ទាញយកវត្តមាន
 async function fetchAttendance(classVal, semesterVal, dateVal) {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(ATTENDANCE_TABLE)
             .select('*')
             .eq('class', classVal)
@@ -76,7 +76,7 @@ async function saveAttendanceToSupabase(attendanceRecords) {
 
     try {
         // លុបកំណត់ត្រាចាស់ចេញ
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabaseClient
             .from(ATTENDANCE_TABLE)
             .delete()
             .eq('class', attendanceRecords[0]?.class)
@@ -88,7 +88,7 @@ async function saveAttendanceToSupabase(attendanceRecords) {
         }
         
         // បញ្ចូលកំណត់ត្រាថ្មី
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(ATTENDANCE_TABLE)
             .insert(attendanceRecords);
         
@@ -110,7 +110,7 @@ async function saveAttendanceToSupabase(attendanceRecords) {
 // មុខងារសម្រាប់ពិនិត្យការតភ្ជាប់
 async function checkConnection() {
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('count')
             .limit(1);
@@ -226,7 +226,7 @@ function generateSmallCardHTML(student) {
 
 // ============ EXPORT ============
 window.SupabaseConfig = {
-    supabase,
+    supabase: supabaseClient,
     TABLE_NAME,
     ATTENDANCE_TABLE,
     fetchAllClasses,
