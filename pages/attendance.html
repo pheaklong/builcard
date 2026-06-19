@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ស្រង់វត្តមានសិស្ស</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
+        .attendance-card {
+            transition: all 0.3s ease;
+        }
+        .attendance-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-present { background: #dcfce7; color: #166534; }
+        .status-absent { background: #fee2e2; color: #991b1b; }
+        .status-auto { background: #fef3c7; color: #92400e; }
+        .status-late { background: #fef9c3; color: #854d0e; }
+        .status-permit { background: #dbeafe; color: #1e40af; }
+        .btn-toggle {
+            transition: all 0.2s ease;
+        }
+        .btn-toggle:hover {
+            transform: scale(1.05);
+        }
+        .auto-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .teacher-mode-toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .teacher-mode-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .teacher-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .teacher-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .teacher-slider {
+            background-color: #4f46e5;
+        }
+        input:checked + .teacher-slider:before {
+            transform: translateX(26px);
+        }
+        .teacher-label {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .connection-status {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .connection-status.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .connection-status.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .attendance-actions {
+                flex-wrap: wrap;
+            }
+            .attendance-actions button {
+                font-size: 10px;
+                padding: 4px 8px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex flex-wrap justify-between items-center gap-2">
+                <div class="flex items-center space-x-4">
+                    <a href="../index.html" class="text-blue-600 hover:text-blue-800">
+                        <svg class="w-6 h-6 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        ត្រឡប់ក្រោយ
+                    </a>
+                    <h1 class="text-xl md:text-2xl font-bold text-indigo-700">📋 ស្រង់វត្តមាន</h1>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span id="connectionStatus" class="connection-status online text-xs md:text-sm">🟢 តភ្ជាប់</span>
+                    <div class="flex items-center space-x-1 md:space-x-2">
+                        <span class="teacher-label text-gray-700 text-xs md:text-sm">👨‍🏫 គ្រូ</span>
+                        <label class="teacher-mode-toggle">
+                            <input type="checkbox" id="teacherMode">
+                            <span class="teacher-slider"></span>
+                        </label>
+                    </div>
+                    <button onclick="saveAttendance()" class="bg-indigo-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-indigo-700 transition text-sm">
+                        💾 រក្សាទុក
+                    </button>
+                    <button onclick="autoSubmitAll()" class="bg-amber-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-amber-700 transition text-sm">
+                        🤖 Auto
+                    </button>
+                    <button onclick="refreshData()" class="bg-gray-600 text-white px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-gray-700 transition text-sm">
+                        🔄
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-6">
+        <!-- Class Selection -->
+        <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ថ្នាក់ (Class)</label>
+                    <select id="classSelect" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <option value="">-- ជ្រើសរើសថ្នាក់ --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ឆមាស (Semester)</label>
+                    <select id="semesterSelect" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <option value="1">ឆមាសទី 1</option>
+                        <option value="2">ឆមាសទី 2</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ថ្ងៃ/ខែ/ឆ្នាំ</label>
+                    <input type="date" id="datePicker" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ចំនួនសិស្ស</label>
+                    <span id="studentCount" class="block text-lg font-bold text-indigo-600 pt-2">0</span>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="loadAttendance()" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm">
+                        🔍 ស្វែងរក
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-3 text-xs md:text-sm">
+                <div class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded-full mr-1"></span> មក (Present)</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded-full mr-1"></span> អវត្តមាន (Absent)</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-yellow-400 rounded-full mr-1"></span> Auto (ស្វ័យប្រវត្តិ)</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-blue-400 rounded-full mr-1"></span> យឺត (Late)</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-full mr-1"></span> អនុញ្ញាត (Permit)</div>
+            </div>
+        </div>
+
+        <!-- Status Summary -->
+        <div id="summaryStats" class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
+                <p class="text-xl md:text-2xl font-bold text-indigo-600" id="totalStudents">0</p>
+                <p class="text-xs md:text-sm text-gray-600">សរុបសិស្ស</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
+                <p class="text-xl md:text-2xl font-bold text-green-600" id="presentCount">0</p>
+                <p class="text-xs md:text-sm text-gray-600">មក</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
+                <p class="text-xl md:text-2xl font-bold text-red-600" id="absentCount">0</p>
+                <p class="text-xs md:text-sm text-gray-600">អវត្តមាន</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
+                <p class="text-xl md:text-2xl font-bold text-yellow-600" id="autoCount">0</p>
+                <p class="text-xs md:text-sm text-gray-600">Auto</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
+                <p class="text-xl md:text-2xl font-bold text-blue-600" id="lateCount">0</p>
+                <p class="text-xs md:text-sm text-gray-600">យឺត</p>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="hidden text-center py-8">
+            <div class="loading-spinner"></div>
+            <p class="text-gray-500 mt-2">កំពុងផ្ទុកទិន្នន័យ...</p>
+        </div>
+
+        <!-- Attendance Table -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700">ល.រ</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700">ឈ្មោះសិស្ស</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700 hidden sm:table-cell">លេខសម្គាល់</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700 hidden md:table-cell">ភេទ</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700 hidden lg:table-cell">ថ្នាក់</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-center text-xs md:text-sm font-semibold text-gray-700">វត្តមាន</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700 hidden sm:table-cell">ស្ថានភាព</th>
+                            <th class="px-2 md:px-4 py-2 md:py-3 text-left text-xs md:text-sm font-semibold text-gray-700">សកម្មភាព</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-8 text-gray-500">
+                                <div class="text-4xl mb-2">👤</div>
+                                <p>សូមជ្រើសរើសថ្នាក់ និងចុច "ស្វែងរក"</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Auto Submit Configuration -->
+        <div class="mt-6 bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <h3 class="font-bold text-lg text-gray-800 mb-4">⚙️ ការកំណត់ Auto Submit</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាចាប់ផ្ដើម Auto</label>
+                    <input type="time" id="autoStartTime" value="08:00" class="w-full border rounded-lg px-3 py-2">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាបញ្ចប់ Auto</label>
+                    <input type="time" id="autoEndTime" value="17:00" class="w-full border rounded-lg px-3 py-2">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="saveAutoSettings()" class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">
+                        💾 រក្សាទុកការកំណត់
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-sm text-amber-800">
+                    <span class="font-bold">ℹ️ កំណត់ចំណាំ៖</span> 
+                    ប្រសិនបើគ្រូមិនបានមកកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យ Auto ដោយស្វ័យប្រវត្តិតាមពេលវេលាដែលបានកំណត់។ 
+                    នៅពេលគ្រូចូលមក គ្រូអាចបិទស្ថានភាព Auto និងកំណត់វត្តមានតាមការពិតបាន។
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../config.js"></script>
+    <script>
+        // ============================================
+        // ATTENDANCE SYSTEM - USING CONFIG.JS
+        // ============================================
+
+        let attendanceData = {};
+        let isTeacherMode = false;
+        let currentStudents = [];
+        let allClasses = [];
+        let isConnected = false;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('datePicker').value = today;
+
+            // Check connection
+            await checkConnection();
+
+            // Load classes from Supabase
+            await loadClasses();
+
+            // Teacher mode toggle
+            document.getElementById('teacherMode').addEventListener('change', function() {
+                isTeacherMode = this.checked;
+                renderAttendanceTable();
+            });
+
+            // Auto-set time fields
+            document.getElementById('autoStartTime').value = '08:00';
+            document.getElementById('autoEndTime').value = '17:00';
+
+            // Load saved auto settings
+            loadAutoSettings();
+        });
+
+        // ============================================
+        // CHECK CONNECTION
+        // ============================================
+
+        async function checkConnection() {
+            try {
+                isConnected = await SupabaseConfig.checkConnection();
+                const statusEl = document.getElementById('connectionStatus');
+                if (isConnected) {
+                    statusEl.className = 'connection-status online';
+                    statusEl.innerHTML = '🟢 តភ្ជាប់ Supabase';
+                } else {
+                    statusEl.className = 'connection-status offline';
+                    statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+                }
+            } catch (error) {
+                isConnected = false;
+                const statusEl = document.getElementById('connectionStatus');
+                statusEl.className = 'connection-status offline';
+                statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+            }
+        }
+
+        // ============================================
+        // LOAD CLASSES
+        // ============================================
+
+        async function loadClasses() {
+            try {
+                const classes = await SupabaseConfig.fetchAllClasses();
+                allClasses = classes;
+                
+                const select = document.getElementById('classSelect');
+                select.innerHTML = '<option value="">-- ជ្រើសរើសថ្នាក់ --</option>';
+                
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls;
+                    option.textContent = `ថ្នាក់ ${cls}`;
+                    select.appendChild(option);
+                });
+
+                // Auto-load first class if available
+                if (classes.length > 0) {
+                    select.value = classes[0];
+                    await loadAttendance();
+                }
+            } catch (error) {
+                console.error('Error loading classes:', error);
+                // Try to load from localStorage
+                const saved = localStorage.getItem('attendanceClasses');
+                if (saved) {
+                    try {
+                        const classes = JSON.parse(saved);
+                        allClasses = classes;
+                        const select = document.getElementById('classSelect');
+                        select.innerHTML = '<option value="">-- ជ្រើសរើសថ្នាក់ --</option>';
+                        classes.forEach(cls => {
+                            const option = document.createElement('option');
+                            option.value = cls;
+                            option.textContent = `ថ្នាក់ ${cls}`;
+                            select.appendChild(option);
+                        });
+                        if (classes.length > 0) {
+                            select.value = classes[0];
+                            loadAttendance();
+                        }
+                    } catch (e) {}
+                }
+            }
+        }
+
+        // ============================================
+        // LOAD ATTENDANCE
+        // ============================================
+
+        async function loadAttendance() {
+            const classVal = document.getElementById('classSelect').value;
+            const dateVal = document.getElementById('datePicker').value;
+            const semesterVal = document.getElementById('semesterSelect').value;
+
+            if (!classVal) {
+                alert('សូមជ្រើសរើសថ្នាក់');
+                return;
+            }
+
+            if (!dateVal) {
+                alert('សូមជ្រើសរើសថ្ងៃ/ខែ/ឆ្នាំ');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+            document.getElementById('attendanceTableBody').innerHTML = '';
+
+            try {
+                // Fetch students from Supabase
+                const students = await SupabaseConfig.fetchStudentsByClass(classVal);
+                currentStudents = students;
+                
+                // Update student count
+                document.getElementById('studentCount').textContent = students.length;
+
+                // Try to fetch attendance from Supabase
+                const key = `${classVal}_${semesterVal}_${dateVal}`;
+                let attendanceRecords = null;
+                
+                if (isConnected) {
+                    attendanceRecords = await SupabaseConfig.fetchAttendance(classVal, semesterVal, dateVal);
+                }
+                
+                // If no records from Supabase, try localStorage
+                if (!attendanceRecords || attendanceRecords.length === 0) {
+                    const saved = localStorage.getItem(`attendance_${key}`);
+                    if (saved) {
+                        try {
+                            const parsed = JSON.parse(saved);
+                            attendanceRecords = Object.entries(parsed).map(([studentId, record]) => ({
+                                student_id: studentId,
+                                status: record.status || 'auto',
+                                auto_assigned: record.autoAssigned !== false,
+                                created_at: record.timestamp || new Date().toISOString()
+                            }));
+                        } catch (e) {}
+                    }
+                }
+                
+                if (attendanceRecords && attendanceRecords.length > 0) {
+                    // Convert attendance records to attendanceData format
+                    attendanceData[key] = {};
+                    attendanceRecords.forEach(record => {
+                        attendanceData[key][record.student_id] = {
+                            status: record.status || 'auto',
+                            autoAssigned: record.auto_assigned !== false,
+                            timestamp: record.created_at || new Date().toISOString()
+                        };
+                    });
+                } else {
+                    // Initialize attendance with auto status
+                    attendanceData[key] = {};
+                    students.forEach(student => {
+                        attendanceData[key][student.studentID] = {
+                            status: 'auto',
+                            autoAssigned: true,
+                            timestamp: new Date().toISOString()
+                        };
+                    });
+                }
+
+                // Ensure all students have records
+                students.forEach(student => {
+                    if (!attendanceData[key][student.studentID]) {
+                        attendanceData[key][student.studentID] = {
+                            status: 'auto',
+                            autoAssigned: true,
+                            timestamp: new Date().toISOString()
+                        };
+                    }
+                });
+
+                renderAttendanceTable();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading attendance:', error);
+                alert('មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ។ សូមព្យាយាមម្តងទៀត។');
+            } finally {
+                document.getElementById('loadingSpinner').classList.add('hidden');
+            }
+        }
+
+        // ============================================
+        // RENDER ATTENDANCE TABLE
+        // ============================================
+
+        function renderAttendanceTable() {
+            const tbody = document.getElementById('attendanceTableBody');
+            const classVal = document.getElementById('classSelect').value;
+            const semesterVal = document.getElementById('semesterSelect').value;
+            const dateVal = document.getElementById('datePicker').value;
+            const key = `${classVal}_${semesterVal}_${dateVal}`;
+
+            if (!currentStudents || currentStudents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">📭</div>
+                            <p>មិនមានសិស្សនៅក្នុងថ្នាក់នេះទេ</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let html = '';
+            currentStudents.forEach((student, index) => {
+                const record = attendanceData[key]?.[student.studentID] || { status: 'auto', autoAssigned: true };
+                const status = record.status || 'auto';
+                const isAuto = record.autoAssigned !== false;
+                
+                // Determine status badge class
+                let badgeClass = 'status-auto';
+                let statusLabel = 'Auto';
+                if (status === 'present') { badgeClass = 'status-present'; statusLabel = '✅ មក'; }
+                else if (status === 'absent') { badgeClass = 'status-absent'; statusLabel = '❌ អវត្តមាន'; }
+                else if (status === 'late') { badgeClass = 'status-late'; statusLabel = '⏰ យឺត'; }
+                else if (status === 'permit') { badgeClass = 'status-permit'; statusLabel = '📝 អនុញ្ញាត'; }
+                else { badgeClass = 'status-auto'; statusLabel = '🔄 Auto'; }
+
+                const canOverride = isTeacherMode;
+
+                html += `
+                    <tr class="border-b hover:bg-gray-50 transition attendance-card">
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-700">${index + 1}</td>
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-800">
+                            ${student.photo ? `<img src="${student.photo}" class="w-5 h-5 md:w-6 md:h-6 rounded-full inline mr-1">` : ''}
+                            ${student.name}
+                        </td>
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-600 hidden sm:table-cell">${student.studentID}</td>
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-600 hidden md:table-cell">${student.sex || 'N/A'}</td>
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-600 hidden lg:table-cell">${student.class}</td>
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-center">
+                            <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-medium ${badgeClass}">
+                                ${statusLabel}
+                            </span>
+                            ${isAuto ? '<span class="ml-1 text-[10px] text-yellow-600 auto-badge">⏳</span>' : ''}
+                        </td>
+                        <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm hidden sm:table-cell">
+                            ${isAuto ? '<span class="text-yellow-600 text-[10px] md:text-xs">⏳ រង់ចាំគ្រូ</span>' : '<span class="text-green-600 text-[10px] md:text-xs">✅ កំណត់ដោយគ្រូ</span>'}
+                        </td>
+                        <td class="px-2 md:px-4 py-2 md:py-3">
+                            ${canOverride ? `
+                                <div class="flex flex-wrap gap-0.5 md:gap-1 attendance-actions">
+                                    <button onclick="setStatus('${student.studentID}', 'present')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-green-500 text-white hover:bg-green-600">មក</button>
+                                    <button onclick="setStatus('${student.studentID}', 'absent')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600">អវត្ត</button>
+                                    <button onclick="setStatus('${student.studentID}', 'late')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600">យឺត</button>
+                                    <button onclick="setStatus('${student.studentID}', 'permit')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600">អនុញ្ញាត</button>
+                                    <button onclick="setStatus('${student.studentID}', 'auto')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600">Auto</button>
+                                </div>
+                            ` : `
+                                <span class="text-[10px] md:text-xs text-gray-400">${isTeacherMode ? 'ចុចប៊ូតុងខាងលើ' : 'បើករបៀបគ្រូ'}</span>
+                            `}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // ============================================
+        // SET STATUS
+        // ============================================
+
+        function setStatus(studentId, newStatus) {
+            if (!isTeacherMode) {
+                alert('សូមបើករបៀបគ្រូ (Teacher Mode) ជាមុនសិន!');
+                return;
+            }
+
+            const classVal = document.getElementById('classSelect').value;
+            const semesterVal = document.getElementById('semesterSelect').value;
+            const dateVal = document.getElementById('datePicker').value;
+            const key = `${classVal}_${semesterVal}_${dateVal}`;
+
+            if (!attendanceData[key]) {
+                attendanceData[key] = {};
+            }
+
+            // Update attendance record
+            attendanceData[key][studentId] = {
+                status: newStatus,
+                autoAssigned: newStatus === 'auto',
+                timestamp: new Date().toISOString(),
+                teacherSet: true
+            };
+
+            renderAttendanceTable();
+            updateStats();
+        }
+
+        // ============================================
+        // UPDATE STATISTICS
+        // ============================================
+
+        function updateStats() {
+            const classVal = document.getElementById('classSelect').value;
+            const semesterVal = document.getElementById('semesterSelect').value;
+            const dateVal = document.getElementById('datePicker').value;
+            const key = `${classVal}_${semesterVal}_${dateVal}`;
+
+            const students = currentStudents;
+            const total = students.length;
+            
+            let present = 0, absent = 0, auto = 0, late = 0;
+
+            students.forEach(student => {
+                const record = attendanceData[key]?.[student.studentID];
+                if (record) {
+                    const status = record.status || 'auto';
+                    if (status === 'present') present++;
+                    else if (status === 'absent') absent++;
+                    else if (status === 'late') late++;
+                    else auto++;
+                } else {
+                    auto++;
+                }
+            });
+
+            document.getElementById('totalStudents').textContent = total;
+            document.getElementById('presentCount').textContent = present;
+            document.getElementById('absentCount').textContent = absent;
+            document.getElementById('autoCount').textContent = auto;
+            document.getElementById('lateCount').textContent = late;
+        }
+
+        // ============================================
+        // SAVE ATTENDANCE
+        // ============================================
+
+        async function saveAttendance() {
+            const classVal = document.getElementById('classSelect').value;
+            const semesterVal = document.getElementById('semesterSelect').value;
+            const dateVal = document.getElementById('datePicker').value;
+            const key = `${classVal}_${semesterVal}_${dateVal}`;
+
+            if (!attendanceData[key]) {
+                alert('មិនមានទិន្នន័យវត្តមានដើម្បីរក្សាទុកទេ!');
+                return;
+            }
+
+            // Prepare attendance records for Supabase
+            const records = [];
+            for (const [studentId, record] of Object.entries(attendanceData[key])) {
+                records.push({
+                    class: classVal,
+                    semester: parseInt(semesterVal),
+                    date: dateVal,
+                    student_id: studentId,
+                    status: record.status || 'auto',
+                    auto_assigned: record.autoAssigned !== false,
+                    created_at: record.timestamp || new Date().toISOString(),
+                    teacher_set: record.teacherSet || false
+                });
+            }
+
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ កំពុងរក្សាទុក...';
+            btn.disabled = true;
+
+            try {
+                let saved = false;
+                
+                // Save to localStorage as backup
+                localStorage.setItem(`attendance_${key}`, JSON.stringify(attendanceData[key]));
+                
+                // Save to Supabase if connected
+                if (isConnected) {
+                    const result = await SupabaseConfig.saveAttendanceToSupabase(records);
+                    if (result) {
+                        saved = true;
+                    }
+                }
+                
+                if (saved) {
+                    btn.innerHTML = '✅ បានរក្សាទុកក្នុង Supabase!';
+                } else {
+                    btn.innerHTML = '✅ បានរក្សាទុកក្នុង Local Storage!';
+                }
+                btn.classList.add('bg-green-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('bg-green-600');
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Error saving:', error);
+                alert('មានបញ្ហាក្នុងការរក្សាទុកទិន្នន័យ!');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================
+        // AUTO SUBMIT ALL
+        // ============================================
+
+        function autoSubmitAll() {
+            if (!confirm('តើអ្នកចង់កំណត់វត្តមានសិស្សទាំងអស់ជា Auto មែនទេ?')) {
+                return;
+            }
+
+            const classVal = document.getElementById('classSelect').value;
+            const semesterVal = document.getElementById('semesterSelect').value;
+            const dateVal = document.getElementById('datePicker').value;
+            const key = `${classVal}_${semesterVal}_${dateVal}`;
+
+            if (!attendanceData[key]) {
+                attendanceData[key] = {};
+            }
+
+            currentStudents.forEach(student => {
+                attendanceData[key][student.studentID] = {
+                    status: 'auto',
+                    autoAssigned: true,
+                    timestamp: new Date().toISOString()
+                };
+            });
+
+            renderAttendanceTable();
+            updateStats();
+            
+            alert('✅ បានកំណត់វត្តមានសិស្សទាំងអស់ជា Auto រួចរាល់!');
+        }
+
+        // ============================================
+        // REFRESH DATA
+        // ============================================
+
+        async function refreshData() {
+            await checkConnection();
+            await loadClasses();
+            await loadAttendance();
+        }
+
+        // ============================================
+        // AUTO SETTINGS
+        // ============================================
+
+        function saveAutoSettings() {
+            const startTime = document.getElementById('autoStartTime').value;
+            const endTime = document.getElementById('autoEndTime').value;
+
+            const settings = { startTime, endTime };
+            localStorage.setItem('autoSettings', JSON.stringify(settings));
+            
+            alert('✅ បានរក្សាទុកការកំណត់ Auto រួចរាល់!');
+        }
+
+        function loadAutoSettings() {
+            const saved = localStorage.getItem('autoSettings');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    if (settings.startTime) document.getElementById('autoStartTime').value = settings.startTime;
+                    if (settings.endTime) document.getElementById('autoEndTime').value = settings.endTime;
+                } catch (e) {}
+            }
+        }
+
+        // ============================================
+        // EXPORT FUNCTIONS
+        // ============================================
+
+        window.loadAttendance = loadAttendance;
+        window.setStatus = setStatus;
+        window.saveAttendance = saveAttendance;
+        window.autoSubmitAll = autoSubmitAll;
+        window.saveAutoSettings = saveAutoSettings;
+        window.renderAttendanceTable = renderAttendanceTable;
+        window.updateStats = updateStats;
+        window.refreshData = refreshData;
+        window.loadClasses = loadClasses;
+        window.checkConnection = checkConnection;
+    </script>
+</body>
+</html>
