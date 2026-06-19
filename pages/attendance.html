@@ -105,7 +105,6 @@
             background: #fee2e2;
             color: #991b1b;
         }
-        /* Mobile responsive */
         @media (max-width: 768px) {
             .attendance-actions {
                 flex-wrap: wrap;
@@ -284,6 +283,19 @@
     <script src="../js/config.js"></script>
     <script>
         // ============================================
+        // CHECK IF CONFIG IS LOADED
+        // ============================================
+        
+        if (typeof SupabaseConfig === 'undefined') {
+            console.error('❌ SupabaseConfig is not defined! Please check config.js');
+            document.getElementById('connectionStatus').innerHTML = '🔴 config.js មិនត្រូវបានផ្ទុក';
+            document.getElementById('connectionStatus').className = 'connection-status offline';
+            alert('មិនអាចផ្ទុកការកំណត់រចនាសម្ព័ន្ធបានទេ។ សូមពិនិត្យឯកសារ config.js');
+        } else {
+            console.log('✅ SupabaseConfig loaded successfully');
+        }
+
+        // ============================================
         // ATTENDANCE SYSTEM - USING CONFIG.JS
         // ============================================
 
@@ -301,6 +313,11 @@
             // Set default date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('datePicker').value = today;
+
+            // Check if config is loaded
+            if (typeof SupabaseConfig === 'undefined') {
+                return;
+            }
 
             // Check connection
             await checkConnection();
@@ -328,6 +345,9 @@
 
         async function checkConnection() {
             try {
+                if (typeof SupabaseConfig === 'undefined') {
+                    throw new Error('SupabaseConfig not loaded');
+                }
                 isConnected = await SupabaseConfig.checkConnection();
                 const statusEl = document.getElementById('connectionStatus');
                 if (isConnected) {
@@ -342,6 +362,7 @@
                 const statusEl = document.getElementById('connectionStatus');
                 statusEl.className = 'connection-status offline';
                 statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+                console.error('Connection error:', error);
             }
         }
 
@@ -351,6 +372,10 @@
 
         async function loadClasses() {
             try {
+                if (typeof SupabaseConfig === 'undefined') {
+                    throw new Error('SupabaseConfig not loaded');
+                }
+                
                 const classes = await SupabaseConfig.fetchAllClasses();
                 allClasses = classes;
                 
@@ -418,6 +443,10 @@
             document.getElementById('attendanceTableBody').innerHTML = '';
 
             try {
+                if (typeof SupabaseConfig === 'undefined') {
+                    throw new Error('SupabaseConfig not loaded');
+                }
+
                 // Fetch students from Supabase
                 const students = await SupabaseConfig.fetchStudentsByClass(classVal);
                 currentStudents = students;
@@ -679,7 +708,7 @@
                 localStorage.setItem(`attendance_${key}`, JSON.stringify(attendanceData[key]));
                 
                 // Save to Supabase if connected
-                if (isConnected) {
+                if (isConnected && typeof SupabaseConfig !== 'undefined') {
                     const result = await SupabaseConfig.saveAttendanceToSupabase(records);
                     if (result) {
                         saved = true;
