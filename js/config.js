@@ -2,11 +2,40 @@
 (function() {
     'use strict';
     
+    // ពិនិត្យមើលថា window.supabase មានឬនៅ
+    if (typeof window.supabase === 'undefined') {
+        console.error('❌ window.supabase is undefined. Make sure Supabase library is loaded first!');
+        // ប្រើ try-catch ដើម្បីកុំឱ្យកូដឈប់ដំណើរការ
+        if (typeof window.SupabaseConfig === 'undefined') {
+            window.SupabaseConfig = {
+                error: 'Supabase library not loaded',
+                isLoaded: false
+            };
+        }
+        return;
+    }
+    
     const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
-    // Initialize Supabase client - ប្រើ window.supabase (មិនមែន window.supabaseClient)
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('🔧 Creating Supabase client...');
+    console.log('📡 URL:', SUPABASE_URL);
+    
+    // Initialize Supabase client
+    let supabaseClient;
+    try {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client created successfully!');
+    } catch (error) {
+        console.error('❌ Failed to create Supabase client:', error);
+        if (typeof window.SupabaseConfig === 'undefined') {
+            window.SupabaseConfig = {
+                error: error.message,
+                isLoaded: false
+            };
+        }
+        return;
+    }
 
     // Table names
     const TABLE_NAME = 'table_student';
@@ -241,7 +270,8 @@
             checkConnection: checkConnection,
             getPhotoHTML: getPhotoHTML,
             generateCardHTML: generateCardHTML,
-            generateSmallCardHTML: generateSmallCardHTML
+            generateSmallCardHTML: generateSmallCardHTML,
+            isLoaded: true
         };
     }
 
