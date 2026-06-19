@@ -14,15 +14,15 @@
         return;
     }
     
-    // ====== កែតម្រូវនៅទីនេះ ======
-    // URL ត្រឹមត្រូវគឺ: https://xmowdtwlidnwnxrkrysj.supabase.co
-    // មិនមែន: https://xmowtdwldnwnxrkrrysj.supabase.co (អក្សរខុស)
+    // ====== ប្រើព័ត៌មានថ្មី ======
     const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
 
     console.log('🔧 Creating Supabase client...');
     console.log('📡 URL:', SUPABASE_URL);
-    console.log('🔑 ANON KEY length:', SUPABASE_ANON_KEY.length);
+    console.log('🔑 ANON KEY (first 20 chars):', SUPABASE_ANON_KEY.substring(0, 20) + '...');
+    console.log('📅 IAT:', new Date(1780432600 * 1000).toLocaleString());
+    console.log('📅 EXP:', new Date(2096008600 * 1000).toLocaleString());
     
     // Initialize Supabase client
     let supabaseClient;
