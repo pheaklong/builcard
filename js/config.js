@@ -1,14 +1,16 @@
+// config.js
 // ============ SUPABASE CONFIGURATION ============
-const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';  // ឬ URL Project ទីពីរ
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';  // Key ដែលត្រូវគ្នាះ
+const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
 // Initialize Supabase client
-const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Table name
 const TABLE_NAME = 'table_student';
+const ATTENDANCE_TABLE = 'attendance';
 
-// Export functions
+// ============ EXISTING FUNCTIONS ============
 function getPhotoHTML(photoData) {
     if (photoData && photoData !== 'null' && photoData !== '') {
         return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
@@ -107,3 +109,132 @@ function generateSmallCardHTML(student) {
         </div>
     `;
 }
+
+// ============ ATTENDANCE FUNCTIONS ============
+
+// មុខងារសម្រាប់ទាញយកថ្នាក់ទាំងអស់
+async function fetchAllClasses() {
+    try {
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .select('class')
+            .order('class');
+        
+        if (error) throw error;
+        
+        // យកតែថ្នាក់ដែលមានតែមួយ (unique)
+        const uniqueClasses = [...new Set(data.map(item => item.class).filter(c => c))];
+        return uniqueClasses.sort();
+    } catch (error) {
+        console.error('Error fetching classes:', error);
+        return [];
+    }
+}
+
+// មុខងារសម្រាប់ទាញយកសិស្សតាមថ្នាក់
+async function fetchStudentsByClass(className) {
+    try {
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .select('id, studentID, name, sex, date_of_birth, class, photo, phonenumber, address, fathername, fatherphone, fatherjob, mothername, motherphone, motherjob')
+            .eq('class', className)
+            .order('name');
+        
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        return [];
+    }
+}
+
+// មុខងារសម្រាប់ទាញយកវត្តមាន
+async function fetchAttendance(classVal, semesterVal, dateVal) {
+    try {
+        const { data, error } = await supabase
+            .from(ATTENDANCE_TABLE)
+            .select('*')
+            .eq('class', classVal)
+            .eq('semester', semesterVal)
+            .eq('date', dateVal);
+        
+        if (error) {
+            console.warn('Attendance table not found or error:', error);
+            return null;
+        }
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching attendance:', error);
+        return null;
+    }
+}
+
+// មុខងារសម្រាប់រក្សាទុកវត្តមាន
+async function saveAttendanceToSupabase(attendanceRecords) {
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+        return null;
+    }
+
+    try {
+        // លុបកំណត់ត្រាចាស់ចេញ
+        const { error: deleteError } = await supabase
+            .from(ATTENDANCE_TABLE)
+            .delete()
+            .eq('class', attendanceRecords[0]?.class)
+            .eq('semester', attendanceRecords[0]?.semester)
+            .eq('date', attendanceRecords[0]?.date);
+        
+        if (deleteError) {
+            console.warn('Error deleting old records:', deleteError);
+        }
+        
+        // បញ្ចូលកំណត់ត្រាថ្មី
+        const { data, error } = await supabase
+            .from(ATTENDANCE_TABLE)
+            .insert(attendanceRecords);
+        
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error saving attendance to Supabase:', error);
+        // Fallback to localStorage
+        try {
+            localStorage.setItem('attendanceData_backup', JSON.stringify(attendanceRecords));
+            console.log('Saved to localStorage as backup');
+        } catch (e) {
+            console.error('Error saving to localStorage:', e);
+        }
+        return null;
+    }
+}
+
+// មុខងារសម្រាប់ពិនិត្យការតភ្ជាប់
+async function checkConnection() {
+    try {
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .select('count')
+            .limit(1);
+        
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error('Connection check failed:', error);
+        return false;
+    }
+}
+
+// ============ EXPORT ============
+window.SupabaseConfig = {
+    supabase,
+    TABLE_NAME,
+    ATTENDANCE_TABLE,
+    fetchAllClasses,
+    fetchStudentsByClass,
+    fetchAttendance,
+    saveAttendanceToSupabase,
+    checkConnection,
+    getPhotoHTML,
+    generateCardHTML,
+    generateSmallCardHTML
+};
