@@ -19,9 +19,9 @@
         }
         .status-present { background: #dcfce7; color: #166534; }
         .status-absent { background: #fee2e2; color: #991b1b; }
-        .status-auto { background: #fef3c7; color: #92400e; }
+        .status-auto { background: #dbeafe; color: #1e40af; }
         .status-late { background: #fef9c3; color: #854d0e; }
-        .status-permit { background: #dbeafe; color: #1e40af; }
+        .status-permit { background: #fef3c7; color: #92400e; }
         .btn-toggle {
             transition: all 0.2s ease;
         }
@@ -158,6 +158,24 @@
             font-weight: 600;
             color: #4f46e5;
         }
+        /* Status legend */
+        .status-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 10px 0;
+        }
+        .status-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        .status-legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -248,13 +266,32 @@
                     </button>
                 </div>
             </div>
-            <div class="mt-4 flex flex-wrap gap-3 text-xs md:text-sm">
-                <div class="flex items-center"><span class="w-3 h-3 bg-green-500 rounded-full mr-1"></span> មក (Present)</div>
-                <div class="flex items-center"><span class="w-3 h-3 bg-red-500 rounded-full mr-1"></span> អវត្តមាន (Absent)</div>
-                <div class="flex items-center"><span class="w-3 h-3 bg-yellow-400 rounded-full mr-1"></span> Auto (ស្វ័យប្រវត្តិ)</div>
-                <div class="flex items-center"><span class="w-3 h-3 bg-blue-400 rounded-full mr-1"></span> យឺត (Late)</div>
-                <div class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-full mr-1"></span> អនុញ្ញាត (Permit)</div>
+            
+            <!-- Status Legend -->
+            <div class="status-legend mt-4 border-t pt-3">
+                <span class="text-sm font-medium text-gray-700 mr-2">ស្ថានភាព៖</span>
+                <div class="status-legend-item">
+                    <span class="status-legend-dot bg-green-500"></span>
+                    <span>មក (Present)</span>
+                </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-dot bg-blue-400"></span>
+                    <span>Auto Present (ស្វ័យប្រវត្តិ)</span>
+                </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-dot bg-red-500"></span>
+                    <span>អវត្តមាន (Absent)</span>
+                </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-dot bg-yellow-400"></span>
+                    <span>យឺត (Late)</span>
+                </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-dot bg-orange-400"></span>
+                    <span>អនុញ្ញាត (Permit)</span>
+                </div>
             </div>
+            
             <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
                 <div class="flex flex-wrap justify-between items-center">
                     <span class="text-sm font-medium text-gray-700">ចំនួនសិស្សសរុប៖</span>
@@ -268,8 +305,8 @@
         <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 border-l-4 border-indigo-500">
             <div class="flex flex-wrap justify-between items-center">
                 <div>
-                    <h3 class="font-bold text-lg text-gray-800">⏰ Auto Submit Schedule</h3>
-                    <p class="text-sm text-gray-500">ប្រព័ន្ធនឹងកំណត់វត្តមានដោយស្វ័យប្រវត្តិនៅពេលកំណត់</p>
+                    <h3 class="font-bold text-lg text-gray-800">⏰ Auto Present Schedule</h3>
+                    <p class="text-sm text-gray-500">ប្រព័ន្ធនឹងកំណត់វត្តមានសិស្សជា "មក" ដោយស្វ័យប្រវត្តិនៅពេលកំណត់</p>
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="text-sm">
@@ -285,11 +322,11 @@
                     </button>
                 </div>
             </div>
-            <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p class="text-sm text-amber-800">
-                    <span class="font-bold">ℹ️ របៀប Auto Submit៖</span> 
-                    ប្រសិនបើគ្រូមិនបានមកកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យ Auto ដោយស្វ័យប្រវត្តិតាមពេលវេលាដែលបានកំណត់។ 
-                    នៅពេលគ្រូចូលមក គ្រូអាចបិទស្ថានភាព Auto និងកំណត់វត្តមានតាមការពិតបាន។
+            <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <span class="font-bold">ℹ️ របៀប Auto Present៖</span> 
+                    ប្រសិនបើគ្រូមិនបានមកកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យសិស្សទាំងអស់ជា <span class="font-bold text-blue-600">"មក"</span> ដោយស្វ័យប្រវត្តិ។ 
+                    នៅពេលគ្រូចូលមក គ្រូអាចបិទ Auto Present និងកំណត់វត្តមានតាមការពិតបាន។
                 </p>
             </div>
         </div>
@@ -302,18 +339,18 @@
             </div>
             <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
                 <p class="text-xl md:text-2xl font-bold text-green-600" id="presentCount">0</p>
-                <p class="text-xs md:text-sm text-gray-600">មក</p>
+                <p class="text-xs md:text-sm text-gray-600">មក (Present)</p>
+            </div>
+            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
+                <p class="text-xl md:text-2xl font-bold text-blue-600" id="autoCount">0</p>
+                <p class="text-xs md:text-sm text-gray-600">Auto Present</p>
             </div>
             <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
                 <p class="text-xl md:text-2xl font-bold text-red-600" id="absentCount">0</p>
                 <p class="text-xs md:text-sm text-gray-600">អវត្តមាន</p>
             </div>
             <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
-                <p class="text-xl md:text-2xl font-bold text-yellow-600" id="autoCount">0</p>
-                <p class="text-xs md:text-sm text-gray-600">Auto</p>
-            </div>
-            <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
-                <p class="text-xl md:text-2xl font-bold text-blue-600" id="lateCount">0</p>
+                <p class="text-xl md:text-2xl font-bold text-yellow-600" id="lateCount">0</p>
                 <p class="text-xs md:text-sm text-gray-600">យឺត</p>
             </div>
         </div>
@@ -388,14 +425,14 @@
 
         <!-- Auto Submit Configuration -->
         <div class="mt-6 bg-white rounded-xl shadow-lg p-4 md:p-6">
-            <h3 class="font-bold text-lg text-gray-800 mb-4">⚙️ ការកំណត់ Auto Submit</h3>
+            <h3 class="font-bold text-lg text-gray-800 mb-4">⚙️ ការកំណត់ Auto Present</h3>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាចាប់ផ្ដើម Auto</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាចាប់ផ្ដើម</label>
                     <input type="time" id="autoStartTime" value="08:00" class="w-full border rounded-lg px-3 py-2">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាបញ្ចប់ Auto</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាបញ្ចប់</label>
                     <input type="time" id="autoEndTime" value="17:00" class="w-full border rounded-lg px-3 py-2">
                 </div>
                 <div>
@@ -408,20 +445,20 @@
                     </button>
                 </div>
             </div>
-            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p class="text-sm text-blue-800">
-                    <span class="font-bold">📌 របៀប Auto Submit៖</span>
+            <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p class="text-sm text-green-800">
+                    <span class="font-bold">📌 របៀប Auto Present៖</span>
                     <br>
                     1. ប្រព័ន្ធនឹងពិនិត្យរៀងរាល់ <span id="displayInterval" class="font-bold">30</span> នាទី
                     <br>
-                    2. ប្រសិនបើគ្រូមិនបានកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យ Auto ដោយស្វ័យប្រវត្តិ
+                    2. ប្រសិនបើគ្រូមិនបានកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់សិស្សទាំងអស់ជា <span class="font-bold text-green-600">"មក"</span> ដោយស្វ័យប្រវត្តិ
                     <br>
-                    3. គ្រូអាចបើក/បិទ Auto Submit បានតាមរយៈប៊ូតុងខាងលើ
+                    3. គ្រូអាចបើក/បិទ Auto Present បានតាមរយៈប៊ូតុងខាងលើ
                 </p>
             </div>
             <!-- Auto Submit Log -->
             <div class="mt-4">
-                <h4 class="font-semibold text-gray-700 mb-2">📋 កំណត់ហេតុ Auto Submit</h4>
+                <h4 class="font-semibold text-gray-700 mb-2">📋 កំណត់ហេតុ Auto Present</h4>
                 <div id="autoLogContainer" class="max-h-40 overflow-y-auto bg-gray-50 rounded-lg p-3 border">
                     <p class="text-sm text-gray-500">មិនទាន់មានកំណត់ហេតុទេ...</p>
                 </div>
@@ -647,8 +684,7 @@
         }
 
         // ============================================
-        // LOAD ATTENDANCE
-        // ============================================
+        // LOAD ATTENDANCE        // ============================================
 
         async function loadAttendance() {
             const classSelect = getElement('classSelect');
@@ -745,11 +781,11 @@
                         };
                     });
                 } else {
-                    // Initialize attendance with auto status
+                    // Initialize attendance with auto status (which means PRESENT by default)
                     attendanceData[key] = {};
                     students.forEach(student => {
                         attendanceData[key][student.studentID] = {
-                            status: 'auto',
+                            status: 'auto', // auto = present automatically
                             autoAssigned: true,
                             subject: subjectVal,
                             time_slot: timeVal,
@@ -836,13 +872,26 @@
                 const isAuto = record.autoAssigned !== false;
                 
                 // Determine status badge class
+                // auto = present automatically (blue)
                 let badgeClass = 'status-auto';
-                let statusLabel = 'Auto';
-                if (status === 'present') { badgeClass = 'status-present'; statusLabel = '✅ មក'; }
-                else if (status === 'absent') { badgeClass = 'status-absent'; statusLabel = '❌ អវត្តមាន'; }
-                else if (status === 'late') { badgeClass = 'status-late'; statusLabel = '⏰ យឺត'; }
-                else if (status === 'permit') { badgeClass = 'status-permit'; statusLabel = '📝 អនុញ្ញាត'; }
-                else { badgeClass = 'status-auto'; statusLabel = '🔄 Auto'; }
+                let statusLabel = '🔄 Auto Present';
+                if (status === 'present') { 
+                    badgeClass = 'status-present'; 
+                    statusLabel = '✅ មក'; 
+                } else if (status === 'absent') { 
+                    badgeClass = 'status-absent'; 
+                    statusLabel = '❌ អវត្តមាន'; 
+                } else if (status === 'late') { 
+                    badgeClass = 'status-late'; 
+                    statusLabel = '⏰ យឺត'; 
+                } else if (status === 'permit') { 
+                    badgeClass = 'status-permit'; 
+                    statusLabel = '📝 អនុញ្ញាត'; 
+                } else { 
+                    // auto = present by system
+                    badgeClass = 'status-auto'; 
+                    statusLabel = '🤖 Auto Present'; 
+                }
 
                 const canOverride = isTeacherMode;
 
@@ -860,19 +909,19 @@
                             <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-medium ${badgeClass}">
                                 ${statusLabel}
                             </span>
-                            ${isAuto ? '<span class="ml-1 text-[10px] text-yellow-600 auto-badge">⏳</span>' : ''}
+                            ${isAuto && status === 'auto' ? '<span class="ml-1 text-[10px] text-blue-600 auto-badge">⏳</span>' : ''}
                         </td>
                         <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm hidden sm:table-cell">
-                            ${isAuto ? '<span class="text-yellow-600 text-[10px] md:text-xs">⏳ រង់ចាំគ្រូ</span>' : '<span class="text-green-600 text-[10px] md:text-xs">✅ កំណត់ដោយគ្រូ</span>'}
+                            ${isAuto && status === 'auto' ? '<span class="text-blue-600 text-[10px] md:text-xs">🤖 កំណត់ដោយប្រព័ន្ធ</span>' : '<span class="text-green-600 text-[10px] md:text-xs">✅ កំណត់ដោយគ្រូ</span>'}
                         </td>
                         <td class="px-2 md:px-4 py-2 md:py-3">
                             ${canOverride ? `
                                 <div class="flex flex-wrap gap-0.5 md:gap-1 attendance-actions">
                                     <button onclick="setStatus('${student.studentID}', 'present')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-green-500 text-white hover:bg-green-600">មក</button>
                                     <button onclick="setStatus('${student.studentID}', 'absent')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-red-500 text-white hover:bg-red-600">អវត្ត</button>
-                                    <button onclick="setStatus('${student.studentID}', 'late')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600">យឺត</button>
-                                    <button onclick="setStatus('${student.studentID}', 'permit')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-purple-500 text-white hover:bg-purple-600">អនុញ្ញាត</button>
-                                    <button onclick="setStatus('${student.studentID}', 'auto')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600">Auto</button>
+                                    <button onclick="setStatus('${student.studentID}', 'late')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-yellow-500 text-white hover:bg-yellow-600">យឺត</button>
+                                    <button onclick="setStatus('${student.studentID}', 'permit')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-orange-500 text-white hover:bg-orange-600">អនុញ្ញាត</button>
+                                    <button onclick="setStatus('${student.studentID}', 'auto')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600">Auto</button>
                                 </div>
                             ` : `
                                 <span class="text-[10px] md:text-xs text-gray-400">${isTeacherMode ? 'ចុចប៊ូតុងខាងលើ' : 'បើករបៀបគ្រូ'}</span>
@@ -918,6 +967,7 @@
             }
 
             // Update attendance record
+            // Note: 'auto' means present by system, not waiting
             attendanceData[key][studentId] = {
                 status: newStatus,
                 autoAssigned: newStatus === 'auto',
@@ -965,7 +1015,7 @@
                     if (status === 'present') present++;
                     else if (status === 'absent') absent++;
                     else if (status === 'late') late++;
-                    else auto++;
+                    else auto++; // auto = present by system
                 } else {
                     auto++;
                 }
@@ -987,10 +1037,10 @@
             
             if (autoSubmitEnabled) {
                 startAutoSubmit();
-                addAutoLog('▶️ បើក Auto Submit');
+                addAutoLog('▶️ បើក Auto Present');
             } else {
                 stopAutoSubmit();
-                addAutoLog('⏹️ បិទ Auto Submit');
+                addAutoLog('⏹️ បិទ Auto Present');
             }
             
             updateAutoDisplay();
@@ -1009,7 +1059,7 @@
                 // Set interval
                 const intervalMs = autoCheckInterval * 60 * 1000;
                 autoSubmitInterval = setInterval(performAutoSubmit, intervalMs);
-                addAutoLog(`⏰ ចាប់ផ្ដើម Auto Submit (រៀងរាល់ ${autoCheckInterval} នាទី)`);
+                addAutoLog(`⏰ ចាប់ផ្ដើម Auto Present (រៀងរាល់ ${autoCheckInterval} នាទី)`);
             }
         }
 
@@ -1018,7 +1068,7 @@
                 clearInterval(autoSubmitInterval);
                 autoSubmitInterval = null;
             }
-            addAutoLog('⏹️ បញ្ឈប់ Auto Submit');
+            addAutoLog('⏹️ បញ្ឈប់ Auto Present');
         }
 
         function performAutoSubmit() {
@@ -1066,7 +1116,7 @@
             currentStudents.forEach(student => {
                 const record = attendanceData[key]?.[student.studentID];
                 if (record) {
-                    // If teacher hasn't set it (still auto), we'll auto submit
+                    // If teacher hasn't set it (still auto/present by system), we'll auto submit
                     if (record.autoAssigned !== false && record.status === 'auto') {
                         needsAutoSubmit = true;
                         autoCount++;
@@ -1078,12 +1128,12 @@
             });
             
             if (needsAutoSubmit && autoCount > 0) {
-                // Auto submit - set all students to auto status
+                // Auto submit - set all students to present by system (auto)
                 currentStudents.forEach(student => {
                     if (!attendanceData[key][student.studentID] || 
                         attendanceData[key][student.studentID].autoAssigned !== false) {
                         attendanceData[key][student.studentID] = {
-                            status: 'auto',
+                            status: 'auto', // auto = present by system
                             autoAssigned: true,
                             subject: subjectVal,
                             time_slot: timeVal,
@@ -1108,7 +1158,7 @@
                                 semester: parseInt(semesterVal),
                                 date: dateVal,
                                 student_id: studentId,
-                                status: 'auto',
+                                status: 'auto', // auto = present by system
                                 auto_assigned: true,
                                 created_at: record.timestamp || new Date().toISOString(),
                                 teacher_set: false,
@@ -1124,7 +1174,7 @@
                 }
                 
                 lastAutoSubmitTime = new Date();
-                addAutoLog(`🤖 Auto Submit: ${autoCount} សិស្ស (${subjectVal} - ${dateVal})`);
+                addAutoLog(`🤖 Auto Present: ${autoCount} សិស្ស (${subjectVal} - ${dateVal})`);
                 
                 // Update UI
                 renderAttendanceTable();
@@ -1172,7 +1222,7 @@
             }
             
             if (statusText) {
-                statusText.textContent = `Auto: ${autoSubmitEnabled ? 'ON ✅' : 'OFF ❌'}`;
+                statusText.textContent = `Auto Present: ${autoSubmitEnabled ? 'ON ✅' : 'OFF ❌'}`;
                 statusText.className = autoSubmitEnabled ? 'text-green-600 font-bold' : 'text-gray-500';
             }
             
@@ -1284,7 +1334,7 @@
         // ============================================
 
         function autoSubmitAll() {
-            if (!confirm('តើអ្នកចង់កំណត់វត្តមានសិស្សទាំងអស់ជា Auto មែនទេ?')) {
+            if (!confirm('តើអ្នកចង់កំណត់វត្តមានសិស្សទាំងអស់ជា "មក" ដោយស្វ័យប្រវត្តិមែនទេ?')) {
                 return;
             }
 
@@ -1312,7 +1362,7 @@
 
             currentStudents.forEach(student => {
                 attendanceData[key][student.studentID] = {
-                    status: 'auto',
+                    status: 'auto', // auto = present by system
                     autoAssigned: true,
                     subject: subjectVal,
                     time_slot: timeVal,
@@ -1327,9 +1377,9 @@
             renderAttendanceTable();
             updateStats();
             
-            addAutoLog(`🤖 Manual Auto Submit: ${currentStudents.length} សិស្ស (${subjectVal} - ${dateVal})`);
+            addAutoLog(`🤖 Manual Auto Present: ${currentStudents.length} សិស្ស (${subjectVal} - ${dateVal})`);
             
-            alert('✅ បានកំណត់វត្តមានសិស្សទាំងអស់ជា Auto រួចរាល់!');
+            alert('✅ បានកំណត់វត្តមានសិស្សទាំងអស់ជា "មក" ដោយស្វ័យប្រវត្តិរួចរាល់!');
         }
 
         // ============================================
@@ -1437,7 +1487,7 @@
                     if (status === 'present') studentAttendance[record.student_id].present++;
                     else if (status === 'absent') studentAttendance[record.student_id].absent++;
                     else if (status === 'late') studentAttendance[record.student_id].late++;
-                    else studentAttendance[record.student_id].auto++;
+                    else studentAttendance[record.student_id].auto++; // auto = present by system
                     studentAttendance[record.student_id].total++;
                 });
 
@@ -1460,10 +1510,10 @@
                                 <tr>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-700">ល.រ</th>
                                     <th class="px-3 py-2 text-left font-semibold text-gray-700">ឈ្មោះសិស្ស</th>
-                                    <th class="px-3 py-2 text-center font-semibold text-green-600">មក</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-green-600">មក (Present)</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-blue-600">Auto Present</th>
                                     <th class="px-3 py-2 text-center font-semibold text-red-600">អវត្តមាន</th>
-                                    <th class="px-3 py-2 text-center font-semibold text-blue-600">យឺត</th>
-                                    <th class="px-3 py-2 text-center font-semibold text-yellow-600">Auto</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-yellow-600">យឺត</th>
                                     <th class="px-3 py-2 text-center font-semibold text-gray-700">សរុប</th>
                                     <th class="px-3 py-2 text-center font-semibold text-indigo-600">% មក</th>
                                 </tr>
@@ -1475,7 +1525,8 @@
                 let totalPresent = 0, totalAbsent = 0, totalLate = 0, totalAuto = 0, totalTotal = 0;
 
                 for (const [studentId, data] of Object.entries(studentAttendance)) {
-                    const percentage = data.total > 0 ? Math.round((data.present / data.total) * 100) : 0;
+                    const totalPresentAll = data.present + data.auto; // present + auto present
+                    const percentage = data.total > 0 ? Math.round((totalPresentAll / data.total) * 100) : 0;
                     totalPresent += data.present;
                     totalAbsent += data.absent;
                     totalLate += data.late;
@@ -1487,9 +1538,9 @@
                             <td class="px-3 py-2 text-gray-700">${index++}</td>
                             <td class="px-3 py-2 font-medium text-gray-800">${data.name}</td>
                             <td class="px-3 py-2 text-center text-green-600 font-bold">${data.present}</td>
+                            <td class="px-3 py-2 text-center text-blue-600 font-bold">${data.auto}</td>
                             <td class="px-3 py-2 text-center text-red-600">${data.absent}</td>
-                            <td class="px-3 py-2 text-center text-blue-600">${data.late}</td>
-                            <td class="px-3 py-2 text-center text-yellow-600">${data.auto}</td>
+                            <td class="px-3 py-2 text-center text-yellow-600">${data.late}</td>
                             <td class="px-3 py-2 text-center font-bold text-gray-700">${data.total}</td>
                             <td class="px-3 py-2 text-center">
                                 <span class="px-2 py-1 rounded-full text-xs font-bold ${percentage >= 80 ? 'bg-green-100 text-green-700' : percentage >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">
@@ -1501,14 +1552,15 @@
                 }
 
                 // Add total row
-                const totalPercentage = totalTotal > 0 ? Math.round((totalPresent / totalTotal) * 100) : 0;
+                const totalPresentAll = totalPresent + totalAuto;
+                const totalPercentage = totalTotal > 0 ? Math.round((totalPresentAll / totalTotal) * 100) : 0;
                 html += `
                     <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
                         <td class="px-3 py-2 text-gray-700" colspan="2">សរុប</td>
                         <td class="px-3 py-2 text-center text-green-600">${totalPresent}</td>
+                        <td class="px-3 py-2 text-center text-blue-600">${totalAuto}</td>
                         <td class="px-3 py-2 text-center text-red-600">${totalAbsent}</td>
-                        <td class="px-3 py-2 text-center text-blue-600">${totalLate}</td>
-                        <td class="px-3 py-2 text-center text-yellow-600">${totalAuto}</td>
+                        <td class="px-3 py-2 text-center text-yellow-600">${totalLate}</td>
                         <td class="px-3 py-2 text-center text-gray-700">${totalTotal}</td>
                         <td class="px-3 py-2 text-center text-indigo-600">${totalPercentage}%</td>
                     </tr>
@@ -1585,8 +1637,8 @@
                 startAutoSubmit();
             }
             
-            alert('✅ បានរក្សាទុកការកំណត់ Auto រួចរាល់!');
-            addAutoLog('⚙️ បានរក្សាទុកការកំណត់ Auto');
+            alert('✅ បានរក្សាទុកការកំណត់ Auto Present រួចរាល់!');
+            addAutoLog('⚙️ បានរក្សាទុកការកំណត់ Auto Present');
         }
 
         function loadAutoSettings() {
@@ -1621,7 +1673,7 @@
             // Auto start if enabled
             if (autoSubmitEnabled) {
                 startAutoSubmit();
-                addAutoLog('🔄 Auto Submit started from saved settings');
+                addAutoLog('🔄 Auto Present started from saved settings');
             }
         }
 
