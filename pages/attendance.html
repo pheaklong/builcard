@@ -134,6 +134,30 @@
         .subject-english { background: #fce7f3; color: #9d174d; }
         .subject-science { background: #e0e7ff; color: #3730a3; }
         .subject-default { background: #f3f4f6; color: #374151; }
+        /* Auto submit status indicator */
+        .auto-status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .auto-status-active {
+            background: #22c55e;
+            animation: blink 1s infinite;
+        }
+        .auto-status-inactive {
+            background: #9ca3af;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .auto-timer {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4f46e5;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -152,6 +176,10 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
                     <span id="connectionStatus" class="connection-status online text-xs md:text-sm">🟢 តភ្ជាប់</span>
+                    <span id="autoStatusIndicator" class="flex items-center text-xs">
+                        <span class="auto-status-indicator auto-status-inactive" id="autoStatusDot"></span>
+                        <span id="autoStatusText" class="text-gray-500">Auto: OFF</span>
+                    </span>
                     <div class="flex items-center space-x-1 md:space-x-2">
                         <span class="teacher-label text-gray-700 text-xs md:text-sm">👨‍🏫 គ្រូ</span>
                         <label class="teacher-mode-toggle">
@@ -227,13 +255,42 @@
                 <div class="flex items-center"><span class="w-3 h-3 bg-blue-400 rounded-full mr-1"></span> យឺត (Late)</div>
                 <div class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-full mr-1"></span> អនុញ្ញាត (Permit)</div>
             </div>
-            <!-- Student Count Display -->
             <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
                 <div class="flex flex-wrap justify-between items-center">
                     <span class="text-sm font-medium text-gray-700">ចំនួនសិស្សសរុប៖</span>
                     <span id="studentCount" class="text-xl font-bold text-indigo-600">0</span>
                     <span class="text-sm text-gray-500">នាក់</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Auto Submit Schedule -->
+        <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 border-l-4 border-indigo-500">
+            <div class="flex flex-wrap justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-lg text-gray-800">⏰ Auto Submit Schedule</h3>
+                    <p class="text-sm text-gray-500">ប្រព័ន្ធនឹងកំណត់វត្តមានដោយស្វ័យប្រវត្តិនៅពេលកំណត់</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm">
+                        <span class="text-gray-600">ចាប់ផ្ដើម:</span>
+                        <span id="displayAutoStart" class="font-bold text-indigo-600">08:00</span>
+                    </div>
+                    <div class="text-sm">
+                        <span class="text-gray-600">បញ្ចប់:</span>
+                        <span id="displayAutoEnd" class="font-bold text-indigo-600">17:00</span>
+                    </div>
+                    <button onclick="toggleAutoSchedule()" id="toggleAutoBtn" class="px-4 py-2 rounded-lg text-white text-sm transition bg-green-600 hover:bg-green-700">
+                        ▶️ បើក Auto
+                    </button>
+                </div>
+            </div>
+            <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p class="text-sm text-amber-800">
+                    <span class="font-bold">ℹ️ របៀប Auto Submit៖</span> 
+                    ប្រសិនបើគ្រូមិនបានមកកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យ Auto ដោយស្វ័យប្រវត្តិតាមពេលវេលាដែលបានកំណត់។ 
+                    នៅពេលគ្រូចូលមក គ្រូអាចបិទស្ថានភាព Auto និងកំណត់វត្តមានតាមការពិតបាន។
+                </p>
             </div>
         </div>
 
@@ -332,7 +389,7 @@
         <!-- Auto Submit Configuration -->
         <div class="mt-6 bg-white rounded-xl shadow-lg p-4 md:p-6">
             <h3 class="font-bold text-lg text-gray-800 mb-4">⚙️ ការកំណត់ Auto Submit</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាចាប់ផ្ដើម Auto</label>
                     <input type="time" id="autoStartTime" value="08:00" class="w-full border rounded-lg px-3 py-2">
@@ -341,18 +398,33 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">ពេលវេលាបញ្ចប់ Auto</label>
                     <input type="time" id="autoEndTime" value="17:00" class="w-full border rounded-lg px-3 py-2">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ចន្លោះពេលពិនិត្យ (នាទី)</label>
+                    <input type="number" id="autoInterval" value="30" min="5" max="120" class="w-full border rounded-lg px-3 py-2">
+                </div>
                 <div class="flex items-end">
                     <button onclick="saveAutoSettings()" class="w-full bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">
-                        💾 រក្សាទុកការកំណត់
+                        💾 រក្សាទុក
                     </button>
                 </div>
             </div>
-            <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p class="text-sm text-amber-800">
-                    <span class="font-bold">ℹ️ កំណត់ចំណាំ៖</span> 
-                    ប្រសិនបើគ្រូមិនបានមកកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យ Auto ដោយស្វ័យប្រវត្តិតាមពេលវេលាដែលបានកំណត់។ 
-                    នៅពេលគ្រូចូលមក គ្រូអាចបិទស្ថានភាព Auto និងកំណត់វត្តមានតាមការពិតបាន។
+            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-blue-800">
+                    <span class="font-bold">📌 របៀប Auto Submit៖</span>
+                    <br>
+                    1. ប្រព័ន្ធនឹងពិនិត្យរៀងរាល់ <span id="displayInterval" class="font-bold">30</span> នាទី
+                    <br>
+                    2. ប្រសិនបើគ្រូមិនបានកំណត់វត្តមាន ប្រព័ន្ធនឹងកំណត់ឱ្យ Auto ដោយស្វ័យប្រវត្តិ
+                    <br>
+                    3. គ្រូអាចបើក/បិទ Auto Submit បានតាមរយៈប៊ូតុងខាងលើ
                 </p>
+            </div>
+            <!-- Auto Submit Log -->
+            <div class="mt-4">
+                <h4 class="font-semibold text-gray-700 mb-2">📋 កំណត់ហេតុ Auto Submit</h4>
+                <div id="autoLogContainer" class="max-h-40 overflow-y-auto bg-gray-50 rounded-lg p-3 border">
+                    <p class="text-sm text-gray-500">មិនទាន់មានកំណត់ហេតុទេ...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -386,6 +458,14 @@
         let allClasses = [];
         let isConnected = false;
         let allAttendanceRecords = [];
+        
+        // Auto Submit variables
+        let autoSubmitEnabled = false;
+        let autoSubmitInterval = null;
+        let autoStartTime = '08:00';
+        let autoEndTime = '17:00';
+        let autoCheckInterval = 30; // minutes
+        let lastAutoSubmitTime = null;
 
         // ============================================
         // HELPER: Get element safely
@@ -463,14 +543,16 @@
                 });
             }
 
-            // Auto-set time fields
-            const autoStart = getElement('autoStartTime');
-            const autoEnd = getElement('autoEndTime');
-            if (autoStart) autoStart.value = '08:00';
-            if (autoEnd) autoEnd.value = '17:00';
-
-            // Load saved auto settings
+            // Load auto settings
             loadAutoSettings();
+            
+            // Start auto submit if enabled
+            if (autoSubmitEnabled) {
+                startAutoSubmit();
+            }
+            
+            // Update display
+            updateAutoDisplay();
         });
 
         // ============================================
@@ -897,6 +979,214 @@
         }
 
         // ============================================
+        // AUTO SUBMIT FUNCTIONS
+        // ============================================
+
+        function toggleAutoSchedule() {
+            autoSubmitEnabled = !autoSubmitEnabled;
+            
+            if (autoSubmitEnabled) {
+                startAutoSubmit();
+                addAutoLog('▶️ បើក Auto Submit');
+            } else {
+                stopAutoSubmit();
+                addAutoLog('⏹️ បិទ Auto Submit');
+            }
+            
+            updateAutoDisplay();
+            saveAutoSettings();
+        }
+
+        function startAutoSubmit() {
+            if (autoSubmitInterval) {
+                clearInterval(autoSubmitInterval);
+            }
+            
+            // Check immediately if enabled
+            if (autoSubmitEnabled) {
+                performAutoSubmit();
+                
+                // Set interval
+                const intervalMs = autoCheckInterval * 60 * 1000;
+                autoSubmitInterval = setInterval(performAutoSubmit, intervalMs);
+                addAutoLog(`⏰ ចាប់ផ្ដើម Auto Submit (រៀងរាល់ ${autoCheckInterval} នាទី)`);
+            }
+        }
+
+        function stopAutoSubmit() {
+            if (autoSubmitInterval) {
+                clearInterval(autoSubmitInterval);
+                autoSubmitInterval = null;
+            }
+            addAutoLog('⏹️ បញ្ឈប់ Auto Submit');
+        }
+
+        function performAutoSubmit() {
+            if (!autoSubmitEnabled) return;
+            
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+            const startTime = parseTime(autoStartTime);
+            const endTime = parseTime(autoEndTime);
+            
+            // Check if within auto submit time range
+            if (currentTime < startTime || currentTime > endTime) {
+                // Outside auto submit hours
+                return;
+            }
+            
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+            
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                return;
+            }
+            
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
+            
+            if (!classVal || !dateVal) return;
+            
+            const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
+            
+            if (!attendanceData[key]) {
+                attendanceData[key] = {};
+            }
+            
+            // Check if teacher has already set attendance
+            let needsAutoSubmit = false;
+            let autoCount = 0;
+            
+            currentStudents.forEach(student => {
+                const record = attendanceData[key]?.[student.studentID];
+                if (record) {
+                    // If teacher hasn't set it (still auto), we'll auto submit
+                    if (record.autoAssigned !== false && record.status === 'auto') {
+                        needsAutoSubmit = true;
+                        autoCount++;
+                    }
+                } else {
+                    needsAutoSubmit = true;
+                    autoCount++;
+                }
+            });
+            
+            if (needsAutoSubmit && autoCount > 0) {
+                // Auto submit - set all students to auto status
+                currentStudents.forEach(student => {
+                    if (!attendanceData[key][student.studentID] || 
+                        attendanceData[key][student.studentID].autoAssigned !== false) {
+                        attendanceData[key][student.studentID] = {
+                            status: 'auto',
+                            autoAssigned: true,
+                            subject: subjectVal,
+                            time_slot: timeVal,
+                            timestamp: new Date().toISOString(),
+                            autoSubmitted: true
+                        };
+                    }
+                });
+                
+                // Save to localStorage
+                localStorage.setItem(`attendance_${key}`, JSON.stringify(attendanceData[key]));
+                
+                // Save to Supabase if connected
+                if (isConnected && typeof SupabaseConfig !== 'undefined') {
+                    const records = [];
+                    for (const [studentId, record] of Object.entries(attendanceData[key])) {
+                        if (record.autoSubmitted) {
+                            records.push({
+                                class: classVal,
+                                subject: subjectVal,
+                                time_slot: timeVal,
+                                semester: parseInt(semesterVal),
+                                date: dateVal,
+                                student_id: studentId,
+                                status: 'auto',
+                                auto_assigned: true,
+                                created_at: record.timestamp || new Date().toISOString(),
+                                teacher_set: false,
+                                auto_submitted: true
+                            });
+                        }
+                    }
+                    if (records.length > 0) {
+                        SupabaseConfig.saveAttendanceToSupabase(records).catch(e => {
+                            console.warn('Auto submit save to Supabase failed:', e);
+                        });
+                    }
+                }
+                
+                lastAutoSubmitTime = new Date();
+                addAutoLog(`🤖 Auto Submit: ${autoCount} សិស្ស (${subjectVal} - ${dateVal})`);
+                
+                // Update UI
+                renderAttendanceTable();
+                updateStats();
+            }
+        }
+
+        function parseTime(timeStr) {
+            const parts = timeStr.split(':');
+            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        }
+
+        function addAutoLog(message) {
+            const container = getElement('autoLogContainer');
+            if (!container) return;
+            
+            const time = new Date().toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit' });
+            const entry = document.createElement('div');
+            entry.className = 'text-xs py-1 border-b border-gray-100 last:border-0';
+            entry.innerHTML = `<span class="text-gray-400">${time}</span> - ${message}`;
+            
+            // Remove "no log" message
+            if (container.querySelector('p')) {
+                container.innerHTML = '';
+            }
+            
+            container.prepend(entry);
+            
+            // Keep only last 50 logs
+            while (container.children.length > 50) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        function updateAutoDisplay() {
+            const statusDot = getElement('autoStatusDot');
+            const statusText = getElement('autoStatusText');
+            const toggleBtn = getElement('toggleAutoBtn');
+            const displayStart = getElement('displayAutoStart');
+            const displayEnd = getElement('displayAutoEnd');
+            const displayInterval = getElement('displayInterval');
+            
+            if (statusDot) {
+                statusDot.className = `auto-status-indicator ${autoSubmitEnabled ? 'auto-status-active' : 'auto-status-inactive'}`;
+            }
+            
+            if (statusText) {
+                statusText.textContent = `Auto: ${autoSubmitEnabled ? 'ON ✅' : 'OFF ❌'}`;
+                statusText.className = autoSubmitEnabled ? 'text-green-600 font-bold' : 'text-gray-500';
+            }
+            
+            if (toggleBtn) {
+                toggleBtn.textContent = autoSubmitEnabled ? '⏹️ បិទ Auto' : '▶️ បើក Auto';
+                toggleBtn.className = `px-4 py-2 rounded-lg text-white text-sm transition ${autoSubmitEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`;
+            }
+            
+            if (displayStart) displayStart.textContent = autoStartTime;
+            if (displayEnd) displayEnd.textContent = autoEndTime;
+            if (displayInterval) displayInterval.textContent = autoCheckInterval;
+        }
+
+        // ============================================
         // SAVE ATTENDANCE
         // ============================================
 
@@ -937,7 +1227,8 @@
                     status: record.status || 'auto',
                     auto_assigned: record.autoAssigned !== false,
                     created_at: record.timestamp || new Date().toISOString(),
-                    teacher_set: record.teacherSet || false
+                    teacher_set: record.teacherSet || false,
+                    auto_submitted: record.autoSubmitted || false
                 });
             }
 
@@ -976,6 +1267,8 @@
                         btn.disabled = false;
                     }, 2000);
                 }
+                
+                addAutoLog(`💾 រក្សាទុកវត្តមាន ${subjectVal} - ${dateVal}`);
             } catch (error) {
                 console.error('Error saving:', error);
                 alert('មានបញ្ហាក្នុងការរក្សាទុកទិន្នន័យ!');
@@ -987,7 +1280,7 @@
         }
 
         // ============================================
-        // AUTO SUBMIT ALL
+        // AUTO SUBMIT ALL (Manual)
         // ============================================
 
         function autoSubmitAll() {
@@ -1023,12 +1316,18 @@
                     autoAssigned: true,
                     subject: subjectVal,
                     time_slot: timeVal,
-                    timestamp: new Date().toISOString()
+                    timestamp: new Date().toISOString(),
+                    autoSubmitted: true
                 };
             });
 
+            // Save
+            localStorage.setItem(`attendance_${key}`, JSON.stringify(attendanceData[key]));
+            
             renderAttendanceTable();
             updateStats();
+            
+            addAutoLog(`🤖 Manual Auto Submit: ${currentStudents.length} សិស្ស (${subjectVal} - ${dateVal})`);
             
             alert('✅ បានកំណត់វត្តមានសិស្សទាំងអស់ជា Auto រួចរាល់!');
         }
@@ -1249,6 +1548,7 @@
             await loadClasses();
             await loadAttendance();
             await loadMonthlySummary();
+            addAutoLog('🔄 Refresh data');
         }
 
         // ============================================
@@ -1258,19 +1558,35 @@
         function saveAutoSettings() {
             const startTime = getElement('autoStartTime');
             const endTime = getElement('autoEndTime');
+            const interval = getElement('autoInterval');
 
-            if (!startTime || !endTime) {
+            if (!startTime || !endTime || !interval) {
                 alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ');
                 return;
             }
 
+            autoStartTime = startTime.value;
+            autoEndTime = endTime.value;
+            autoCheckInterval = parseInt(interval.value) || 30;
+
             const settings = { 
-                startTime: startTime.value, 
-                endTime: endTime.value 
+                startTime: autoStartTime, 
+                endTime: autoEndTime,
+                interval: autoCheckInterval,
+                enabled: autoSubmitEnabled
             };
             localStorage.setItem('autoSettings', JSON.stringify(settings));
             
+            updateAutoDisplay();
+            
+            // Restart auto submit with new settings
+            if (autoSubmitEnabled) {
+                stopAutoSubmit();
+                startAutoSubmit();
+            }
+            
             alert('✅ បានរក្សាទុកការកំណត់ Auto រួចរាល់!');
+            addAutoLog('⚙️ បានរក្សាទុកការកំណត់ Auto');
         }
 
         function loadAutoSettings() {
@@ -1280,9 +1596,32 @@
                     const settings = JSON.parse(saved);
                     const startTime = getElement('autoStartTime');
                     const endTime = getElement('autoEndTime');
-                    if (startTime && settings.startTime) startTime.value = settings.startTime;
-                    if (endTime && settings.endTime) endTime.value = settings.endTime;
+                    const interval = getElement('autoInterval');
+                    
+                    if (startTime && settings.startTime) {
+                        startTime.value = settings.startTime;
+                        autoStartTime = settings.startTime;
+                    }
+                    if (endTime && settings.endTime) {
+                        endTime.value = settings.endTime;
+                        autoEndTime = settings.endTime;
+                    }
+                    if (interval && settings.interval) {
+                        interval.value = settings.interval;
+                        autoCheckInterval = settings.interval;
+                    }
+                    if (settings.enabled !== undefined) {
+                        autoSubmitEnabled = settings.enabled;
+                    }
                 } catch (e) {}
+            }
+            
+            updateAutoDisplay();
+            
+            // Auto start if enabled
+            if (autoSubmitEnabled) {
+                startAutoSubmit();
+                addAutoLog('🔄 Auto Submit started from saved settings');
             }
         }
 
@@ -1302,6 +1641,8 @@
         window.checkConnection = checkConnection;
         window.loadMonthlySummary = loadMonthlySummary;
         window.getSubjectClass = getSubjectClass;
+        window.toggleAutoSchedule = toggleAutoSchedule;
+        window.performAutoSubmit = performAutoSubmit;
     </script>
 </body>
 </html>
