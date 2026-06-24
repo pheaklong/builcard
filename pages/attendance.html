@@ -227,6 +227,14 @@
                 <div class="flex items-center"><span class="w-3 h-3 bg-blue-400 rounded-full mr-1"></span> យឺត (Late)</div>
                 <div class="flex items-center"><span class="w-3 h-3 bg-purple-400 rounded-full mr-1"></span> អនុញ្ញាត (Permit)</div>
             </div>
+            <!-- Student Count Display -->
+            <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div class="flex flex-wrap justify-between items-center">
+                    <span class="text-sm font-medium text-gray-700">ចំនួនសិស្សសរុប៖</span>
+                    <span id="studentCount" class="text-xl font-bold text-indigo-600">0</span>
+                    <span class="text-sm text-gray-500">នាក់</span>
+                </div>
+            </div>
         </div>
 
         <!-- Status Summary -->
@@ -398,6 +406,22 @@
                 return true;
             }
             return false;
+        }
+
+        // ============================================
+        // HELPER: Get subject class for styling
+        // ============================================
+
+        function getSubjectClass(subject) {
+            const map = {
+                'ICT': 'subject-ict',
+                'Math': 'subject-math',
+                'Khmer': 'subject-khmer',
+                'English': 'subject-english',
+                'Science': 'subject-science',
+                'Social': 'subject-default'
+            };
+            return map[subject] || 'subject-default';
         }
 
         // ============================================
@@ -589,7 +613,10 @@
                 currentStudents = students;
                 
                 // Update student count
-                setTextContent('studentCount', students.length.toString());
+                const studentCountEl = getElement('studentCount');
+                if (studentCountEl) {
+                    studentCountEl.textContent = students.length;
+                }
 
                 // Create key with subject and time
                 const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
@@ -1156,17 +1183,6 @@
                     totalAuto += data.auto;
                     totalTotal += data.total;
 
-                    const getSubjectClass = (subject) => {
-                        const map = {
-                            'ICT': 'subject-ict',
-                            'Math': 'subject-math',
-                            'Khmer': 'subject-khmer',
-                            'English': 'subject-english',
-                            'Science': 'subject-science'
-                        };
-                        return map[subject] || 'subject-default';
-                    };
-
                     html += `
                         <tr class="border-b hover:bg-gray-50">
                             <td class="px-3 py-2 text-gray-700">${index++}</td>
@@ -1285,6 +1301,7 @@
         window.loadClasses = loadClasses;
         window.checkConnection = checkConnection;
         window.loadMonthlySummary = loadMonthlySummary;
+        window.getSubjectClass = getSubjectClass;
     </script>
 </body>
 </html>
