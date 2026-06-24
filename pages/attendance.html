@@ -114,6 +114,27 @@
                 padding: 4px 8px;
             }
         }
+        /* Monthly summary styles */
+        .monthly-summary-card {
+            transition: all 0.3s ease;
+        }
+        .monthly-summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .subject-tag {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .subject-ict { background: #dbeafe; color: #1e40af; }
+        .subject-math { background: #fef3c7; color: #92400e; }
+        .subject-khmer { background: #dcfce7; color: #166534; }
+        .subject-english { background: #fce7f3; color: #9d174d; }
+        .subject-science { background: #e0e7ff; color: #3730a3; }
+        .subject-default { background: #f3f4f6; color: #374151; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -156,11 +177,31 @@
     <div class="container mx-auto px-4 py-6">
         <!-- Class Selection -->
         <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ថ្នាក់ (Class)</label>
                     <select id="classSelect" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
                         <option value="">-- ជ្រើសរើសថ្នាក់ --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">មុខវិជ្ជា (Subject)</label>
+                    <select id="subjectSelect" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <option value="ICT">ICT</option>
+                        <option value="Math">គណិតវិទ្យា</option>
+                        <option value="Khmer">ភាសាខ្មែរ</option>
+                        <option value="English">ភាសាអង់គ្លេស</option>
+                        <option value="Science">វិទ្យាសាស្ត្រ</option>
+                        <option value="Social">សង្គម</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ម៉ោង (Time)</label>
+                    <select id="timeSelect" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <option value="08:00-09:30">08:00 - 09:30</option>
+                        <option value="09:45-11:15">09:45 - 11:15</option>
+                        <option value="13:00-14:30">13:00 - 14:30</option>
+                        <option value="14:45-16:15">14:45 - 16:15</option>
                     </select>
                 </div>
                 <div>
@@ -173,10 +214,6 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ថ្ងៃ/ខែ/ឆ្នាំ</label>
                     <input type="date" id="datePicker" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ចំនួនសិស្ស</label>
-                    <span id="studentCount" class="block text-lg font-bold text-indigo-600 pt-2">0</span>
                 </div>
                 <div class="flex items-end">
                     <button onclick="loadAttendance()" class="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm">
@@ -214,6 +251,40 @@
             <div class="bg-white rounded-xl shadow p-3 md:p-4 text-center">
                 <p class="text-xl md:text-2xl font-bold text-blue-600" id="lateCount">0</p>
                 <p class="text-xs md:text-sm text-gray-600">យឺត</p>
+            </div>
+        </div>
+
+        <!-- Monthly Summary -->
+        <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
+            <div class="flex flex-wrap justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">📊 សង្ខេបវត្តមានប្រចាំខែ</h3>
+                <div class="flex gap-2">
+                    <select id="monthSelect" class="border rounded-lg px-3 py-1 text-sm">
+                        <option value="1">មករា</option>
+                        <option value="2">កុម្ភៈ</option>
+                        <option value="3">មីនា</option>
+                        <option value="4">មេសា</option>
+                        <option value="5">ឧសភា</option>
+                        <option value="6">មិថុនា</option>
+                        <option value="7">កក្កដា</option>
+                        <option value="8">សីហា</option>
+                        <option value="9">កញ្ញា</option>
+                        <option value="10">តុលា</option>
+                        <option value="11">វិច្ឆិកា</option>
+                        <option value="12">ធ្នូ</option>
+                    </select>
+                    <select id="yearSelect" class="border rounded-lg px-3 py-1 text-sm">
+                        <option value="2024">2024</option>
+                        <option value="2025">2025</option>
+                        <option value="2026">2026</option>
+                    </select>
+                    <button onclick="loadMonthlySummary()" class="bg-indigo-600 text-white px-4 py-1 rounded-lg hover:bg-indigo-700 transition text-sm">
+                        មើល
+                    </button>
+                </div>
+            </div>
+            <div id="monthlySummaryContent" class="overflow-x-auto">
+                <p class="text-gray-500 text-center py-4">សូមជ្រើសរើសថ្នាក់ និងចុច "មើល"</p>
             </div>
         </div>
 
@@ -304,6 +375,7 @@
         let currentStudents = [];
         let allClasses = [];
         let isConnected = false;
+        let allAttendanceRecords = []; // For monthly summary
 
         // ============================================
         // INITIALIZATION
@@ -313,6 +385,11 @@
             // Set default date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('datePicker').value = today;
+
+            // Set default month and year
+            const now = new Date();
+            document.getElementById('monthSelect').value = now.getMonth() + 1;
+            document.getElementById('yearSelect').value = now.getFullYear();
 
             // Check if config is loaded
             if (typeof SupabaseConfig === 'undefined') {
@@ -425,6 +502,8 @@
 
         async function loadAttendance() {
             const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const timeVal = document.getElementById('timeSelect').value;
             const dateVal = document.getElementById('datePicker').value;
             const semesterVal = document.getElementById('semesterSelect').value;
 
@@ -454,12 +533,18 @@
                 // Update student count
                 document.getElementById('studentCount').textContent = students.length;
 
-                // Try to fetch attendance from Supabase
-                const key = `${classVal}_${semesterVal}_${dateVal}`;
+                // Create key with subject and time
+                const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
                 let attendanceRecords = null;
                 
                 if (isConnected) {
                     attendanceRecords = await SupabaseConfig.fetchAttendance(classVal, semesterVal, dateVal);
+                    // Filter by subject and time if needed
+                    if (attendanceRecords && attendanceRecords.length > 0) {
+                        attendanceRecords = attendanceRecords.filter(r => 
+                            r.subject === subjectVal && r.time_slot === timeVal
+                        );
+                    }
                 }
                 
                 // If no records from Supabase, try localStorage
@@ -472,6 +557,8 @@
                                 student_id: studentId,
                                 status: record.status || 'auto',
                                 auto_assigned: record.autoAssigned !== false,
+                                subject: record.subject || subjectVal,
+                                time_slot: record.time_slot || timeVal,
                                 created_at: record.timestamp || new Date().toISOString()
                             }));
                         } catch (e) {}
@@ -485,6 +572,8 @@
                         attendanceData[key][record.student_id] = {
                             status: record.status || 'auto',
                             autoAssigned: record.auto_assigned !== false,
+                            subject: record.subject || subjectVal,
+                            time_slot: record.time_slot || timeVal,
                             timestamp: record.created_at || new Date().toISOString()
                         };
                     });
@@ -495,6 +584,8 @@
                         attendanceData[key][student.studentID] = {
                             status: 'auto',
                             autoAssigned: true,
+                            subject: subjectVal,
+                            time_slot: timeVal,
                             timestamp: new Date().toISOString()
                         };
                     });
@@ -506,6 +597,8 @@
                         attendanceData[key][student.studentID] = {
                             status: 'auto',
                             autoAssigned: true,
+                            subject: subjectVal,
+                            time_slot: timeVal,
                             timestamp: new Date().toISOString()
                         };
                     }
@@ -528,9 +621,11 @@
         function renderAttendanceTable() {
             const tbody = document.getElementById('attendanceTableBody');
             const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const timeVal = document.getElementById('timeSelect').value;
             const semesterVal = document.getElementById('semesterSelect').value;
             const dateVal = document.getElementById('datePicker').value;
-            const key = `${classVal}_${semesterVal}_${dateVal}`;
+            const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!currentStudents || currentStudents.length === 0) {
                 tbody.innerHTML = `
@@ -611,9 +706,11 @@
             }
 
             const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const timeVal = document.getElementById('timeSelect').value;
             const semesterVal = document.getElementById('semesterSelect').value;
             const dateVal = document.getElementById('datePicker').value;
-            const key = `${classVal}_${semesterVal}_${dateVal}`;
+            const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
                 attendanceData[key] = {};
@@ -623,6 +720,8 @@
             attendanceData[key][studentId] = {
                 status: newStatus,
                 autoAssigned: newStatus === 'auto',
+                subject: subjectVal,
+                time_slot: timeVal,
                 timestamp: new Date().toISOString(),
                 teacherSet: true
             };
@@ -637,9 +736,11 @@
 
         function updateStats() {
             const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const timeVal = document.getElementById('timeSelect').value;
             const semesterVal = document.getElementById('semesterSelect').value;
             const dateVal = document.getElementById('datePicker').value;
-            const key = `${classVal}_${semesterVal}_${dateVal}`;
+            const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             const students = currentStudents;
             const total = students.length;
@@ -672,9 +773,11 @@
 
         async function saveAttendance() {
             const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const timeVal = document.getElementById('timeSelect').value;
             const semesterVal = document.getElementById('semesterSelect').value;
             const dateVal = document.getElementById('datePicker').value;
-            const key = `${classVal}_${semesterVal}_${dateVal}`;
+            const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
                 alert('មិនមានទិន្នន័យវត្តមានដើម្បីរក្សាទុកទេ!');
@@ -686,6 +789,8 @@
             for (const [studentId, record] of Object.entries(attendanceData[key])) {
                 records.push({
                     class: classVal,
+                    subject: subjectVal,
+                    time_slot: timeVal,
                     semester: parseInt(semesterVal),
                     date: dateVal,
                     student_id: studentId,
@@ -745,9 +850,11 @@
             }
 
             const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const timeVal = document.getElementById('timeSelect').value;
             const semesterVal = document.getElementById('semesterSelect').value;
             const dateVal = document.getElementById('datePicker').value;
-            const key = `${classVal}_${semesterVal}_${dateVal}`;
+            const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
                 attendanceData[key] = {};
@@ -757,6 +864,8 @@
                 attendanceData[key][student.studentID] = {
                     status: 'auto',
                     autoAssigned: true,
+                    subject: subjectVal,
+                    time_slot: timeVal,
                     timestamp: new Date().toISOString()
                 };
             });
@@ -768,6 +877,209 @@
         }
 
         // ============================================
+        // LOAD MONTHLY SUMMARY
+        // ============================================
+
+        async function loadMonthlySummary() {
+            const classVal = document.getElementById('classSelect').value;
+            const subjectVal = document.getElementById('subjectSelect').value;
+            const month = document.getElementById('monthSelect').value;
+            const year = document.getElementById('yearSelect').value;
+
+            if (!classVal) {
+                alert('សូមជ្រើសរើសថ្នាក់');
+                return;
+            }
+
+            const container = document.getElementById('monthlySummaryContent');
+            container.innerHTML = '<div class="loading-spinner"></div><p class="text-center text-gray-500">កំពុងផ្ទុក...</p>';
+
+            try {
+                let records = [];
+                
+                if (isConnected && typeof SupabaseConfig !== 'undefined') {
+                    // Fetch from Supabase
+                    const allRecords = await SupabaseConfig.fetchAttendance(classVal, null, null);
+                    if (allRecords && allRecords.length > 0) {
+                        records = allRecords.filter(r => {
+                            const date = new Date(r.date);
+                            return date.getMonth() === parseInt(month) - 1 && 
+                                   date.getFullYear() === parseInt(year) &&
+                                   (r.subject === subjectVal || !subjectVal);
+                        });
+                    }
+                }
+
+                // If no records, try localStorage
+                if (records.length === 0) {
+                    // Scan localStorage for attendance records
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const key = localStorage.key(i);
+                        if (key && key.startsWith('attendance_')) {
+                            const parts = key.replace('attendance_', '').split('_');
+                            if (parts.length >= 3) {
+                                const savedClass = parts[0];
+                                const savedSubject = parts[1];
+                                const savedDate = parts[parts.length - 1];
+                                if (savedClass === classVal && savedSubject === subjectVal) {
+                                    const date = new Date(savedDate);
+                                    if (date.getMonth() === parseInt(month) - 1 && 
+                                        date.getFullYear() === parseInt(year)) {
+                                        try {
+                                            const data = JSON.parse(localStorage.getItem(key));
+                                            for (const [studentId, record] of Object.entries(data)) {
+                                                records.push({
+                                                    student_id: studentId,
+                                                    status: record.status || 'auto',
+                                                    subject: record.subject || subjectVal,
+                                                    date: savedDate,
+                                                    time_slot: record.time_slot || 'N/A'
+                                                });
+                                            }
+                                        } catch (e) {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Get student names
+                const students = await SupabaseConfig.fetchStudentsByClass(classVal);
+                const studentMap = {};
+                students.forEach(s => { studentMap[s.studentID] = s.name; });
+
+                // Group by student
+                const studentAttendance = {};
+                records.forEach(record => {
+                    if (!studentAttendance[record.student_id]) {
+                        studentAttendance[record.student_id] = {
+                            name: studentMap[record.student_id] || record.student_id,
+                            present: 0,
+                            absent: 0,
+                            late: 0,
+                            auto: 0,
+                            total: 0
+                        };
+                    }
+                    const status = record.status || 'auto';
+                    if (status === 'present') studentAttendance[record.student_id].present++;
+                    else if (status === 'absent') studentAttendance[record.student_id].absent++;
+                    else if (status === 'late') studentAttendance[record.student_id].late++;
+                    else studentAttendance[record.student_id].auto++;
+                    studentAttendance[record.student_id].total++;
+                });
+
+                // Render summary table
+                if (Object.keys(studentAttendance).length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <div class="text-4xl mb-2">📊</div>
+                            <p>មិនមានទិន្នន័យវត្តមានសម្រាប់ខែនេះទេ</p>
+                            <p class="text-sm">សូមពិនិត្យមើលថាតើអ្នកបានរក្សាទុកវត្តមានរួចហើយឬនៅ</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 border-b">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-700">ល.រ</th>
+                                    <th class="px-3 py-2 text-left font-semibold text-gray-700">ឈ្មោះសិស្ស</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-green-600">មក</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-red-600">អវត្តមាន</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-blue-600">យឺត</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-yellow-600">Auto</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-gray-700">សរុប</th>
+                                    <th class="px-3 py-2 text-center font-semibold text-indigo-600">% មក</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                let index = 1;
+                let totalPresent = 0, totalAbsent = 0, totalLate = 0, totalAuto = 0, totalTotal = 0;
+
+                for (const [studentId, data] of Object.entries(studentAttendance)) {
+                    const percentage = data.total > 0 ? Math.round((data.present / data.total) * 100) : 0;
+                    totalPresent += data.present;
+                    totalAbsent += data.absent;
+                    totalLate += data.late;
+                    totalAuto += data.auto;
+                    totalTotal += data.total;
+
+                    const getSubjectClass = (subject) => {
+                        const map = {
+                            'ICT': 'subject-ict',
+                            'Math': 'subject-math',
+                            'Khmer': 'subject-khmer',
+                            'English': 'subject-english',
+                            'Science': 'subject-science'
+                        };
+                        return map[subject] || 'subject-default';
+                    };
+
+                    html += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-3 py-2 text-gray-700">${index++}</td>
+                            <td class="px-3 py-2 font-medium text-gray-800">${data.name}</td>
+                            <td class="px-3 py-2 text-center text-green-600 font-bold">${data.present}</td>
+                            <td class="px-3 py-2 text-center text-red-600">${data.absent}</td>
+                            <td class="px-3 py-2 text-center text-blue-600">${data.late}</td>
+                            <td class="px-3 py-2 text-center text-yellow-600">${data.auto}</td>
+                            <td class="px-3 py-2 text-center font-bold text-gray-700">${data.total}</td>
+                            <td class="px-3 py-2 text-center">
+                                <span class="px-2 py-1 rounded-full text-xs font-bold ${percentage >= 80 ? 'bg-green-100 text-green-700' : percentage >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}">
+                                    ${percentage}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                // Add total row
+                const totalPercentage = totalTotal > 0 ? Math.round((totalPresent / totalTotal) * 100) : 0;
+                html += `
+                    <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
+                        <td class="px-3 py-2 text-gray-700" colspan="2">សរុប</td>
+                        <td class="px-3 py-2 text-center text-green-600">${totalPresent}</td>
+                        <td class="px-3 py-2 text-center text-red-600">${totalAbsent}</td>
+                        <td class="px-3 py-2 text-center text-blue-600">${totalLate}</td>
+                        <td class="px-3 py-2 text-center text-yellow-600">${totalAuto}</td>
+                        <td class="px-3 py-2 text-center text-gray-700">${totalTotal}</td>
+                        <td class="px-3 py-2 text-center text-indigo-600">${totalPercentage}%</td>
+                    </tr>
+                `;
+
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="subject-tag ${getSubjectClass(subjectVal)}">📚 ${subjectVal}</span>
+                        <span class="text-sm text-gray-500">ខែ ${month}/${year}</span>
+                        <span class="text-sm text-gray-500">ថ្នាក់ ${classVal}</span>
+                        <span class="text-sm text-gray-500">សរុបសិស្ស ${Object.keys(studentAttendance).length} នាក់</span>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading monthly summary:', error);
+                container.innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <p>មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យសង្ខេបប្រចាំខែ</p>
+                        <p class="text-sm text-gray-500">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
         // REFRESH DATA
         // ============================================
 
@@ -775,6 +1087,7 @@
             await checkConnection();
             await loadClasses();
             await loadAttendance();
+            await loadMonthlySummary();
         }
 
         // ============================================
@@ -816,6 +1129,7 @@
         window.refreshData = refreshData;
         window.loadClasses = loadClasses;
         window.checkConnection = checkConnection;
+        window.loadMonthlySummary = loadMonthlySummary;
     </script>
 </body>
 </html>
