@@ -114,7 +114,6 @@
                 padding: 4px 8px;
             }
         }
-        /* Monthly summary styles */
         .monthly-summary-card {
             transition: all 0.3s ease;
         }
@@ -258,7 +257,7 @@
         <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
             <div class="flex flex-wrap justify-between items-center mb-4">
                 <h3 class="font-bold text-lg text-gray-800">📊 សង្ខេបវត្តមានប្រចាំខែ</h3>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                     <select id="monthSelect" class="border rounded-lg px-3 py-1 text-sm">
                         <option value="1">មករា</option>
                         <option value="2">កុម្ភៈ</option>
@@ -359,8 +358,11 @@
         
         if (typeof SupabaseConfig === 'undefined') {
             console.error('❌ SupabaseConfig is not defined! Please check config.js');
-            document.getElementById('connectionStatus').innerHTML = '🔴 config.js មិនត្រូវបានផ្ទុក';
-            document.getElementById('connectionStatus').className = 'connection-status offline';
+            const statusEl = document.getElementById('connectionStatus');
+            if (statusEl) {
+                statusEl.innerHTML = '🔴 config.js មិនត្រូវបានផ្ទុក';
+                statusEl.className = 'connection-status offline';
+            }
             alert('មិនអាចផ្ទុកការកំណត់រចនាសម្ព័ន្ធបានទេ។ សូមពិនិត្យឯកសារ config.js');
         } else {
             console.log('✅ SupabaseConfig loaded successfully');
@@ -375,21 +377,47 @@
         let currentStudents = [];
         let allClasses = [];
         let isConnected = false;
-        let allAttendanceRecords = []; // For monthly summary
+        let allAttendanceRecords = [];
+
+        // ============================================
+        // HELPER: Get element safely
+        // ============================================
+
+        function getElement(id) {
+            const el = document.getElementById(id);
+            if (!el) {
+                console.warn(`⚠️ Element with id "${id}" not found`);
+            }
+            return el;
+        }
+
+        function setTextContent(id, text) {
+            const el = getElement(id);
+            if (el) {
+                el.textContent = text;
+                return true;
+            }
+            return false;
+        }
 
         // ============================================
         // INITIALIZATION
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Attendance page initialized');
+            
             // Set default date to today
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('datePicker').value = today;
+            const datePicker = getElement('datePicker');
+            if (datePicker) datePicker.value = today;
 
             // Set default month and year
             const now = new Date();
-            document.getElementById('monthSelect').value = now.getMonth() + 1;
-            document.getElementById('yearSelect').value = now.getFullYear();
+            const monthSelect = getElement('monthSelect');
+            const yearSelect = getElement('yearSelect');
+            if (monthSelect) monthSelect.value = now.getMonth() + 1;
+            if (yearSelect) yearSelect.value = now.getFullYear();
 
             // Check if config is loaded
             if (typeof SupabaseConfig === 'undefined') {
@@ -403,14 +431,19 @@
             await loadClasses();
 
             // Teacher mode toggle
-            document.getElementById('teacherMode').addEventListener('change', function() {
-                isTeacherMode = this.checked;
-                renderAttendanceTable();
-            });
+            const teacherMode = getElement('teacherMode');
+            if (teacherMode) {
+                teacherMode.addEventListener('change', function() {
+                    isTeacherMode = this.checked;
+                    renderAttendanceTable();
+                });
+            }
 
             // Auto-set time fields
-            document.getElementById('autoStartTime').value = '08:00';
-            document.getElementById('autoEndTime').value = '17:00';
+            const autoStart = getElement('autoStartTime');
+            const autoEnd = getElement('autoEndTime');
+            if (autoStart) autoStart.value = '08:00';
+            if (autoEnd) autoEnd.value = '17:00';
 
             // Load saved auto settings
             loadAutoSettings();
@@ -426,19 +459,23 @@
                     throw new Error('SupabaseConfig not loaded');
                 }
                 isConnected = await SupabaseConfig.checkConnection();
-                const statusEl = document.getElementById('connectionStatus');
-                if (isConnected) {
-                    statusEl.className = 'connection-status online';
-                    statusEl.innerHTML = '🟢 តភ្ជាប់ Supabase';
-                } else {
-                    statusEl.className = 'connection-status offline';
-                    statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+                const statusEl = getElement('connectionStatus');
+                if (statusEl) {
+                    if (isConnected) {
+                        statusEl.className = 'connection-status online';
+                        statusEl.innerHTML = '🟢 តភ្ជាប់ Supabase';
+                    } else {
+                        statusEl.className = 'connection-status offline';
+                        statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+                    }
                 }
             } catch (error) {
                 isConnected = false;
-                const statusEl = document.getElementById('connectionStatus');
-                statusEl.className = 'connection-status offline';
-                statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+                const statusEl = getElement('connectionStatus');
+                if (statusEl) {
+                    statusEl.className = 'connection-status offline';
+                    statusEl.innerHTML = '🔴 បរាជ័យក្នុងការតភ្ជាប់';
+                }
                 console.error('Connection error:', error);
             }
         }
@@ -456,7 +493,12 @@
                 const classes = await SupabaseConfig.fetchAllClasses();
                 allClasses = classes;
                 
-                const select = document.getElementById('classSelect');
+                const select = getElement('classSelect');
+                if (!select) {
+                    console.error('❌ classSelect element not found');
+                    return;
+                }
+                
                 select.innerHTML = '<option value="">-- ជ្រើសរើសថ្នាក់ --</option>';
                 
                 classes.forEach(cls => {
@@ -479,17 +521,19 @@
                     try {
                         const classes = JSON.parse(saved);
                         allClasses = classes;
-                        const select = document.getElementById('classSelect');
-                        select.innerHTML = '<option value="">-- ជ្រើសរើសថ្នាក់ --</option>';
-                        classes.forEach(cls => {
-                            const option = document.createElement('option');
-                            option.value = cls;
-                            option.textContent = `ថ្នាក់ ${cls}`;
-                            select.appendChild(option);
-                        });
-                        if (classes.length > 0) {
-                            select.value = classes[0];
-                            loadAttendance();
+                        const select = getElement('classSelect');
+                        if (select) {
+                            select.innerHTML = '<option value="">-- ជ្រើសរើសថ្នាក់ --</option>';
+                            classes.forEach(cls => {
+                                const option = document.createElement('option');
+                                option.value = cls;
+                                option.textContent = `ថ្នាក់ ${cls}`;
+                                select.appendChild(option);
+                            });
+                            if (classes.length > 0) {
+                                select.value = classes[0];
+                                loadAttendance();
+                            }
                         }
                     } catch (e) {}
                 }
@@ -501,11 +545,23 @@
         // ============================================
 
         async function loadAttendance() {
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const timeVal = document.getElementById('timeSelect').value;
-            const dateVal = document.getElementById('datePicker').value;
-            const semesterVal = document.getElementById('semesterSelect').value;
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                console.error('❌ Required elements not found');
+                alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ។ សូមធ្វើការផ្ទុកទំព័រឡើងវិញ។');
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
 
             if (!classVal) {
                 alert('សូមជ្រើសរើសថ្នាក់');
@@ -518,8 +574,10 @@
             }
 
             // Show loading
-            document.getElementById('loadingSpinner').classList.remove('hidden');
-            document.getElementById('attendanceTableBody').innerHTML = '';
+            const spinner = getElement('loadingSpinner');
+            const tbody = getElement('attendanceTableBody');
+            if (spinner) spinner.classList.remove('hidden');
+            if (tbody) tbody.innerHTML = '';
 
             try {
                 if (typeof SupabaseConfig === 'undefined') {
@@ -531,7 +589,7 @@
                 currentStudents = students;
                 
                 // Update student count
-                document.getElementById('studentCount').textContent = students.length;
+                setTextContent('studentCount', students.length.toString());
 
                 // Create key with subject and time
                 const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
@@ -610,7 +668,8 @@
                 console.error('Error loading attendance:', error);
                 alert('មានបញ្ហាក្នុងការផ្ទុកទិន្នន័យ។ សូមព្យាយាមម្តងទៀត។');
             } finally {
-                document.getElementById('loadingSpinner').classList.add('hidden');
+                const spinner = getElement('loadingSpinner');
+                if (spinner) spinner.classList.add('hidden');
             }
         }
 
@@ -619,12 +678,34 @@
         // ============================================
 
         function renderAttendanceTable() {
-            const tbody = document.getElementById('attendanceTableBody');
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const timeVal = document.getElementById('timeSelect').value;
-            const semesterVal = document.getElementById('semesterSelect').value;
-            const dateVal = document.getElementById('datePicker').value;
+            const tbody = getElement('attendanceTableBody');
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+
+            if (!tbody) {
+                console.error('❌ attendanceTableBody not found');
+                return;
+            }
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-8 text-red-500">
+                            <p>មានបញ្ហាក្នុងការផ្ទុកទំព័រ</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!currentStudents || currentStudents.length === 0) {
@@ -705,11 +786,22 @@
                 return;
             }
 
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const timeVal = document.getElementById('timeSelect').value;
-            const semesterVal = document.getElementById('semesterSelect').value;
-            const dateVal = document.getElementById('datePicker').value;
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ');
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
@@ -735,11 +827,21 @@
         // ============================================
 
         function updateStats() {
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const timeVal = document.getElementById('timeSelect').value;
-            const semesterVal = document.getElementById('semesterSelect').value;
-            const dateVal = document.getElementById('datePicker').value;
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             const students = currentStudents;
@@ -760,11 +862,11 @@
                 }
             });
 
-            document.getElementById('totalStudents').textContent = total;
-            document.getElementById('presentCount').textContent = present;
-            document.getElementById('absentCount').textContent = absent;
-            document.getElementById('autoCount').textContent = auto;
-            document.getElementById('lateCount').textContent = late;
+            setTextContent('totalStudents', total.toString());
+            setTextContent('presentCount', present.toString());
+            setTextContent('absentCount', absent.toString());
+            setTextContent('autoCount', auto.toString());
+            setTextContent('lateCount', late.toString());
         }
 
         // ============================================
@@ -772,11 +874,22 @@
         // ============================================
 
         async function saveAttendance() {
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const timeVal = document.getElementById('timeSelect').value;
-            const semesterVal = document.getElementById('semesterSelect').value;
-            const dateVal = document.getElementById('datePicker').value;
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ');
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
@@ -801,10 +914,12 @@
                 });
             }
 
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ កំពុងរក្សាទុក...';
-            btn.disabled = true;
+            const btn = event && event.target ? event.target : document.querySelector('.bg-indigo-600');
+            const originalText = btn ? btn.innerHTML : '💾 រក្សាទុក';
+            if (btn) {
+                btn.innerHTML = '⏳ កំពុងរក្សាទុក...';
+                btn.disabled = true;
+            }
 
             try {
                 let saved = false;
@@ -820,23 +935,27 @@
                     }
                 }
                 
-                if (saved) {
-                    btn.innerHTML = '✅ បានរក្សាទុកក្នុង Supabase!';
-                } else {
-                    btn.innerHTML = '✅ បានរក្សាទុកក្នុង Local Storage!';
+                if (btn) {
+                    if (saved) {
+                        btn.innerHTML = '✅ បានរក្សាទុកក្នុង Supabase!';
+                    } else {
+                        btn.innerHTML = '✅ បានរក្សាទុកក្នុង Local Storage!';
+                    }
+                    btn.classList.add('bg-green-600');
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('bg-green-600');
+                        btn.disabled = false;
+                    }, 2000);
                 }
-                btn.classList.add('bg-green-600');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.remove('bg-green-600');
-                    btn.disabled = false;
-                }, 2000);
             } catch (error) {
                 console.error('Error saving:', error);
                 alert('មានបញ្ហាក្នុងការរក្សាទុកទិន្នន័យ!');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             }
         }
 
@@ -849,11 +968,22 @@
                 return;
             }
 
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const timeVal = document.getElementById('timeSelect').value;
-            const semesterVal = document.getElementById('semesterSelect').value;
-            const dateVal = document.getElementById('datePicker').value;
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+            const datePicker = getElement('datePicker');
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect || !datePicker) {
+                alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ');
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+            const dateVal = datePicker.value;
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
@@ -881,17 +1011,27 @@
         // ============================================
 
         async function loadMonthlySummary() {
-            const classVal = document.getElementById('classSelect').value;
-            const subjectVal = document.getElementById('subjectSelect').value;
-            const month = document.getElementById('monthSelect').value;
-            const year = document.getElementById('yearSelect').value;
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const monthSelect = getElement('monthSelect');
+            const yearSelect = getElement('yearSelect');
+            const container = getElement('monthlySummaryContent');
+
+            if (!classSelect || !subjectSelect || !monthSelect || !yearSelect || !container) {
+                console.error('❌ Required elements for monthly summary not found');
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const month = monthSelect.value;
+            const year = yearSelect.value;
 
             if (!classVal) {
                 alert('សូមជ្រើសរើសថ្នាក់');
                 return;
             }
 
-            const container = document.getElementById('monthlySummaryContent');
             container.innerHTML = '<div class="loading-spinner"></div><p class="text-center text-gray-500">កំពុងផ្ទុក...</p>';
 
             try {
@@ -945,7 +1085,12 @@
                 }
 
                 // Get student names
-                const students = await SupabaseConfig.fetchStudentsByClass(classVal);
+                let students = [];
+                try {
+                    students = await SupabaseConfig.fetchStudentsByClass(classVal);
+                } catch (e) {
+                    console.warn('Could not fetch students:', e);
+                }
                 const studentMap = {};
                 students.forEach(s => { studentMap[s.studentID] = s.name; });
 
@@ -1095,10 +1240,18 @@
         // ============================================
 
         function saveAutoSettings() {
-            const startTime = document.getElementById('autoStartTime').value;
-            const endTime = document.getElementById('autoEndTime').value;
+            const startTime = getElement('autoStartTime');
+            const endTime = getElement('autoEndTime');
 
-            const settings = { startTime, endTime };
+            if (!startTime || !endTime) {
+                alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ');
+                return;
+            }
+
+            const settings = { 
+                startTime: startTime.value, 
+                endTime: endTime.value 
+            };
             localStorage.setItem('autoSettings', JSON.stringify(settings));
             
             alert('✅ បានរក្សាទុកការកំណត់ Auto រួចរាល់!');
@@ -1109,8 +1262,10 @@
             if (saved) {
                 try {
                     const settings = JSON.parse(saved);
-                    if (settings.startTime) document.getElementById('autoStartTime').value = settings.startTime;
-                    if (settings.endTime) document.getElementById('autoEndTime').value = settings.endTime;
+                    const startTime = getElement('autoStartTime');
+                    const endTime = getElement('autoEndTime');
+                    if (startTime && settings.startTime) startTime.value = settings.startTime;
+                    if (endTime && settings.endTime) endTime.value = settings.endTime;
                 } catch (e) {}
             }
         }
