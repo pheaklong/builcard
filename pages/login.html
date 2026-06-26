@@ -32,34 +32,11 @@
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .login-card .logo {
-            text-align: center;
-            font-size: 52px;
-            margin-bottom: 8px;
-        }
-        .login-card h1 {
-            font-size: 28px;
-            font-weight: bold;
-            color: #4f46e5;
-            text-align: center;
-            margin-bottom: 4px;
-        }
-        .login-card .subtitle {
-            text-align: center;
-            color: #6b7280;
-            font-size: 14px;
-            margin-bottom: 28px;
-        }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 6px;
-        }
+        .login-card .logo { text-align: center; font-size: 52px; margin-bottom: 8px; }
+        .login-card h1 { font-size: 28px; font-weight: bold; color: #4f46e5; text-align: center; margin-bottom: 4px; }
+        .login-card .subtitle { text-align: center; color: #6b7280; font-size: 14px; margin-bottom: 28px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 6px; }
         .form-group input {
             width: 100%;
             padding: 11px 14px;
@@ -74,10 +51,6 @@
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
-        .form-group input:disabled {
-            background: #f3f4f6;
-            cursor: not-allowed;
-        }
         .btn-login {
             width: 100%;
             padding: 12px;
@@ -90,17 +63,9 @@
             cursor: pointer;
             transition: background 0.3s, transform 0.1s;
         }
-        .btn-login:hover {
-            background: #4338ca;
-        }
-        .btn-login:active {
-            transform: scale(0.98);
-        }
-        .btn-login:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .btn-login:hover { background: #4338ca; }
+        .btn-login:active { transform: scale(0.98); }
+        .btn-login:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
         .error-message {
             background: #fee2e2;
             color: #991b1b;
@@ -111,10 +76,7 @@
             display: none;
             border-left: 4px solid #991b1b;
         }
-        .error-message.show {
-            display: block;
-            animation: shake 0.4s ease;
-        }
+        .error-message.show { display: block; animation: shake 0.4s ease; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-8px); }
@@ -129,12 +91,8 @@
             color: #6b7280;
             border: 1px solid #e5e7eb;
         }
-        .test-credentials p {
-            margin: 4px 0;
-        }
-        .test-credentials strong {
-            color: #374151;
-        }
+        .test-credentials p { margin: 4px 0; }
+        .test-credentials strong { color: #374151; }
         .test-credentials .role-badge {
             display: inline-block;
             padding: 1px 8px;
@@ -161,20 +119,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .footer-text {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 12px;
-            color: #9ca3af;
-        }
-        @media (max-width: 480px) {
-            .login-card {
-                padding: 28px 20px;
-            }
-            .login-card h1 {
-                font-size: 22px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -194,9 +138,7 @@
                 <label for="password">ពាក្យសម្ងាត់</label>
                 <input type="password" id="password" placeholder="បញ្ចូលពាក្យសម្ងាត់" required>
             </div>
-            <button type="submit" class="btn-login" id="loginBtn">
-                🔐 ចូលប្រើប្រាស់
-            </button>
+            <button type="submit" class="btn-login" id="loginBtn">🔐 ចូលប្រើប្រាស់</button>
         </form>
 
         <div class="test-credentials">
@@ -204,22 +146,12 @@
             <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong> <span class="role-badge admin">Admin</span></p>
             <p>👨‍🏫 គ្រូ: <strong>teacher</strong> / <strong>teacher123</strong> <span class="role-badge teacher">គ្រូ</span></p>
             <p>👨‍🎓 សិស្ស: <strong>student</strong> / <strong>student123</strong> <span class="role-badge student">សិស្ស</span></p>
-            <p class="text-xs text-gray-400 mt-2">💡 ប្រសិនបើមិនទាន់មានគណនី សូមទាក់ទង Admin</p>
-        </div>
-
-        <div class="footer-text">
-            BUILCARD v2.0 © 2025
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="../js/config.js"></script>
     <script src="../js/user-management.js"></script>
     <script>
-        // ============================================
-        // LOGIN HANDLER
-        // ============================================
-
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -228,31 +160,22 @@
             const errorEl = document.getElementById('errorMessage');
             const btn = document.getElementById('loginBtn');
 
-            // Reset error
             errorEl.classList.remove('show');
             errorEl.textContent = '';
 
-            // Validate
             if (!username || !password) {
                 showError('សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់');
                 return;
             }
 
-            // Disable button
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> កំពុងចូលប្រើ...';
 
             try {
-                // Wait for user management to be ready
-                if (typeof userManagement === 'undefined') {
-                    await waitForUserManagement();
-                }
-
                 const result = await userManagement.login(username, password);
                 
                 if (result.success) {
                     errorEl.classList.remove('show');
-                    // Redirect based on role
                     const role = result.user.role;
                     const redirectMap = {
                         'admin': 'admin-dashboard.html',
@@ -262,7 +185,6 @@
                     };
                     const redirectUrl = redirectMap[role] || 'index.html';
                     
-                    // Show success briefly before redirect
                     btn.innerHTML = '✅ ចូលប្រើដោយជោគជ័យ!';
                     btn.style.background = '#22c55e';
                     
@@ -274,7 +196,6 @@
                     btn.disabled = false;
                     btn.innerHTML = '🔐 ចូលប្រើប្រាស់';
                     btn.style.background = '';
-                    // Focus on username field
                     document.getElementById('username').focus();
                     document.getElementById('username').select();
                 }
@@ -293,28 +214,6 @@
             errorEl.classList.add('show');
         }
 
-        function waitForUserManagement() {
-            return new Promise((resolve) => {
-                let attempts = 0;
-                const maxAttempts = 20;
-                const checkInterval = setInterval(() => {
-                    attempts++;
-                    if (typeof userManagement !== 'undefined') {
-                        clearInterval(checkInterval);
-                        resolve();
-                    } else if (attempts >= maxAttempts) {
-                        clearInterval(checkInterval);
-                        console.error('User management not loaded after max attempts');
-                        resolve();
-                    }
-                }, 200);
-            });
-        }
-
-        // ============================================
-        // ENTER KEY SUPPORT
-        // ============================================
-
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 const form = document.getElementById('loginForm');
@@ -325,12 +224,7 @@
             }
         });
 
-        // ============================================
-        // AUTO-FOCUS ON LOAD
-        // ============================================
-
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if already logged in
             if (typeof userManagement !== 'undefined' && userManagement.isLoggedIn()) {
                 const user = userManagement.getCurrentUser();
                 const redirectMap = {
@@ -342,17 +236,10 @@
                 window.location.href = redirectMap[user.role] || 'index.html';
                 return;
             }
-            
-            // Focus on username field
             document.getElementById('username').focus();
         });
 
-        // ============================================
-        // MAKE FUNCTIONS GLOBAL
-        // ============================================
-
         window.handleLogin = handleLogin;
-        window.waitForUserManagement = waitForUserManagement;
     </script>
 </body>
 </html>
