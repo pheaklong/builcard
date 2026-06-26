@@ -25,7 +25,8 @@ class UserManagement {
                 manage_grades: true,
                 manage_attendance: true,
                 view_student_results: true,
-                create_notification: true
+                create_notification: true,
+                assign_teacher_permissions: true
             },
             editor: {
                 create_user: false,
@@ -57,7 +58,8 @@ class UserManagement {
                 create_notification: false,
                 view_own_classes: true,
                 take_attendance: true,
-                enter_grades: true
+                enter_grades: true,
+                assign_teacher_permissions: false
             },
             student: {
                 create_user: false,
@@ -74,7 +76,8 @@ class UserManagement {
                 create_notification: false,
                 view_own_results: true,
                 request_certificate: true,
-                receive_notifications: true
+                receive_notifications: true,
+                assign_teacher_permissions: false
             }
         };
         this.isUsingSupabase = false;
@@ -244,7 +247,12 @@ class UserManagement {
                 if (supabaseUser && supabaseUser.password === hashedPassword && supabaseUser.status === 'active') {
                     user = supabaseUser;
                     // Add to local cache
-                    this.users.push(user);
+                    const existingIndex = this.users.findIndex(u => u.id === user.id);
+                    if (existingIndex === -1) {
+                        this.users.push(user);
+                    } else {
+                        this.users[existingIndex] = user;
+                    }
                     this.saveUsersToLocal();
                 }
             } catch (error) {
@@ -306,8 +314,11 @@ class UserManagement {
             return { success: false, message: 'អ៊ីមែលមានរួចហើយ' };
         }
 
+        // Generate unique ID
+        const id = crypto.randomUUID ? crypto.randomUUID() : `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
         const newUser = {
-            id: `user_${Date.now()}`,
+            id: id,
             username: userData.username,
             password: this.hashPassword(userData.password),
             email: userData.email,
@@ -515,14 +526,20 @@ class UserManagement {
             return { success: false, message: 'អ្នកមិនមានសិទ្ធិបង្កើតការជូនដំណឹងទេ' };
         }
 
+        // Convert userIds to string format
+        let userIdsStr = 'all';
+        if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+            userIdsStr = userIds.join(',');
+        }
+
         const notification = {
             id: `notif_${Date.now()}`,
             title: title,
             message: message,
             type: type,
             createdAt: new Date().toISOString(),
-            readBy: [],
-            userIds: userIds || 'all'
+            readBy: '',
+            userIds: userIdsStr
         };
 
         // Save to localStorage
@@ -548,7 +565,11 @@ class UserManagement {
         if (!userId) return [];
 
         return notifications.filter(n => {
-            return n.userIds === 'all' || (Array.isArray(n.userIds) && n.userIds.includes(userId));
+            if (n.userIds === 'all') return true;
+            if (!n.userIds) return false;
+            // Check if userId is in the comma-separated list
+            const userIdsList = n.userIds.split(',');
+            return userIdsList.includes(userId);
         });
     }
 
@@ -560,12 +581,17 @@ class UserManagement {
 
         const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
         const notification = notifications.find(n => n.id === notificationId);
-        if (notification && !notification.readBy.includes(userId)) {
-            notification.readBy.push(userId);
-            localStorage.setItem('notifications', JSON.stringify(notifications));
+        if (notification) {
+            // Update readBy as comma-separated string
+            const readList = notification.readBy ? notification.readBy.split(',') : [];
+            if (!readList.includes(userId)) {
+                readList.push(userId);
+                notification.readBy = readList.join(',');
+                localStorage.setItem('notifications', JSON.stringify(notifications));
 
-            if (this.isUsingSupabase) {
-                await SupabaseConfig.markNotificationRead(notificationId, userId);
+                if (this.isUsingSupabase) {
+                    await SupabaseConfig.markNotificationRead(notificationId, userId);
+                }
             }
         }
     }
@@ -584,29 +610,28 @@ class UserManagement {
         }
 
         const users = this.getUsers();
-        const roles = ['admin', 'editor', 'teacher', 'student'];
 
         container.innerHTML = `
             <div class="user-management">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold text-gray-800">👥 គ្រប់គ្រងអ្នកប្រើប្រាស់</h3>
                     ${this.hasPermission('create_user') ? `
-                        <button onclick="userManagement.showCreateUserForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                        <button onclick="window.userManagement.showCreateUserForm()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                             + បង្កើតអ្នកប្រើប្រាស់
                         </button>
                     ` : ''}
                 </div>
 
                 <div class="mb-4 flex flex-wrap gap-2">
-                    <input type="text" id="userSearch" placeholder="ស្វែងរក..." class="border rounded-lg px-3 py-1 text-sm flex-1 min-w-[150px]" oninput="userManagement.filterUsers()">
-                    <select id="roleFilter" class="border rounded-lg px-3 py-1 text-sm" onchange="userManagement.filterUsers()">
+                    <input type="text" id="userSearch" placeholder="ស្វែងរក..." class="border rounded-lg px-3 py-1 text-sm flex-1 min-w-[150px]" oninput="window.userManagement.filterUsers()">
+                    <select id="roleFilter" class="border rounded-lg px-3 py-1 text-sm" onchange="window.userManagement.filterUsers()">
                         <option value="">ទាំងអស់</option>
                         <option value="admin">Admin</option>
                         <option value="editor">Editor</option>
                         <option value="teacher">គ្រូ</option>
                         <option value="student">សិស្ស</option>
                     </select>
-                    <select id="statusFilter" class="border rounded-lg px-3 py-1 text-sm" onchange="userManagement.filterUsers()">
+                    <select id="statusFilter" class="border rounded-lg px-3 py-1 text-sm" onchange="window.userManagement.filterUsers()">
                         <option value="">ទាំងអស់</option>
                         <option value="active">សកម្ម</option>
                         <option value="inactive">អសកម្ម</option>
@@ -657,9 +682,9 @@ class UserManagement {
                 <td class="px-3 py-2">${roleLabels[user.role] || user.role}</td>
                 <td class="px-3 py-2">${statusLabels[user.status] || user.status}</td>
                 <td class="px-3 py-2 text-center">
-                    ${canEdit ? `<button onclick="userManagement.editUser('${user.id}')" class="text-blue-600 hover:text-blue-800 mr-2">✏️</button>` : ''}
-                    ${canDelete ? `<button onclick="userManagement.deleteUser('${user.id}')" class="text-red-600 hover:text-red-800">🗑️</button>` : ''}
-                    ${canManageRoles && user.role === 'teacher' ? `<button onclick="userManagement.manageTeacherPermissions('${user.id}')" class="text-green-600 hover:text-green-800 ml-2">🔑</button>` : ''}
+                    ${canEdit ? `<button onclick="window.userManagement.editUser('${user.id}')" class="text-blue-600 hover:text-blue-800 mr-2">✏️</button>` : ''}
+                    ${canDelete ? `<button onclick="window.userManagement.deleteUser('${user.id}')" class="text-red-600 hover:text-red-800">🗑️</button>` : ''}
+                    ${canManageRoles && user.role === 'teacher' ? `<button onclick="window.userManagement.manageTeacherPermissions('${user.id}')" class="text-green-600 hover:text-green-800 ml-2">🔑</button>` : ''}
                 </td>
             </tr>
         `;
@@ -693,7 +718,7 @@ class UserManagement {
         modal.innerHTML = `
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <h3 class="text-xl font-bold text-gray-800 mb-4">➕ បង្កើតអ្នកប្រើប្រាស់ថ្មី</h3>
-                <form id="createUserForm" onsubmit="userManagement.handleCreateUser(event)">
+                <form id="createUserForm" onsubmit="window.userManagement.handleCreateUser(event)">
                     <div class="mb-3">
                         <label class="block text-sm font-medium text-gray-700">ឈ្មោះអ្នកប្រើប្រាស់ *</label>
                         <input type="text" id="newUsername" class="w-full border rounded-lg px-3 py-2" required>
@@ -716,14 +741,14 @@ class UserManagement {
                             <option value="student">សិស្ស</option>
                             <option value="teacher">គ្រូ</option>
                             ${this.hasPermission('manage_roles') ? `<option value="editor">Editor</option>` : ''}
-                            ${this.currentUser.role === this.roles.ADMIN ? `<option value="admin">Admin</option>` : ''}
+                            ${this.currentUser && this.currentUser.role === this.roles.ADMIN ? `<option value="admin">Admin</option>` : ''}
                         </select>
                     </div>
-                    <div class="mb-3" id="studentFields">
+                    <div class="mb-3" id="studentFields" style="display:${document.getElementById('newRole')?.value === 'student' ? 'block' : 'none'}">
                         <label class="block text-sm font-medium text-gray-700">ថ្នាក់</label>
                         <input type="text" id="newClass" class="w-full border rounded-lg px-3 py-2" placeholder="ឧ. 12A">
                     </div>
-                    <div class="mb-3" id="studentFields2">
+                    <div class="mb-3" id="studentFields2" style="display:${document.getElementById('newRole')?.value === 'student' ? 'block' : 'none'}">
                         <label class="block text-sm font-medium text-gray-700">លេខសម្គាល់សិស្ស</label>
                         <input type="text" id="newStudentId" class="w-full border rounded-lg px-3 py-2" placeholder="ឧ. STU001">
                     </div>
@@ -744,6 +769,7 @@ class UserManagement {
         `;
         document.body.appendChild(modal);
 
+        // Show/hide student fields based on role
         document.getElementById('newRole').addEventListener('change', function() {
             const show = this.value === 'student';
             document.getElementById('studentFields').style.display = show ? 'block' : 'none';
@@ -787,7 +813,7 @@ class UserManagement {
         modal.innerHTML = `
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <h3 class="text-xl font-bold text-gray-800 mb-4">✏️ កែប្រែអ្នកប្រើប្រាស់</h3>
-                <form id="editUserForm" onsubmit="userManagement.handleEditUser(event, '${userId}')">
+                <form id="editUserForm" onsubmit="window.userManagement.handleEditUser(event, '${userId}')">
                     <div class="mb-3">
                         <label class="block text-sm font-medium text-gray-700">ឈ្មោះពេញ</label>
                         <input type="text" id="editFullName" class="w-full border rounded-lg px-3 py-2" value="${user.fullName}" required>
@@ -802,7 +828,7 @@ class UserManagement {
                             <select id="editRole" class="w-full border rounded-lg px-3 py-2">
                                 <option value="student" ${user.role === 'student' ? 'selected' : ''}>សិស្ស</option>
                                 <option value="teacher" ${user.role === 'teacher' ? 'selected' : ''}>គ្រូ</option>
-                                ${this.currentUser.role === this.roles.ADMIN ? `
+                                ${this.currentUser && this.currentUser.role === this.roles.ADMIN ? `
                                     <option value="editor" ${user.role === 'editor' ? 'selected' : ''}>Editor</option>
                                     <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
                                 ` : ''}
@@ -890,7 +916,7 @@ class UserManagement {
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
                 <h3 class="text-xl font-bold text-gray-800 mb-4">🔑 កំណត់សិទ្ធិគ្រូ</h3>
                 <p class="text-sm text-gray-500 mb-4">គ្រូ៖ <strong>${teacher.fullName}</strong></p>
-                <form id="permissionForm" onsubmit="userManagement.handlePermissionUpdate(event, '${teacherId}')">
+                <form id="permissionForm" onsubmit="window.userManagement.handlePermissionUpdate(event, '${teacherId}')">
                     <div class="space-y-2 mb-4">
                         <label class="flex items-center gap-2">
                             <input type="checkbox" id="perm_attendance" ${permissions.take_attendance ? 'checked' : ''}>
@@ -962,11 +988,11 @@ class UserManagement {
             nav.innerHTML = `
                 <span class="text-sm text-gray-600">${roleLabels[this.currentUser.role] || this.currentUser.role}</span>
                 <span class="text-sm text-gray-600">${this.currentUser.fullName}</span>
-                <button onclick="userManagement.logout()" class="text-red-600 hover:text-red-800 text-sm">ចាកចេញ</button>
+                <button onclick="window.userManagement.logout()" class="text-red-600 hover:text-red-800 text-sm">ចាកចេញ</button>
             `;
         } else {
             nav.innerHTML = `
-                <button onclick="userManagement.showLogin()" class="text-indigo-600 hover:text-indigo-800 text-sm">ចូលប្រើប្រាស់</button>
+                <button onclick="window.userManagement.showLogin()" class="text-indigo-600 hover:text-indigo-800 text-sm">ចូលប្រើប្រាស់</button>
             `;
         }
     }
