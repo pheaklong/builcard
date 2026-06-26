@@ -5,8 +5,9 @@
 const SupabaseConfig = {
     // Supabase credentials - សូមប្តូរតាមគម្រោងរបស់អ្នក
     supabaseUrl: 'https://xmowdtwlidnwnxrkrysj.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAAeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabase: null,
+    isInitialized: false,
 
     // Tables
     tables: {
@@ -25,13 +26,19 @@ const SupabaseConfig = {
     // ============================================
 
     init() {
+        if (this.isInitialized) return true;
+        
         try {
-            if (typeof supabase !== 'undefined') {
+            // Check if supabase is available globally
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
                 this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey);
-                console.log('✅ Supabase initialized');
+                this.isInitialized = true;
+                console.log('✅ Supabase initialized successfully');
                 return true;
             } else {
-                console.error('❌ Supabase library not loaded');
+                console.warn('⚠️ Supabase library not loaded yet, will retry...');
+                // Try again after a delay
+                setTimeout(() => this.init(), 500);
                 return false;
             }
         } catch (error) {
@@ -46,10 +53,15 @@ const SupabaseConfig = {
 
     async checkConnection() {
         try {
-            if (!this.supabase) {
+            // Try to initialize if not done yet
+            if (!this.isInitialized) {
                 this.init();
             }
-            if (!this.supabase) return false;
+            
+            if (!this.supabase) {
+                console.warn('⚠️ Supabase not initialized');
+                return false;
+            }
             
             const { data, error } = await this.supabase
                 .from(this.tables.users)
@@ -60,6 +72,7 @@ const SupabaseConfig = {
                 console.error('Connection error:', error);
                 return false;
             }
+            console.log('✅ Supabase connection successful');
             return true;
         } catch (error) {
             console.error('Connection error:', error);
@@ -76,7 +89,9 @@ const SupabaseConfig = {
      */
     async saveUser(user) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             // Check if user exists
@@ -149,7 +164,9 @@ const SupabaseConfig = {
      */
     async getAllUsers() {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -192,7 +209,9 @@ const SupabaseConfig = {
      */
     async getUserById(userId) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -234,7 +253,9 @@ const SupabaseConfig = {
      */
     async getUserByUsername(username) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -278,7 +299,9 @@ const SupabaseConfig = {
      */
     async deleteUser(userId) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -299,7 +322,9 @@ const SupabaseConfig = {
      */
     async updateUserStatus(userId, status) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -320,7 +345,9 @@ const SupabaseConfig = {
      */
     async updateUserPermissions(userId, permissions) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -344,7 +371,9 @@ const SupabaseConfig = {
      */
     async updateLastLogin(userId) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -365,7 +394,9 @@ const SupabaseConfig = {
      */
     async getUsersByRole(role) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -392,7 +423,9 @@ const SupabaseConfig = {
      */
     async saveNotification(notification) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -420,7 +453,9 @@ const SupabaseConfig = {
      */
     async getNotifications(userId) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -450,7 +485,9 @@ const SupabaseConfig = {
      */
     async markNotificationRead(notificationId, userId) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             // Get current notification
@@ -491,7 +528,9 @@ const SupabaseConfig = {
      */
     async saveScheduleConfig(schedule) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -520,7 +559,9 @@ const SupabaseConfig = {
      */
     async getScheduleConfig(classVal, subjectVal, timeVal, semesterVal) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -546,7 +587,9 @@ const SupabaseConfig = {
 
     async fetchAttendance(classVal, semester, date) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             let query = this.supabase
@@ -572,7 +615,9 @@ const SupabaseConfig = {
 
     async saveAttendanceToSupabase(records) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             if (records.length === 0) return true;
@@ -619,7 +664,9 @@ const SupabaseConfig = {
 
     async fetchStudentsByClass(classVal) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             // First try to get from students table
@@ -679,7 +726,9 @@ const SupabaseConfig = {
 
     async fetchAllClasses() {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             // Get distinct classes from students table
@@ -719,7 +768,9 @@ const SupabaseConfig = {
 
     async requestCertificate(studentId, type, details) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -742,7 +793,9 @@ const SupabaseConfig = {
 
     async getCertificates(studentId) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { data, error } = await this.supabase
@@ -761,7 +814,9 @@ const SupabaseConfig = {
 
     async updateCertificateStatus(certificateId, status) {
         try {
-            if (!this.supabase) this.init();
+            if (!this.isInitialized) {
+                this.init();
+            }
             if (!this.supabase) throw new Error('Supabase not initialized');
 
             const { error } = await this.supabase
@@ -786,7 +841,10 @@ const SupabaseConfig = {
 // AUTO-INITIALIZE
 // ============================================
 
-// Initialize Supabase when the script loads
+// Try to initialize immediately
+SupabaseConfig.init();
+
+// Also try again when DOM is ready
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
         SupabaseConfig.init();
