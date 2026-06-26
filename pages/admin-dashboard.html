@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - BUILCARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
+        
+        /* Sidebar styles */
         .sidebar {
             background: #1a1a2e;
             min-height: 100vh;
@@ -19,13 +23,14 @@
             color: white;
             z-index: 100;
             overflow-y: auto;
+            transition: transform 0.3s ease;
         }
         .sidebar .brand {
             text-align: center;
-            padding: 16px 0;
-            font-size: 20px;
+            padding: 16px 0 20px;
+            font-size: 22px;
             font-weight: bold;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             margin-bottom: 20px;
         }
         .sidebar .brand span {
@@ -40,75 +45,215 @@
             transition: all 0.3s;
             cursor: pointer;
             border-left: 3px solid transparent;
+            font-size: 14px;
         }
         .sidebar .nav-item:hover {
             background: rgba(255,255,255,0.05);
             color: white;
         }
         .sidebar .nav-item.active {
-            background: rgba(79, 70, 229, 0.2);
+            background: rgba(79, 70, 229, 0.15);
             color: white;
             border-left-color: #4f46e5;
         }
         .sidebar .nav-item .icon {
             margin-right: 12px;
             font-size: 18px;
+            width: 24px;
+            text-align: center;
         }
+        .sidebar .nav-item.logout-btn {
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 16px;
+            color: #fc8181;
+        }
+        .sidebar .nav-item.logout-btn:hover {
+            color: #f56565;
+            background: rgba(252, 129, 129, 0.08);
+        }
+
+        /* Main content */
         .main-content {
             margin-left: 250px;
             padding: 24px;
             min-height: 100vh;
             background: #f7fafc;
         }
+
+        /* Stats cards */
         .stats-card {
             background: white;
             border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 20px 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
         }
         .stats-card .number {
-            font-size: 28px;
+            font-size: 30px;
             font-weight: bold;
+            line-height: 1.2;
         }
-        .logout-btn {
-            color: #fc8181;
+        .stats-card .label {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 4px;
         }
-        .logout-btn:hover {
-            color: #f56565;
-            background: rgba(252, 129, 129, 0.1);
+        .stats-card .icon-bg {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
         }
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                min-height: auto;
-                position: relative;
-                padding: 10px;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .sidebar .nav-item {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-        }
+
+        /* Tabs */
         .tab-content {
             display: none;
+            animation: fadeIn 0.3s ease;
         }
         .tab-content.active {
             display: block;
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Notification item */
         .notification-item {
-            transition: all 0.2s;
+            transition: background 0.2s;
+            border: 1px solid #f0f0f0;
         }
         .notification-item:hover {
-            background: #f3f4f6;
+            background: #f8fafc;
+        }
+        .notification-item.unread {
+            border-left: 4px solid #4f46e5;
+            background: #f0f4ff;
+        }
+
+        /* Mobile menu toggle */
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #4a5568;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .menu-toggle:hover {
+            color: #1a202c;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 16px;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 99;
+            }
+            .sidebar-overlay.active {
+                display: block;
+            }
+            .stats-card .number {
+                font-size: 24px;
+            }
+        }
+
+        /* Scrollbar styles */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+        }
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Header */
+        .page-header {
+            background: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-header h1 {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1a202c;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-info .badge {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-admin { background: #fee2e2; color: #991b1b; }
+        .badge-editor { background: #dbeafe; color: #1e40af; }
+        .badge-teacher { background: #dcfce7; color: #166534; }
+        .badge-student { background: #fef3c7; color: #92400e; }
+
+        /* Quick action buttons */
+        .quick-action {
+            transition: all 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+        .quick-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
         }
     </style>
 </head>
 <body>
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="brand">📚 BUIL<span>CARD</span></div>
         <nav>
             <a class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
@@ -132,54 +277,69 @@
     <!-- Main Content -->
     <div class="main-content">
         <!-- Header -->
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800" id="pageTitle">📊 ផ្ទាំងគ្រប់គ្រង</h1>
+        <div class="page-header">
             <div class="flex items-center gap-3">
+                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+                <h1 id="pageTitle">📊 ផ្ទាំងគ្រប់គ្រង</h1>
+            </div>
+            <div class="user-info">
                 <span id="userDisplay" class="text-sm text-gray-600"></span>
-                <span id="roleBadge" class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">Admin</span>
+                <span id="roleBadge" class="badge badge-admin">Admin</span>
             </div>
         </div>
 
         <!-- Tab: Dashboard -->
         <div id="tab-dashboard" class="tab-content active">
             <!-- Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="stats-card">
-                    <p class="text-gray-500 text-sm">អ្នកប្រើប្រាស់សរុប</p>
-                    <p class="number text-indigo-600" id="totalUsers">0</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+                <div class="stats-card flex items-center justify-between">
+                    <div>
+                        <p class="label">អ្នកប្រើប្រាស់សរុប</p>
+                        <p class="number text-indigo-600" id="totalUsers">0</p>
+                    </div>
+                    <div class="icon-bg bg-indigo-50 text-indigo-600">👥</div>
                 </div>
-                <div class="stats-card">
-                    <p class="text-gray-500 text-sm">គ្រូ</p>
-                    <p class="number text-green-600" id="totalTeachers">0</p>
+                <div class="stats-card flex items-center justify-between">
+                    <div>
+                        <p class="label">គ្រូ</p>
+                        <p class="number text-green-600" id="totalTeachers">0</p>
+                    </div>
+                    <div class="icon-bg bg-green-50 text-green-600">👨‍🏫</div>
                 </div>
-                <div class="stats-card">
-                    <p class="text-gray-500 text-sm">សិស្ស</p>
-                    <p class="number text-blue-600" id="totalStudents">0</p>
+                <div class="stats-card flex items-center justify-between">
+                    <div>
+                        <p class="label">សិស្ស</p>
+                        <p class="number text-blue-600" id="totalStudents">0</p>
+                    </div>
+                    <div class="icon-bg bg-blue-50 text-blue-600">👨‍🎓</div>
                 </div>
-                <div class="stats-card">
-                    <p class="text-gray-500 text-sm">ការជូនដំណឹង</p>
-                    <p class="number text-yellow-600" id="totalNotifications">0</p>
+                <div class="stats-card flex items-center justify-between">
+                    <div>
+                        <p class="label">ការជូនដំណឹង</p>
+                        <p class="number text-yellow-600" id="totalNotifications">0</p>
+                    </div>
+                    <div class="icon-bg bg-yellow-50 text-yellow-600">🔔</div>
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class="bg-white rounded-xl shadow p-6">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-4">⚡ សកម្មភាពរហ័ស</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <button onclick="switchTab('users')" class="p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition text-center">
-                        <div class="text-2xl">➕</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button onclick="switchTab('users')" class="quick-action p-4 bg-indigo-50 rounded-xl hover:bg-indigo-100 transition text-center">
+                        <div class="text-3xl mb-1">➕</div>
                         <p class="text-sm font-medium text-gray-700">បង្កើតអ្នកប្រើប្រាស់</p>
                     </button>
-                    <button onclick="switchTab('notifications')" class="p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition text-center">
-                        <div class="text-2xl">🔔</div>
+                    <button onclick="switchTab('notifications')" class="quick-action p-4 bg-yellow-50 rounded-xl hover:bg-yellow-100 transition text-center">
+                        <div class="text-3xl mb-1">🔔</div>
                         <p class="text-sm font-medium text-gray-700">ផ្ញើការជូនដំណឹង</p>
                     </button>
-                    <a href="attendance.html" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition text-center">
-                        <div class="text-2xl">📋</div>
+                    <a href="attendance.html" class="quick-action p-4 bg-green-50 rounded-xl hover:bg-green-100 transition text-center">
+                        <div class="text-3xl mb-1">📋</div>
                         <p class="text-sm font-medium text-gray-700">ស្រង់វត្តមាន</p>
                     </a>
-                    <a href="../index.html" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center">
-                        <div class="text-2xl">🏠</div>
+                    <a href="../index.html" class="quick-action p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition text-center">
+                        <div class="text-3xl mb-1">🏠</div>
                         <p class="text-sm font-medium text-gray-700">ទំព័រដើម</p>
                     </a>
                 </div>
@@ -193,19 +353,19 @@
 
         <!-- Tab: Notifications -->
         <div id="tab-notifications" class="tab-content">
-            <div class="bg-white rounded-xl shadow p-6">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-4">🔔 ការជូនដំណឹង</h3>
                 
                 <!-- Create Notification -->
-                <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 class="font-medium text-gray-700 mb-2">📝 បង្កើតការជូនដំណឹងថ្មី</h4>
+                <div class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <h4 class="font-medium text-gray-700 mb-3">📝 បង្កើតការជូនដំណឹងថ្មី</h4>
                     <form id="notificationForm" onsubmit="handleCreateNotification(event)">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                                <input type="text" id="notifTitle" placeholder="ចំណងជើង" class="w-full border rounded-lg px-3 py-2 text-sm" required>
+                                <input type="text" id="notifTitle" placeholder="ចំណងជើង" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" required>
                             </div>
                             <div>
-                                <select id="notifType" class="w-full border rounded-lg px-3 py-2 text-sm">
+                                <select id="notifType" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
                                     <option value="info">📘 ព័ត៌មាន</option>
                                     <option value="success">✅ ជោគជ័យ</option>
                                     <option value="warning">⚠️ ការព្រមាន</option>
@@ -213,17 +373,17 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <textarea id="notifMessage" placeholder="សារជូនដំណឹង..." class="w-full border rounded-lg px-3 py-2 text-sm" rows="2" required></textarea>
+                        <div class="mt-3">
+                            <textarea id="notifMessage" placeholder="សារជូនដំណឹង..." class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" rows="2" required></textarea>
                         </div>
-                        <div class="mt-2 flex flex-wrap gap-3">
-                            <select id="notifAudience" class="border rounded-lg px-3 py-2 text-sm">
-                                <option value="all">ទាំងអស់គ្នា</option>
-                                <option value="teachers">គ្រូទាំងអស់</option>
-                                <option value="students">សិស្សទាំងអស់</option>
-                                <option value="admins">Admin ទាំងអស់</option>
+                        <div class="mt-3 flex flex-wrap gap-3">
+                            <select id="notifAudience" class="border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+                                <option value="all">👥 ទាំងអស់គ្នា</option>
+                                <option value="teachers">👨‍🏫 គ្រូទាំងអស់</option>
+                                <option value="students">👨‍🎓 សិស្សទាំងអស់</option>
+                                <option value="admins">👑 Admin ទាំងអស់</option>
                             </select>
-                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm">
+                            <button type="submit" class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
                                 📤 ផ្ញើការជូនដំណឹង
                             </button>
                         </div>
@@ -232,42 +392,45 @@
 
                 <!-- Notification List -->
                 <div id="notificationList">
-                    <!-- Will be rendered by JS -->
+                    <div class="text-center py-8 text-gray-500">
+                        <p>📭 កំពុងផ្ទុកការជូនដំណឹង...</p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Tab: Settings -->
         <div id="tab-settings" class="tab-content">
-            <div class="bg-white rounded-xl shadow p-6">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
                 <h3 class="font-bold text-gray-800 mb-4">⚙️ ការកំណត់ប្រព័ន្ធ</h3>
-                <div class="space-y-4">
+                <div class="space-y-4 max-w-lg">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">ឈ្មោះប្រព័ន្ធ</label>
-                        <input type="text" value="BUILCARD" class="w-full max-w-md border rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ឈ្មោះប្រព័ន្ធ</label>
+                        <input type="text" value="BUILCARD" class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">ឆ្នាំសិក្សា</label>
-                        <select class="w-full max-w-md border rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ឆ្នាំសិក្សា</label>
+                        <select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
                             <option>2024-2025</option>
                             <option selected>2025-2026</option>
+                            <option>2026-2027</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">ភាសា</label>
-                        <select class="w-full max-w-md border rounded-lg px-3 py-2 text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ភាសា</label>
+                        <select class="w-full border rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
                             <option>ភាសាខ្មែរ</option>
                             <option>English</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">ការតភ្ជាប់ Supabase</label>
-                        <div class="flex items-center gap-2">
-                            <span id="supabaseStatus" class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">កំពុងពិនិត្យ...</span>
-                            <button onclick="checkSupabaseConnection()" class="text-indigo-600 hover:text-indigo-800 text-sm">ពិនិត្យម្តងទៀត</button>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ការតភ្ជាប់ Supabase</label>
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <span id="supabaseStatus" class="px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">កំពុងពិនិត្យ...</span>
+                            <button onclick="checkSupabaseConnection()" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">ពិនិត្យម្តងទៀត</button>
                         </div>
                     </div>
-                    <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    <button class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
                         💾 រក្សាទុកការកំណត់
                     </button>
                 </div>
@@ -275,6 +438,7 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="../js/config.js"></script>
     <script src="../js/user-management.js"></script>
     <script>
@@ -283,19 +447,22 @@
         // ============================================
 
         document.addEventListener('DOMContentLoaded', async function() {
-            // Wait for user management to initialize
+            console.log('Admin dashboard loading...');
+
+            // Wait for user management to be ready
             if (typeof userManagement === 'undefined') {
-                console.error('User management not loaded');
-                return;
+                await waitForUserManagement();
             }
 
-            // Check if user is logged in and is admin
+            // Check if user is logged in
             if (!userManagement.isLoggedIn()) {
                 window.location.href = 'login.html';
                 return;
             }
 
             const user = userManagement.getCurrentUser();
+            
+            // Check if user is admin
             if (user.role !== 'admin') {
                 alert('អ្នកមិនមានសិទ្ធិចូលមើលទំព័រនេះទេ');
                 window.location.href = 'login.html';
@@ -305,21 +472,58 @@
             // Display user info
             document.getElementById('userDisplay').textContent = `👤 ${user.fullName}`;
             document.getElementById('roleBadge').textContent = 'Admin';
+            document.getElementById('roleBadge').className = 'badge badge-admin';
 
-            // Load stats
+            // Load data
             await updateStats();
-
-            // Load user management
             userManagement.renderUserManagement('userManagementContainer');
-
-            // Load notifications
             renderNotifications();
-
-            // Check Supabase connection
             await checkSupabaseConnection();
 
-            // Update UI
-            userManagement.updateUI();
+            console.log('Admin dashboard loaded successfully');
+        });
+
+        // ============================================
+        // WAIT FOR USER MANAGEMENT
+        // ============================================
+
+        function waitForUserManagement() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 20;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    if (typeof userManagement !== 'undefined') {
+                        clearInterval(checkInterval);
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.error('User management not loaded after max attempts');
+                        resolve();
+                    }
+                }, 200);
+            });
+        }
+
+        // ============================================
+        // SIDEBAR TOGGLE (Mobile)
+        // ============================================
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // Close sidebar on window resize to desktop
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            }
         });
 
         // ============================================
@@ -361,6 +565,11 @@
             } else if (tabId === 'notifications') {
                 renderNotifications();
             }
+
+            // Close sidebar on mobile
+            if (window.innerWidth <= 768) {
+                toggleSidebar();
+            }
         }
 
         // ============================================
@@ -375,18 +584,18 @@
                 if (typeof SupabaseConfig !== 'undefined') {
                     const connected = await SupabaseConfig.checkConnection();
                     if (connected) {
-                        statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs';
+                        statusEl.className = 'px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium';
                         statusEl.textContent = '✅ តភ្ជាប់ដោយជោគជ័យ';
                     } else {
-                        statusEl.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs';
+                        statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
                         statusEl.textContent = '❌ មិនអាចតភ្ជាប់';
                     }
                 } else {
-                    statusEl.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs';
+                    statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
                     statusEl.textContent = '❌ Config.js មិនត្រូវបានផ្ទុក';
                 }
             } catch (error) {
-                statusEl.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs';
+                statusEl.className = 'px-3 py-1.5 bg-red-100 text-red-700 rounded-full text-xs font-medium';
                 statusEl.textContent = '❌ កំហុសក្នុងការតភ្ជាប់';
                 console.error('Connection check error:', error);
             }
@@ -425,16 +634,18 @@
 
             if (notifications.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <p>📭 មិនមានការជូនដំណឹងទេ</p>
+                    <div class="text-center py-10 text-gray-500">
+                        <div class="text-5xl mb-3">📭</div>
+                        <p>មិនមានការជូនដំណឹងទេ</p>
+                        <p class="text-sm">បង្កើតការជូនដំណឹងថ្មីខាងលើ</p>
                     </div>
                 `;
                 return;
             }
 
             container.innerHTML = `
-                <div class="space-y-2 max-h-96 overflow-y-auto">
-                    ${notifications.map(n => {
+                <div class="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    ${notifications.map((n, index) => {
                         // Format user_ids for display
                         let audienceDisplay = 'ទាំងអស់គ្នា';
                         if (n.userIds && n.userIds !== 'all') {
@@ -445,19 +656,32 @@
                             });
                             audienceDisplay = userNames.join(', ');
                         }
+                        
+                        // Type colors
+                        const typeColors = {
+                            info: 'border-blue-400 bg-blue-50',
+                            success: 'border-green-400 bg-green-50',
+                            warning: 'border-yellow-400 bg-yellow-50',
+                            error: 'border-red-400 bg-red-50'
+                        };
+                        const typeClass = typeColors[n.type] || typeColors.info;
+                        
                         return `
-                            <div class="notification-item p-3 bg-gray-50 border rounded-lg">
+                            <div class="notification-item p-3 rounded-lg ${typeClass} border-l-4">
                                 <div class="flex justify-between items-start">
                                     <h4 class="font-medium text-gray-800">${n.title}</h4>
-                                    <span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span>
+                                    <span class="text-xs text-gray-400 whitespace-nowrap ml-4">${new Date(n.createdAt).toLocaleString()}</span>
                                 </div>
                                 <p class="text-sm text-gray-600 mt-1">${n.message}</p>
-                                <span class="text-xs text-gray-400 mt-1 block">
-                                    អ្នកទទួល៖ ${audienceDisplay}
+                                <span class="text-xs text-gray-400 mt-1.5 block">
+                                    👥 អ្នកទទួល៖ ${audienceDisplay}
                                 </span>
                             </div>
                         `;
                     }).join('')}
+                </div>
+                <div class="mt-3 text-xs text-gray-400 text-right">
+                    សរុប ${notifications.length} ការជូនដំណឹង
                 </div>
             `;
         }
@@ -517,11 +741,13 @@
         // ============================================
 
         window.switchTab = switchTab;
+        window.toggleSidebar = toggleSidebar;
         window.handleLogout = handleLogout;
         window.handleCreateNotification = handleCreateNotification;
         window.renderNotifications = renderNotifications;
         window.updateStats = updateStats;
         window.checkSupabaseConnection = checkSupabaseConnection;
+        window.waitForUserManagement = waitForUserManagement;
     </script>
 </body>
 </html>
