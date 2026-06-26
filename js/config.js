@@ -1,299 +1,780 @@
-// ============ SUPABASE CONFIGURATION ============
-(function() {
-    'use strict';
-    
-    // ពិនិត្យមើលថា window.supabase មានឬនៅ
-    if (typeof window.supabase === 'undefined') {
-        console.error('❌ window.supabase is undefined. Make sure Supabase library is loaded first!');
-        if (typeof window.SupabaseConfig === 'undefined') {
-            window.SupabaseConfig = {
-                error: 'Supabase library not loaded',
-                isLoaded: false
-            };
-        }
-        return;
-    }
-    
-    // ====== ប្រើព័ត៌មានថ្មី ======
-    const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
+// ============================================
+// SUPABASE CONFIGURATION
+// ============================================
 
-    console.log('🔧 Creating Supabase client...');
-    console.log('📡 URL:', SUPABASE_URL);
-    console.log('🔑 ANON KEY (first 20 chars):', SUPABASE_ANON_KEY.substring(0, 20) + '...');
-    console.log('📅 IAT:', new Date(1780432600 * 1000).toLocaleString());
-    console.log('📅 EXP:', new Date(2096008600 * 1000).toLocaleString());
-    
-    // Initialize Supabase client
-    let supabaseClient;
-    try {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('✅ Supabase client created successfully!');
-    } catch (error) {
-        console.error('❌ Failed to create Supabase client:', error);
-        if (typeof window.SupabaseConfig === 'undefined') {
-            window.SupabaseConfig = {
-                error: error.message,
-                isLoaded: false
-            };
-        }
-        return;
-    }
+const SupabaseConfig = {
+    // Supabase credentials
+    supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
+    supabaseKey: 'YOUR_SUPABASE_ANON_KEY',
+    supabase: null,
 
-    // Table names
-    const TABLE_NAME = 'table_student';
-    const ATTENDANCE_TABLE = 'attendance';
+    // Tables
+    tables: {
+        users: 'users',
+        attendance: 'attendance',
+        grades: 'grades',
+        students: 'students',
+        classes: 'classes',
+        notifications: 'notifications',
+        certificates: 'certificates',
+        schedule: 'schedule'
+    },
 
-    // ============ ATTENDANCE FUNCTIONS ============
+    // ============================================
+    // INITIALIZATION
+    // ============================================
 
-    // មុខងារសម្រាប់ទាញយកថ្នាក់ទាំងអស់
-    async function fetchAllClasses() {
+    init() {
         try {
-            console.log('🔍 Fetching all classes...');
-            const { data, error } = await supabaseClient
-                .from(TABLE_NAME)
-                .select('class')
-                .order('class');
-            
-            if (error) {
-                console.error('❌ Error from Supabase:', error);
-                throw error;
+            if (typeof supabase !== 'undefined') {
+                this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey);
+                console.log('✅ Supabase initialized');
+                return true;
+            } else {
+                console.error('❌ Supabase library not loaded');
+                return false;
             }
-            
-            // យកតែថ្នាក់ដែលមានតែមួយ (unique)
-            const uniqueClasses = [...new Set(data.map(item => item.class).filter(c => c && c.trim() !== ''))];
-            console.log('✅ Classes found:', uniqueClasses);
-            return uniqueClasses.sort();
         } catch (error) {
-            console.error('❌ Error fetching classes:', error);
-            return [];
+            console.error('❌ Supabase initialization error:', error);
+            return false;
         }
-    }
+    },
 
-    // មុខងារសម្រាប់ទាញយកសិស្សតាមថ្នាក់
-    async function fetchStudentsByClass(className) {
+    // ============================================
+    // CONNECTION CHECK
+    // ============================================
+
+    async checkConnection() {
         try {
-            console.log('🔍 Fetching students for class:', className);
-            const { data, error } = await supabaseClient
-                .from(TABLE_NAME)
-                .select('id, studentID, name, sex, date_of_birth, class, photo, phonenumber, address, fathername, fatherphone, fatherjob, mothername, motherphone, motherjob')
-                .eq('class', className)
-                .order('name');
-            
-            if (error) {
-                console.error('❌ Error from Supabase:', error);
-                throw error;
+            if (!this.supabase) {
+                this.init();
             }
-            console.log('✅ Students found:', data ? data.length : 0);
-            return data || [];
-        } catch (error) {
-            console.error('❌ Error fetching students:', error);
-            return [];
-        }
-    }
-
-    // មុខងារសម្រាប់ទាញយកវត្តមាន
-    async function fetchAttendance(classVal, semesterVal, dateVal) {
-        try {
-            const { data, error } = await supabaseClient
-                .from(ATTENDANCE_TABLE)
-                .select('*')
-                .eq('class', classVal)
-                .eq('semester', semesterVal)
-                .eq('date', dateVal);
+            if (!this.supabase) return false;
             
-            if (error) {
-                console.warn('⚠️ Attendance table not found or error:', error);
-                return null;
-            }
-            return data || [];
-        } catch (error) {
-            console.error('❌ Error fetching attendance:', error);
-            return null;
-        }
-    }
-
-    // មុខងារសម្រាប់រក្សាទុកវត្តមាន
-    async function saveAttendanceToSupabase(attendanceRecords) {
-        if (!attendanceRecords || attendanceRecords.length === 0) {
-            return null;
-        }
-
-        try {
-            // លុបកំណត់ត្រាចាស់ចេញ
-            const { error: deleteError } = await supabaseClient
-                .from(ATTENDANCE_TABLE)
-                .delete()
-                .eq('class', attendanceRecords[0]?.class)
-                .eq('semester', attendanceRecords[0]?.semester)
-                .eq('date', attendanceRecords[0]?.date);
-            
-            if (deleteError) {
-                console.warn('⚠️ Error deleting old records:', deleteError);
-            }
-            
-            // បញ្ចូលកំណត់ត្រាថ្មី
-            const { data, error } = await supabaseClient
-                .from(ATTENDANCE_TABLE)
-                .insert(attendanceRecords);
-            
-            if (error) throw error;
-            return data;
-        } catch (error) {
-            console.error('❌ Error saving attendance to Supabase:', error);
-            // Fallback to localStorage
-            try {
-                localStorage.setItem('attendanceData_backup', JSON.stringify(attendanceRecords));
-                console.log('💾 Saved to localStorage as backup');
-            } catch (e) {
-                console.error('❌ Error saving to localStorage:', e);
-            }
-            return null;
-        }
-    }
-
-    // មុខងារសម្រាប់ពិនិត្យការតភ្ជាប់
-    async function checkConnection() {
-        try {
-            console.log('🔍 Checking connection to Supabase...');
-            const { data, error } = await supabaseClient
-                .from(TABLE_NAME)
+            const { data, error } = await this.supabase
+                .from(this.tables.users)
                 .select('count')
                 .limit(1);
             
             if (error) {
-                console.error('❌ Connection check failed:', error);
+                console.error('Connection error:', error);
                 return false;
             }
-            console.log('✅ Connection successful!');
             return true;
         } catch (error) {
-            console.error('❌ Connection check failed:', error);
+            console.error('Connection error:', error);
             return false;
         }
-    }
+    },
 
-    // ============ CARD FUNCTIONS ============
+    // ============================================
+    // USER MANAGEMENT FUNCTIONS
+    // ============================================
 
-    function getPhotoHTML(photoData) {
-        if (photoData && photoData !== 'null' && photoData !== '') {
-            return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
+    /**
+     * Save a user to Supabase
+     */
+    async saveUser(user) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            // Check if user exists
+            const { data: existing, error: checkError } = await this.supabase
+                .from(this.tables.users)
+                .select('id')
+                .eq('id', user.id)
+                .single();
+
+            if (checkError && checkError.code !== 'PGRST116') {
+                throw checkError;
+            }
+
+            let result;
+            if (existing) {
+                // Update existing user
+                result = await this.supabase
+                    .from(this.tables.users)
+                    .update({
+                        username: user.username,
+                        email: user.email,
+                        full_name: user.fullName,
+                        role: user.role,
+                        status: user.status,
+                        permissions: user.permissions,
+                        class: user.class || null,
+                        student_id: user.studentId || null,
+                        phone: user.phone || null,
+                        parent_name: user.parentName || null,
+                        parent_phone: user.parentPhone || null,
+                        address: user.address || null,
+                        last_login: user.lastLogin || null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id);
+            } else {
+                // Insert new user
+                result = await this.supabase
+                    .from(this.tables.users)
+                    .insert({
+                        id: user.id,
+                        username: user.username,
+                        password: user.password,
+                        email: user.email,
+                        full_name: user.fullName,
+                        role: user.role,
+                        status: user.status,
+                        permissions: user.permissions,
+                        class: user.class || null,
+                        student_id: user.studentId || null,
+                        phone: user.phone || null,
+                        parent_name: user.parentName || null,
+                        parent_phone: user.parentPhone || null,
+                        address: user.address || null,
+                        created_at: user.createdAt || new Date().toISOString(),
+                        last_login: user.lastLogin || null
+                    });
+            }
+
+            if (result.error) throw result.error;
+            return { success: true, data: result.data };
+        } catch (error) {
+            console.error('Error saving user:', error);
+            return { success: false, error: error.message };
         }
-        return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
-                    <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                    </svg>
-                </div>`;
-    }
+    },
 
-    function generateCardHTML(data) {
-        const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-        const photoHTML = getPhotoHTML(data.photo);
-        
-        return `
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-2xl overflow-hidden" style="width: 380px; font-family: 'Khmer', Arial, sans-serif;">
-                <div class="bg-white p-4 text-center border-b-4 border-yellow-400">
-                    <h3 class="text-xl font-bold text-blue-800">កាតសម្គាល់សិស្ស</h3>
-                    <p class="text-sm text-gray-600">សាលារៀន​ ឌីជីថល</p>
-                </div>
-                
-                <div class="p-4 text-white">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex-1">
-                            <p class="text-sm opacity-90">លេខសម្គាល់៖</p>
-                            <p class="font-bold text-lg">${data.studentID || 'N/A'}</p>
-                        </div>
-                        ${photoHTML}
-                    </div>
-                    
-                    <div class="space-y-2 text-sm">
-                        <div><p class="opacity-90">ឈ្មោះ៖</p><p class="font-semibold text-base">${data.name || 'N/A'}</p></div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><p class="opacity-90">ភេទ៖</p><p>${data.sex || 'N/A'}</p></div>
-                            <div><p class="opacity-90">ថ្ងៃខែកំណើត៖</p><p>${birthDate}</p></div>
-                        </div>
-                        <div><p class="opacity-90">ថ្នាក់៖</p><p class="font-medium">${data.class || 'N/A'}</p></div>
-                        <div><p class="opacity-90">ទូរស័ព្ទ៖</p><p>${data.phonenumber || 'N/A'}</p></div>
-                        <div><p class="opacity-90">អាសយដ្ឋាន៖</p><p class="text-xs">${data.address || 'N/A'}</p></div>
-                    </div>
-                    
-                    <hr class="my-3 border-white/30">
-                    
-                    <div class="text-xs space-y-1">
-                        <p><span class="opacity-90">ឪពុក៖</span> ${data.fathername || 'N/A'} (${data.fatherjob || ''})</p>
-                        <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${data.fatherphone || 'N/A'}</p>
-                        <p><span class="opacity-90">ម្តាយ៖</span> ${data.mothername || 'N/A'} (${data.motherjob || ''})</p>
-                        <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${data.motherphone || 'N/A'}</p>
-                    </div>
-                </div>
-                
-                <div class="bg-yellow-400 p-2 text-center text-xs font-bold text-blue-900">
-                    ចេញថ្ងៃទី: ${new Date().toLocaleDateString('km-KH')}
-                </div>
-            </div>
-        `;
-    }
+    /**
+     * Get all users from Supabase
+     */
+    async getAllUsers() {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
 
-    function generateSmallCardHTML(student) {
-        const birthDate = student.date_of_birth ? new Date(student.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-        const photoHTML = getPhotoHTML(student.photo);
-        
-        return `
-            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow" style="font-family: 'Khmer', Arial, sans-serif;">
-                <div class="bg-white p-3 text-center border-b-2 border-yellow-400">
-                    <h3 class="text-md font-bold text-blue-800">កាតសម្គាល់សិស្ស</h3>
-                    <p class="text-xs text-gray-600">សាលារៀន​ ឌីជីថល</p>
-                </div>
-                <div class="p-3 text-white">
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex-1">
-                            <p class="text-xs opacity-90">លេខសម្គាល់៖</p>
-                            <p class="font-bold text-sm">${student.studentID || 'N/A'}</p>
-                        </div>
-                        ${photoHTML}
-                    </div>
-                    <div class="space-y-1 text-xs">
-                        <div><p class="opacity-90">ឈ្មោះ៖</p><p class="font-semibold">${student.name || 'N/A'}</p></div>
-                        <div class="grid grid-cols-2 gap-1">
-                            <div><p class="opacity-90">ភេទ៖</p><p>${student.sex || 'N/A'}</p></div>
-                            <div><p class="opacity-90">ថ្ងៃកំណើត៖</p><p>${birthDate}</p></div>
-                        </div>
-                        <div><p class="opacity-90">ថ្នាក់៖</p><p class="font-medium">${student.class || 'N/A'}</p></div>
-                        <div><p class="opacity-90">ទូរស័ព្ទ៖</p><p>${student.phonenumber || 'N/A'}</p></div>
-                    </div>
-                    <hr class="my-2 border-white/30">
-                    <div class="text-xs space-y-0.5">
-                        <p><span class="opacity-90">ឪពុក៖</span> ${student.fathername || 'N/A'}</p>
-                        <p><span class="opacity-90">ម្តាយ៖</span> ${student.mothername || 'N/A'}</p>
-                    </div>
-                </div>
-                <div class="bg-yellow-400 p-1.5 text-center text-[10px] font-bold text-blue-900">
-                    ចេញថ្ងៃទី: ${new Date().toLocaleDateString('km-KH')}
-                </div>
-            </div>
-        `;
-    }
+            const { data, error } = await this.supabase
+                .from(this.tables.users)
+                .select('*')
+                .order('full_name');
 
-    // ============ EXPORT ============
-    if (typeof window.SupabaseConfig === 'undefined') {
-        window.SupabaseConfig = {
-            supabase: supabaseClient,
-            TABLE_NAME: TABLE_NAME,
-            ATTENDANCE_TABLE: ATTENDANCE_TABLE,
-            fetchAllClasses: fetchAllClasses,
-            fetchStudentsByClass: fetchStudentsByClass,
-            fetchAttendance: fetchAttendance,
-            saveAttendanceToSupabase: saveAttendanceToSupabase,
-            checkConnection: checkConnection,
-            getPhotoHTML: getPhotoHTML,
-            generateCardHTML: generateCardHTML,
-            generateSmallCardHTML: generateSmallCardHTML,
-            isLoaded: true
-        };
-    }
+            if (error) throw error;
+            
+            // Map to match the user management format
+            return data.map(user => ({
+                id: user.id,
+                username: user.username,
+                password: user.password,
+                email: user.email,
+                fullName: user.full_name,
+                role: user.role,
+                status: user.status,
+                permissions: user.permissions || {},
+                class: user.class,
+                studentId: user.student_id,
+                phone: user.phone,
+                parentName: user.parent_name,
+                parentPhone: user.parent_phone,
+                address: user.address,
+                createdAt: user.created_at,
+                lastLogin: user.last_login
+            }));
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            return [];
+        }
+    },
 
-    console.log('✅ Supabase Config loaded successfully!');
-    console.log('📡 URL:', SUPABASE_URL);
-    console.log('📊 Table:', TABLE_NAME);
-    console.log('📋 Attendance Table:', ATTENDANCE_TABLE);
-})();
+    /**
+     * Get a single user by ID
+     */
+    async getUserById(userId) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { data, error } = await this.supabase
+                .from(this.tables.users)
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error) throw error;
+            
+            return {
+                id: data.id,
+                username: data.username,
+                password: data.password,
+                email: data.email,
+                fullName: data.full_name,
+                role: data.role,
+                status: data.status,
+                permissions: data.permissions || {},
+                class: data.class,
+                studentId: data.student_id,
+                phone: data.phone,
+                parentName: data.parent_name,
+                parentPhone: data.parent_phone,
+                address: data.address,
+                createdAt: data.created_at,
+                lastLogin: data.last_login
+            };
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Get user by username
+     */
+    async getUserByUsername(username) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { data, error } = await this.supabase
+                .from(this.tables.users)
+                .select('*')
+                .eq('username', username)
+                .single();
+
+            if (error) throw error;
+            
+            return {
+                id: data.id,
+                username: data.username,
+                password: data.password,
+                email: data.email,
+                fullName: data.full_name,
+                role: data.role,
+                status: data.status,
+                permissions: data.permissions || {},
+                class: data.class,
+                studentId: data.student_id,
+                phone: data.phone,
+                parentName: data.parent_name,
+                parentPhone: data.parent_phone,
+                address: data.address,
+                createdAt: data.created_at,
+                lastLogin: data.last_login
+            };
+        } catch (error) {
+            console.error('Error fetching user by username:', error);
+            return null;
+        }
+    },
+
+    /**
+     * Delete a user
+     */
+    async deleteUser(userId) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.users)
+                .delete()
+                .eq('id', userId);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Update user status
+     */
+    async updateUserStatus(userId, status) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.users)
+                .update({ status: status, updated_at: new Date().toISOString() })
+                .eq('id', userId);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating user status:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Update user permissions
+     */
+    async updateUserPermissions(userId, permissions) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.users)
+                .update({ 
+                    permissions: permissions,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating user permissions:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Update last login
+     */
+    async updateLastLogin(userId) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.users)
+                .update({ last_login: new Date().toISOString() })
+                .eq('id', userId);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating last login:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Get users by role
+     */
+    async getUsersByRole(role) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { data, error } = await this.supabase
+                .from(this.tables.users)
+                .select('*')
+                .eq('role', role)
+                .eq('status', 'active')
+                .order('full_name');
+
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Error fetching users by role:', error);
+            return [];
+        }
+    },
+
+    // ============================================
+    // NOTIFICATION FUNCTIONS
+    // ============================================
+
+    /**
+     * Save notification to Supabase
+     */
+    async saveNotification(notification) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.notifications)
+                .insert({
+                    id: notification.id,
+                    title: notification.title,
+                    message: notification.message,
+                    type: notification.type,
+                    user_ids: notification.userIds || 'all',
+                    created_at: notification.createdAt || new Date().toISOString(),
+                    read_by: notification.readBy || []
+                });
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error saving notification:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Get notifications for a user
+     */
+    async getNotifications(userId) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { data, error } = await this.supabase
+                .from(this.tables.notifications)
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            // Filter notifications for this user
+            return data.filter(n => {
+                if (n.user_ids === 'all') return true;
+                if (Array.isArray(n.user_ids)) return n.user_ids.includes(userId);
+                return false;
+            });
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            return [];
+        }
+    },
+
+    /**
+     * Mark notification as read
+     */
+    async markNotificationRead(notificationId, userId) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            // Get current notification
+            const { data, error } = await this.supabase
+                .from(this.tables.notifications)
+                .select('read_by')
+                .eq('id', notificationId)
+                .single();
+
+            if (error) throw error;
+
+            const readBy = data.read_by || [];
+            if (!readBy.includes(userId)) {
+                readBy.push(userId);
+            }
+
+            const { error: updateError } = await this.supabase
+                .from(this.tables.notifications)
+                .update({ read_by: readBy })
+                .eq('id', notificationId);
+
+            if (updateError) throw updateError;
+            return { success: true };
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // ============================================
+    // SCHEDULE CONFIGURATION
+    // ============================================
+
+    /**
+     * Save schedule configuration
+     */
+    async saveScheduleConfig(schedule) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.schedule)
+                .upsert({
+                    class: schedule.class,
+                    subject: schedule.subject,
+                    time_slot: schedule.time_slot,
+                    semester: schedule.semester,
+                    days: schedule.days,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'class,subject,time_slot,semester'
+                });
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error saving schedule:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    /**
+     * Get schedule configuration
+     */
+    async getScheduleConfig(classVal, subjectVal, timeVal, semesterVal) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { data, error } = await this.supabase
+                .from(this.tables.schedule)
+                .select('*')
+                .eq('class', classVal)
+                .eq('subject', subjectVal)
+                .eq('time_slot', timeVal)
+                .eq('semester', semesterVal)
+                .single();
+
+            if (error && error.code !== 'PGRST116') throw error;
+            return data || null;
+        } catch (error) {
+            console.error('Error fetching schedule:', error);
+            return null;
+        }
+    },
+
+    // ============================================
+    // ATTENDANCE FUNCTIONS
+    // ============================================
+
+    async fetchAttendance(classVal, semester, date) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            let query = this.supabase
+                .from(this.tables.attendance)
+                .select('*')
+                .eq('class', classVal);
+
+            if (semester) {
+                query = query.eq('semester', parseInt(semester));
+            }
+            if (date) {
+                query = query.eq('date', date);
+            }
+
+            const { data, error } = await query;
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('Error fetching attendance:', error);
+            return [];
+        }
+    },
+
+    async saveAttendanceToSupabase(records) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            // Delete existing records for the same class, subject, date
+            if (records.length > 0) {
+                const first = records[0];
+                await this.supabase
+                    .from(this.tables.attendance)
+                    .delete()
+                    .eq('class', first.class)
+                    .eq('subject', first.subject)
+                    .eq('date', first.date)
+                    .eq('time_slot', first.time_slot);
+            }
+
+            // Insert new records
+            const { error } = await this.supabase
+                .from(this.tables.attendance)
+                .insert(records.map(r => ({
+                    class: r.class,
+                    subject: r.subject,
+                    time_slot: r.time_slot,
+                    semester: r.semester,
+                    date: r.date,
+                    student_id: r.student_id,
+                    status: r.status,
+                    auto_assigned: r.auto_assigned || false,
+                    teacher_set: r.teacher_set || false,
+                    auto_submitted: r.auto_submitted || false,
+                    not_scheduled: r.not_scheduled || false,
+                    created_at: r.created_at || new Date().toISOString()
+                })));
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Error saving attendance:', error);
+            return false;
+        }
+    },
+
+    // ============================================
+    // STUDENT FUNCTIONS
+    // ============================================
+
+    async fetchStudentsByClass(classVal) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            // First try to get from students table
+            const { data, error } = await this.supabase
+                .from(this.tables.students)
+                .select('*')
+                .eq('class', classVal)
+                .order('name');
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                return data.map(s => ({
+                    studentID: s.student_id || s.id,
+                    name: s.name,
+                    class: s.class,
+                    sex: s.sex || 'N/A',
+                    photo: s.photo || null,
+                    phone: s.phone || null,
+                    parentName: s.parent_name || null,
+                    parentPhone: s.parent_phone || null,
+                    address: s.address || null
+                }));
+            }
+
+            // If no students in students table, try to get from users table
+            const { data: userData, error: userError } = await this.supabase
+                .from(this.tables.users)
+                .select('*')
+                .eq('role', 'student')
+                .eq('class', classVal)
+                .eq('status', 'active')
+                .order('full_name');
+
+            if (userError) throw userError;
+
+            if (userData && userData.length > 0) {
+                return userData.map(s => ({
+                    studentID: s.student_id || s.id,
+                    name: s.full_name,
+                    class: s.class,
+                    sex: 'N/A',
+                    photo: null,
+                    phone: s.phone || null,
+                    parentName: s.parent_name || null,
+                    parentPhone: s.parent_phone || null,
+                    address: s.address || null
+                }));
+            }
+
+            return [];
+        } catch (error) {
+            console.error('Error fetching students:', error);
+            return [];
+        }
+    },
+
+    async fetchAllClasses() {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            // Get distinct classes from students table
+            const { data, error } = await this.supabase
+                .from(this.tables.students)
+                .select('class')
+                .not('class', 'is', null);
+
+            if (error) throw error;
+
+            const classes = [...new Set(data.map(s => s.class))].filter(Boolean);
+            
+            if (classes.length > 0) {
+                return classes.sort();
+            }
+
+            // If no classes in students, try from users
+            const { data: userData, error: userError } = await this.supabase
+                .from(this.tables.users)
+                .select('class')
+                .eq('role', 'student')
+                .not('class', 'is', null);
+
+            if (userError) throw userError;
+
+            const userClasses = [...new Set(userData.map(s => s.class))].filter(Boolean);
+            return userClasses.sort();
+        } catch (error) {
+            console.error('Error fetching classes:', error);
+            // Return default classes
+            return ['12A', '12B', '12C', '11A', '11B', '10A', '10B'];
+        }
+    },
+
+    // ============================================
+    // CERTIFICATE FUNCTIONS
+    // ============================================
+
+    async requestCertificate(studentId, type, details) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.certificates)
+                .insert({
+                    student_id: studentId,
+                    type: type,
+                    details: details,
+                    status: 'pending',
+                    requested_at: new Date().toISOString()
+                });
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error requesting certificate:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    async getCertificates(studentId) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { data, error } = await this.supabase
+                .from(this.tables.certificates)
+                .select('*')
+                .eq('student_id', studentId)
+                .order('requested_at', { ascending: false });
+
+            if (error) throw error;
+            return data || [];
+        } catch (error) {
+            console.error('Error fetching certificates:', error);
+            return [];
+        }
+    },
+
+    async updateCertificateStatus(certificateId, status) {
+        try {
+            if (!this.supabase) this.init();
+            if (!this.supabase) throw new Error('Supabase not initialized');
+
+            const { error } = await this.supabase
+                .from(this.tables.certificates)
+                .update({ 
+                    status: status,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', certificateId);
+
+            if (error) throw error;
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating certificate:', error);
+            return { success: false, error: error.message };
+        }
+    }
+};
+
+// ============================================
+// AUTO-INITIALIZE
+// ============================================
+
+// Initialize Supabase when the script loads
+if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', function() {
+        SupabaseConfig.init();
+    });
+}
