@@ -8,6 +8,7 @@
     <!-- Supabase library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
+    
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
         body {
@@ -402,6 +403,28 @@
             // Focus on username field
             document.getElementById('username').focus();
         });
+        // នៅក្នុង handleLogin function មុនពេល login
+        // បន្ថែមកូដនេះ:
+        
+        // Wait for userManagement to be initialized
+        if (typeof userManagement !== 'undefined' && !userManagement.isInitialized) {
+            console.log('⏳ Waiting for userManagement to initialize...');
+            await new Promise((resolve) => {
+                const checkInterval = setInterval(() => {
+                    if (userManagement.isInitialized) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }
+                }, 200);
+            });
+            console.log('✅ userManagement initialized');
+        }
+        
+        // Check if users are loaded
+        if (userManagement.users.length === 0) {
+            console.log('⏳ No users loaded, waiting...');
+            await userManagement.init();
+        }
 
         // ============================================
         // MAKE FUNCTIONS GLOBAL
