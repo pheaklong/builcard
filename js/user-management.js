@@ -1,5 +1,5 @@
 // ============================================
-// USER MANAGEMENT SYSTEM
+// USER MANAGEMENT SYSTEM - WITH SUPABASE
 // ============================================
 
 class UserManagement {
@@ -13,7 +13,6 @@ class UserManagement {
             STUDENT: 'student'
         };
         this.permissions = {
-            // Admin permissions
             admin: {
                 create_user: true,
                 delete_user: true,
@@ -28,7 +27,6 @@ class UserManagement {
                 view_student_results: true,
                 create_notification: true
             },
-            // Editor permissions
             editor: {
                 create_user: false,
                 delete_user: false,
@@ -44,7 +42,6 @@ class UserManagement {
                 create_notification: true,
                 assign_teacher_permissions: true
             },
-            // Teacher permissions
             teacher: {
                 create_user: false,
                 delete_user: false,
@@ -62,7 +59,6 @@ class UserManagement {
                 take_attendance: true,
                 enter_grades: true
             },
-            // Student permissions
             student: {
                 create_user: false,
                 delete_user: false,
@@ -81,32 +77,64 @@ class UserManagement {
                 receive_notifications: true
             }
         };
+        this.isUsingSupabase = false;
         this.init();
     }
 
-    init() {
-        // Load users from localStorage
-        this.loadUsers();
+    async init() {
+        // Check if Supabase is available
+        if (typeof SupabaseConfig !== 'undefined' && SupabaseConfig.supabase) {
+            this.isUsingSupabase = true;
+            console.log('✅ Using Supabase for user management');
+            await this.loadUsersFromSupabase();
+        } else {
+            console.log('⚠️ Using localStorage for user management (fallback)');
+            this.loadUsersFromLocal();
+        }
         
-        // Check if there's a logged in user
         this.loadCurrentUser();
-        
-        // Setup auth listeners
         this.setupAuthListeners();
     }
 
-    loadUsers() {
+    // ============================================
+    // LOAD USERS FROM SUPABASE
+    // ============================================
+
+    async loadUsersFromSupabase() {
+        try {
+            const users = await SupabaseConfig.getAllUsers();
+            if (users && users.length > 0) {
+                this.users = users;
+                this.saveUsersToLocal();
+            } else {
+                // No users in Supabase, create default admin
+                this.createDefaultAdmin();
+                // Sync to Supabase
+                await this.syncToSupabase();
+            }
+        } catch (error) {
+            console.error('Error loading users from Supabase:', error);
+            // Fallback to localStorage
+            this.loadUsersFromLocal();
+        }
+    }
+
+    loadUsersFromLocal() {
         const saved = localStorage.getItem('system_users');
         if (saved) {
             try {
                 this.users = JSON.parse(saved);
             } catch (e) {
                 this.users = [];
+                this.createDefaultAdmin();
             }
         } else {
-            // Create default admin user if no users exist
             this.createDefaultAdmin();
         }
+    }
+
+    saveUsersToLocal() {
+        localStorage.setItem('system_users', JSON.stringify(this.users));
     }
 
     createDefaultAdmin() {
@@ -120,44 +148,41 @@ class UserManagement {
             createdAt: new Date().toISOString(),
             status: 'active',
             permissions: this.permissions.admin,
-            lastLogin: null
+            lastLogin: null,
+            class: null,
+            studentId: null,
+            phone: null,
+            parentName: null,
+            parentPhone: null,
+            address: null
         };
         this.users = [defaultAdmin];
-        this.saveUsers();
+        this.saveUsersToLocal();
         console.log('✅ Default admin created: admin / admin123');
     }
 
-    saveUsers() {
-        localStorage.setItem('system_users', JSON.stringify(this.users));
-        // Also sync to Supabase if available
-        this.syncToSupabase();
-    }
+    // ============================================
+    // SYNC TO SUPABASE
+    // ============================================
 
     async syncToSupabase() {
+        if (!this.isUsingSupabase) return;
+        
         try {
-            if (typeof SupabaseConfig !== 'undefined') {
-                // Save each user to Supabase
-                for (const user of this.users) {
-                    await SupabaseConfig.saveUser({
-                        id: user.id,
-                        username: user.username,
-                        email: user.email,
-                        full_name: user.fullName,
-                        role: user.role,
-                        status: user.status,
-                        permissions: user.permissions,
-                        created_at: user.createdAt,
-                        last_login: user.lastLogin
-                    });
-                }
+            for (const user of this.users) {
+                await SupabaseConfig.saveUser(user);
             }
-        } catch (e) {
-            console.warn('Could not sync users to Supabase:', e);
+            console.log('✅ Users synced to Supabase');
+        } catch (error) {
+            console.error('Error syncing users to Supabase:', error);
         }
     }
 
+    // ============================================
+    // HASH PASSWORD
+    // ============================================
+
     hashPassword(password) {
-        // Simple hash (in production, use bcrypt or similar)
         let hash = 0;
         for (let i = 0; i < password.length; i++) {
             const char = password.charCodeAt(i);
@@ -167,15 +192,23 @@ class UserManagement {
         return hash.toString(16);
     }
 
+    // ============================================
+    // LOAD CURRENT USER
+    // ============================================
+
     loadCurrentUser() {
         const saved = localStorage.getItem('current_user');
         if (saved) {
             try {
                 this.currentUser = JSON.parse(saved);
-                // Update user data from users list
+                // Verify user still exists
                 const userData = this.users.find(u => u.id === this.currentUser.id);
                 if (userData) {
-                    this.currentUser = userData;
+                    const { password, ...userWithoutPassword } = userData;
+                    this.currentUser = userWithoutPassword;
+                } else {
+                    this.currentUser = null;
+                    localStorage.removeItem('current_user');
                 }
             } catch (e) {
                 this.currentUser = null;
@@ -184,7 +217,6 @@ class UserManagement {
     }
 
     setupAuthListeners() {
-        // Listen for login/logout events
         window.addEventListener('storage', (e) => {
             if (e.key === 'current_user') {
                 this.loadCurrentUser();
@@ -197,28 +229,48 @@ class UserManagement {
     // AUTHENTICATION METHODS
     // ============================================
 
-    login(username, password) {
+    async login(username, password) {
         const hashedPassword = this.hashPassword(password);
-        const user = this.users.find(u => 
+        let user = this.users.find(u => 
             u.username === username && 
             u.password === hashedPassword &&
             u.status === 'active'
         );
 
+        // If not found locally, try Supabase
+        if (!user && this.isUsingSupabase) {
+            try {
+                const supabaseUser = await SupabaseConfig.getUserByUsername(username);
+                if (supabaseUser && supabaseUser.password === hashedPassword && supabaseUser.status === 'active') {
+                    user = supabaseUser;
+                    // Add to local cache
+                    this.users.push(user);
+                    this.saveUsersToLocal();
+                }
+            } catch (error) {
+                console.error('Error checking user in Supabase:', error);
+            }
+        }
+
         if (user) {
             // Update last login
             user.lastLogin = new Date().toISOString();
-            this.saveUsers();
+            this.saveUsersToLocal();
+            
+            // Update in Supabase
+            if (this.isUsingSupabase) {
+                await SupabaseConfig.updateLastLogin(user.id);
+            }
             
             // Set current user (without password)
-            const { password, ...userWithoutPassword } = user;
+            const { password: pwd, ...userWithoutPassword } = user;
             this.currentUser = userWithoutPassword;
             localStorage.setItem('current_user', JSON.stringify(userWithoutPassword));
             
             return { success: true, user: userWithoutPassword };
         }
 
-        return { success: false, message: 'Username or password incorrect' };
+        return { success: false, message: 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' };
     }
 
     logout() {
@@ -239,20 +291,19 @@ class UserManagement {
     // USER MANAGEMENT METHODS
     // ============================================
 
-    createUser(userData) {
-        // Check if user has permission
+    async createUser(userData) {
         if (!this.hasPermission('create_user')) {
-            return { success: false, message: 'You do not have permission to create users' };
+            return { success: false, message: 'អ្នកមិនមានសិទ្ធិបង្កើតអ្នកប្រើប្រាស់ទេ' };
         }
 
         // Check if username already exists
         if (this.users.find(u => u.username === userData.username)) {
-            return { success: false, message: 'Username already exists' };
+            return { success: false, message: 'ឈ្មោះអ្នកប្រើប្រាស់មានរួចហើយ' };
         }
 
         // Check if email already exists
         if (this.users.find(u => u.email === userData.email)) {
-            return { success: false, message: 'Email already exists' };
+            return { success: false, message: 'អ៊ីមែលមានរួចហើយ' };
         }
 
         const newUser = {
@@ -275,41 +326,50 @@ class UserManagement {
         };
 
         this.users.push(newUser);
-        this.saveUsers();
-        
+        this.saveUsersToLocal();
+
+        // Save to Supabase
+        if (this.isUsingSupabase) {
+            const result = await SupabaseConfig.saveUser(newUser);
+            if (!result.success) {
+                console.error('Error saving user to Supabase:', result.error);
+            }
+        }
+
         const { password, ...userWithoutPassword } = newUser;
         return { success: true, user: userWithoutPassword };
     }
 
-    updateUser(userId, updates) {
+    async updateUser(userId, updates) {
         if (!this.hasPermission('edit_user')) {
-            return { success: false, message: 'You do not have permission to edit users' };
+            return { success: false, message: 'អ្នកមិនមានសិទ្ធិកែប្រែអ្នកប្រើប្រាស់ទេ' };
         }
 
         const index = this.users.findIndex(u => u.id === userId);
         if (index === -1) {
-            return { success: false, message: 'User not found' };
+            return { success: false, message: 'រកមិនឃើញអ្នកប្រើប្រាស់' };
         }
 
-        // Don't allow editing yourself if you're not admin
         if (this.currentUser && this.currentUser.id === userId && this.currentUser.role !== this.roles.ADMIN) {
-            return { success: false, message: 'You cannot edit your own account' };
+            return { success: false, message: 'អ្នកមិនអាចកែប្រែគណនីរបស់ខ្លួនឯងបានទេ' };
         }
 
-        // If updating role, update permissions
         if (updates.role) {
             updates.permissions = this.permissions[updates.role] || this.permissions[this.roles.STUDENT];
         }
 
-        // If updating password
         if (updates.password) {
             updates.password = this.hashPassword(updates.password);
         }
 
         this.users[index] = { ...this.users[index], ...updates };
-        this.saveUsers();
+        this.saveUsersToLocal();
 
-        // If updating current user, refresh session
+        // Update in Supabase
+        if (this.isUsingSupabase) {
+            await SupabaseConfig.saveUser(this.users[index]);
+        }
+
         if (this.currentUser && this.currentUser.id === userId) {
             const { password, ...userWithoutPassword } = this.users[index];
             this.currentUser = userWithoutPassword;
@@ -319,33 +379,36 @@ class UserManagement {
         return { success: true, user: this.users[index] };
     }
 
-    deleteUser(userId) {
+    async deleteUser(userId) {
         if (!this.hasPermission('delete_user')) {
-            return { success: false, message: 'You do not have permission to delete users' };
+            return { success: false, message: 'អ្នកមិនមានសិទ្ធិលុបអ្នកប្រើប្រាស់ទេ' };
         }
 
-        // Cannot delete yourself
         if (this.currentUser && this.currentUser.id === userId) {
-            return { success: false, message: 'You cannot delete your own account' };
+            return { success: false, message: 'អ្នកមិនអាចលុបគណនីរបស់ខ្លួនឯងបានទេ' };
         }
 
-        // Cannot delete the last admin
         const adminCount = this.users.filter(u => u.role === this.roles.ADMIN).length;
         const userToDelete = this.users.find(u => u.id === userId);
         if (userToDelete && userToDelete.role === this.roles.ADMIN && adminCount <= 1) {
-            return { success: false, message: 'Cannot delete the last admin account' };
+            return { success: false, message: 'មិនអាចលុប Admin ចុងក្រោយបានទេ' };
         }
 
         this.users = this.users.filter(u => u.id !== userId);
-        this.saveUsers();
+        this.saveUsersToLocal();
+
+        // Delete from Supabase
+        if (this.isUsingSupabase) {
+            await SupabaseConfig.deleteUser(userId);
+        }
+
         return { success: true };
     }
 
     getUsers(filters = {}) {
         if (!this.hasPermission('view_all')) {
-            // Students can only see their own data
             if (this.currentUser && this.currentUser.role === this.roles.STUDENT) {
-                return this.users.filter(u => u.id === this.currentUser.id);
+                return this.users.filter(u => u.id === this.currentUser.id).map(({ password, ...user }) => user);
             }
             return [];
         }
@@ -370,7 +433,6 @@ class UserManagement {
             );
         }
 
-        // Remove passwords
         return filteredUsers.map(({ password, ...user }) => user);
     }
 
@@ -378,7 +440,6 @@ class UserManagement {
         const user = this.users.find(u => u.id === userId);
         if (!user) return null;
         
-        // Check permission
         if (!this.hasPermission('view_all') && this.currentUser.id !== userId) {
             return null;
         }
@@ -412,24 +473,28 @@ class UserManagement {
     // TEACHER PERMISSION MANAGEMENT
     // ============================================
 
-    assignTeacherPermissions(teacherId, permissions) {
+    async assignTeacherPermissions(teacherId, permissions) {
         if (!this.hasPermission('assign_teacher_permissions') && 
             !this.hasPermission('manage_roles')) {
-            return { success: false, message: 'You do not have permission to assign teacher permissions' };
+            return { success: false, message: 'អ្នកមិនមានសិទ្ធិកំណត់សិទ្ធិគ្រូទេ' };
         }
 
         const teacher = this.users.find(u => u.id === teacherId);
         if (!teacher) {
-            return { success: false, message: 'Teacher not found' };
+            return { success: false, message: 'រកមិនឃើញគ្រូ' };
         }
 
         if (teacher.role !== this.roles.TEACHER) {
-            return { success: false, message: 'User is not a teacher' };
+            return { success: false, message: 'អ្នកប្រើប្រាស់នេះមិនមែនជាគ្រូទេ' };
         }
 
-        // Merge permissions
         teacher.permissions = { ...teacher.permissions, ...permissions };
-        this.saveUsers();
+        this.saveUsersToLocal();
+
+        if (this.isUsingSupabase) {
+            await SupabaseConfig.updateUserPermissions(teacherId, teacher.permissions);
+        }
+
         return { success: true, user: teacher };
     }
 
@@ -442,70 +507,72 @@ class UserManagement {
     }
 
     // ============================================
-    // UI METHODS
+    // NOTIFICATION SYSTEM
     // ============================================
 
-    renderLoginForm(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
+    async createNotification(title, message, type = 'info', userIds = null) {
+        if (!this.hasPermission('create_notification')) {
+            return { success: false, message: 'អ្នកមិនមានសិទ្ធិបង្កើតការជូនដំណឹងទេ' };
+        }
 
-        container.innerHTML = `
-            <div class="login-container max-w-md mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg">
-                <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-indigo-700">🔐 ចូលប្រើប្រព័ន្ធ</h2>
-                    <p class="text-gray-500 text-sm">សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់</p>
-                </div>
-                <form id="loginForm" onsubmit="return userManagement.handleLogin(event)">
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ឈ្មោះអ្នកប្រើប្រាស់</label>
-                        <input type="text" id="loginUsername" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500" placeholder="បញ្ចូលឈ្មោះអ្នកប្រើប្រាស់" required>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">ពាក្យសម្ងាត់</label>
-                        <input type="password" id="loginPassword" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500" placeholder="បញ្ចូលពាក្យសម្ងាត់" required>
-                    </div>
-                    <div id="loginError" class="text-red-500 text-sm mb-2 hidden"></div>
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">
-                        ចូលប្រើប្រាស់
-                    </button>
-                </form>
-                <div class="mt-4 text-center text-sm text-gray-500">
-                    <p>សាកល្បងប្រើ៖ admin / admin123</p>
-                </div>
-            </div>
-        `;
+        const notification = {
+            id: `notif_${Date.now()}`,
+            title: title,
+            message: message,
+            type: type,
+            createdAt: new Date().toISOString(),
+            readBy: [],
+            userIds: userIds || 'all'
+        };
+
+        // Save to localStorage
+        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        notifications.unshift(notification);
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+
+        // Save to Supabase
+        if (this.isUsingSupabase) {
+            await SupabaseConfig.saveNotification(notification);
+        }
+
+        return { success: true, notification: notification };
     }
 
-    handleLogin(event) {
-        event.preventDefault();
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        const errorEl = document.getElementById('loginError');
-
-        const result = this.login(username, password);
+    getNotifications(userId = null) {
+        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
         
-        if (result.success) {
-            window.location.href = this.getRedirectUrl(result.user.role);
-        } else {
-            errorEl.textContent = result.message;
-            errorEl.classList.remove('hidden');
+        if (!userId) {
+            userId = this.currentUser?.id;
+        }
+
+        if (!userId) return [];
+
+        return notifications.filter(n => {
+            return n.userIds === 'all' || (Array.isArray(n.userIds) && n.userIds.includes(userId));
+        });
+    }
+
+    async markNotificationRead(notificationId, userId = null) {
+        if (!userId) {
+            userId = this.currentUser?.id;
+        }
+        if (!userId) return;
+
+        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification && !notification.readBy.includes(userId)) {
+            notification.readBy.push(userId);
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+
+            if (this.isUsingSupabase) {
+                await SupabaseConfig.markNotificationRead(notificationId, userId);
+            }
         }
     }
 
-    getRedirectUrl(role) {
-        switch(role) {
-            case this.roles.ADMIN:
-                return 'admin-dashboard.html';
-            case this.roles.EDITOR:
-                return 'editor-dashboard.html';
-            case this.roles.TEACHER:
-                return 'teacher-dashboard.html';
-            case this.roles.STUDENT:
-                return 'student-dashboard.html';
-            default:
-                return 'index.html';
-        }
-    }
+    // ============================================
+    // UI METHODS
+    // ============================================
 
     renderUserManagement(containerId) {
         const container = document.getElementById(containerId);
@@ -677,7 +744,6 @@ class UserManagement {
         `;
         document.body.appendChild(modal);
 
-        // Show/hide student fields based on role
         document.getElementById('newRole').addEventListener('change', function() {
             const show = this.value === 'student';
             document.getElementById('studentFields').style.display = show ? 'block' : 'none';
@@ -685,7 +751,7 @@ class UserManagement {
         });
     }
 
-    handleCreateUser(event) {
+    async handleCreateUser(event) {
         event.preventDefault();
         
         const userData = {
@@ -699,7 +765,7 @@ class UserManagement {
             phone: document.getElementById('newPhone').value || null
         };
 
-        const result = this.createUser(userData);
+        const result = await this.createUser(userData);
         if (result.success) {
             alert('✅ បានបង្កើតអ្នកប្រើប្រាស់ដោយជោគជ័យ!');
             document.querySelector('.fixed')?.remove();
@@ -709,7 +775,7 @@ class UserManagement {
         }
     }
 
-    editUser(userId) {
+    async editUser(userId) {
         const user = this.getUserById(userId);
         if (!user) {
             alert('រកមិនឃើញអ្នកប្រើប្រាស់');
@@ -768,7 +834,7 @@ class UserManagement {
         document.body.appendChild(modal);
     }
 
-    handleEditUser(event, userId) {
+    async handleEditUser(event, userId) {
         event.preventDefault();
         
         const updates = {
@@ -787,7 +853,7 @@ class UserManagement {
             updates.password = password;
         }
 
-        const result = this.updateUser(userId, updates);
+        const result = await this.updateUser(userId, updates);
         if (result.success) {
             alert('✅ បានកែប្រែអ្នកប្រើប្រាស់ដោយជោគជ័យ!');
             document.querySelector('.fixed')?.remove();
@@ -797,10 +863,10 @@ class UserManagement {
         }
     }
 
-    deleteUser(userId) {
+    async deleteUser(userId) {
         if (!confirm('តើអ្នកប្រាកដជាចង់លុបអ្នកប្រើប្រាស់នេះមែនទេ?')) return;
 
-        const result = this.deleteUser(userId);
+        const result = await this.deleteUser(userId);
         if (result.success) {
             alert('✅ បានលុបអ្នកប្រើប្រាស់ដោយជោគជ័យ!');
             this.renderUserManagement('userManagementContainer');
@@ -809,7 +875,7 @@ class UserManagement {
         }
     }
 
-    manageTeacherPermissions(teacherId) {
+    async manageTeacherPermissions(teacherId) {
         const teacher = this.getUserById(teacherId);
         if (!teacher) {
             alert('រកមិនឃើញគ្រូ');
@@ -857,7 +923,7 @@ class UserManagement {
         document.body.appendChild(modal);
     }
 
-    handlePermissionUpdate(event, teacherId) {
+    async handlePermissionUpdate(event, teacherId) {
         event.preventDefault();
         
         const permissions = {
@@ -867,7 +933,7 @@ class UserManagement {
             manage_grades: document.getElementById('perm_manage').checked
         };
 
-        const result = this.assignTeacherPermissions(teacherId, permissions);
+        const result = await this.assignTeacherPermissions(teacherId, permissions);
         if (result.success) {
             alert('✅ បានកំណត់សិទ្ធិដោយជោគជ័យ!');
             document.querySelector('.fixed')?.remove();
@@ -882,7 +948,6 @@ class UserManagement {
     // ============================================
 
     updateUI() {
-        // Update navigation based on user role
         const nav = document.querySelector('.user-nav');
         if (!nav) return;
 
@@ -907,7 +972,6 @@ class UserManagement {
     }
 
     showLogin() {
-        // Redirect to login page or show login modal
         window.location.href = 'login.html';
     }
 
@@ -917,103 +981,6 @@ class UserManagement {
             window.location.href = 'login.html';
         }
     }
-
-    // ============================================
-    // NOTIFICATION SYSTEM
-    // ============================================
-
-    createNotification(title, message, type = 'info', userIds = null) {
-        if (!this.hasPermission('create_notification')) {
-            return { success: false, message: 'You do not have permission to create notifications' };
-        }
-
-        const notification = {
-            id: `notif_${Date.now()}`,
-            title: title,
-            message: message,
-            type: type, // 'info', 'warning', 'success', 'error'
-            createdAt: new Date().toISOString(),
-            readBy: [],
-            userIds: userIds || 'all' // 'all' or array of user IDs
-        };
-
-        // Save to localStorage
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        notifications.unshift(notification);
-        localStorage.setItem('notifications', JSON.stringify(notifications));
-
-        // Also save to Supabase
-        if (typeof SupabaseConfig !== 'undefined') {
-            SupabaseConfig.saveNotification(notification).catch(e => {
-                console.warn('Could not save notification to Supabase:', e);
-            });
-        }
-
-        return { success: true, notification: notification };
-    }
-
-    getNotifications(userId = null) {
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        
-        if (!userId) {
-            userId = this.currentUser?.id;
-        }
-
-        if (!userId) return [];
-
-        return notifications.filter(n => {
-            return n.userIds === 'all' || n.userIds.includes(userId);
-        });
-    }
-
-    markNotificationRead(notificationId, userId = null) {
-        if (!userId) {
-            userId = this.currentUser?.id;
-        }
-        if (!userId) return;
-
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        const notification = notifications.find(n => n.id === notificationId);
-        if (notification && !notification.readBy.includes(userId)) {
-            notification.readBy.push(userId);
-            localStorage.setItem('notifications', JSON.stringify(notifications));
-        }
-    }
-
-    renderNotifications(containerId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-
-        const notifications = this.getNotifications();
-        
-        if (notifications.length === 0) {
-            container.innerHTML = `
-                <div class="text-center py-4 text-gray-500">
-                    <p>📭 មិនមានការជូនដំណឹងទេ</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="space-y-2">
-                ${notifications.slice(0, 10).map(n => `
-                    <div class="p-3 bg-white border rounded-lg ${n.readBy.includes(this.currentUser?.id) ? 'opacity-70' : 'border-indigo-300'}">
-                        <div class="flex justify-between items-start">
-                            <h4 class="font-medium text-gray-800">${n.title}</h4>
-                            <span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">${n.message}</p>
-                        ${!n.readBy.includes(this.currentUser?.id) ? `
-                            <button onclick="userManagement.markNotificationRead('${n.id}')" class="text-xs text-indigo-600 mt-1">
-                                អានរួច
-                            </button>
-                        ` : ''}
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
 }
 
 // ============================================
@@ -1021,11 +988,8 @@ class UserManagement {
 // ============================================
 
 const userManagement = new UserManagement();
-
-// Make available globally
 window.userManagement = userManagement;
 
-// Auto update UI on load
 document.addEventListener('DOMContentLoaded', function() {
     userManagement.updateUI();
 });
