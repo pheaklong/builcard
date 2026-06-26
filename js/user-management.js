@@ -1,5 +1,5 @@
 // ============================================
-// USER MANAGEMENT SYSTEM - SUPABASE ONLY
+// USER MANAGEMENT SYSTEM - SUPABASE SDK
 // ============================================
 
 class UserManagement {
@@ -83,7 +83,6 @@ class UserManagement {
             }
         };
         
-        // Start initialization immediately
         this.init();
     }
 
@@ -94,7 +93,7 @@ class UserManagement {
     async init() {
         if (this.isInitialized) return;
         
-        console.log('🔧 Initializing User Management with Supabase...');
+        console.log('🔧 Initializing User Management with Supabase SDK...');
         
         try {
             // Check if SupabaseConfig is available
@@ -104,7 +103,11 @@ class UserManagement {
             }
 
             // Initialize Supabase
-            SupabaseConfig.init();
+            const initResult = SupabaseConfig.init();
+            if (!initResult) {
+                console.error('❌ Supabase initialization failed');
+                return;
+            }
             
             // Check connection
             console.log('🔄 Checking Supabase connection...');
@@ -125,7 +128,7 @@ class UserManagement {
             this.loadCurrentUser();
             
             this.isInitialized = true;
-            console.log('✅ User Management initialized with Supabase');
+            console.log('✅ User Management initialized with Supabase SDK');
             
             // Update UI
             this.updateUI();
