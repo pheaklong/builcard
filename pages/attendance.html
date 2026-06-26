@@ -22,6 +22,7 @@
         .status-auto { background: #dbeafe; color: #1e40af; }
         .status-late { background: #fef9c3; color: #854d0e; }
         .status-permit { background: #fef3c7; color: #92400e; }
+        .status-not-scheduled { background: #f3f4f6; color: #6b7280; }
         .btn-toggle {
             transition: all 0.2s ease;
         }
@@ -134,7 +135,6 @@
         .subject-english { background: #fce7f3; color: #9d174d; }
         .subject-science { background: #e0e7ff; color: #3730a3; }
         .subject-default { background: #f3f4f6; color: #374151; }
-        /* Auto submit status indicator */
         .auto-status-indicator {
             display: inline-block;
             width: 10px;
@@ -158,7 +158,6 @@
             font-weight: 600;
             color: #4f46e5;
         }
-        /* Status legend */
         .status-legend {
             display: flex;
             flex-wrap: wrap;
@@ -175,6 +174,42 @@
             width: 14px;
             height: 14px;
             border-radius: 4px;
+        }
+        /* Schedule warning */
+        .schedule-warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .schedule-info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .day-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4f46e5;
+            cursor: pointer;
+        }
+        .day-label {
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .day-checkbox:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .day-label.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -222,7 +257,7 @@
     <div class="container mx-auto px-4 py-6">
         <!-- Class Selection -->
         <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ថ្នាក់ (Class)</label>
                     <select id="classSelect" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
@@ -256,6 +291,46 @@
                         <option value="2">ឆមាសទី 2</option>
                     </select>
                 </div>
+            </div>
+            
+            <!-- Schedule Configuration - NEW -->
+            <div class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div class="flex flex-wrap items-center gap-4">
+                    <span class="font-bold text-gray-700 text-sm">📅 ថ្ងៃបង្រៀន៖</span>
+                    <div class="flex flex-wrap gap-3">
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="1" data-day="Mon"> ចន្ទ
+                        </label>
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="2" data-day="Tue"> អង្គារ
+                        </label>
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="3" data-day="Wed"> ពុធ
+                        </label>
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="4" data-day="Thu"> ព្រហស្បតិ៍
+                        </label>
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="5" data-day="Fri"> សុក្រ
+                        </label>
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="6" data-day="Sat"> សៅរ៍
+                        </label>
+                        <label class="day-label flex items-center gap-1">
+                            <input type="checkbox" class="day-checkbox" value="0" data-day="Sun"> អាទិត្យ
+                        </label>
+                    </div>
+                    <button onclick="saveScheduleConfig()" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition text-sm ml-auto">
+                        💾 រក្សាទុកកាលវិភាគ
+                    </button>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    <span>💡 ជ្រើសរើសថ្ងៃដែលមានការបង្រៀនសម្រាប់មុខវិជ្ជានេះ។ ប្រព័ន្ធនឹងគិតតែថ្ងៃដែលបានជ្រើសរើសប៉ុណ្ណោះ។</span>
+                </div>
+                <div id="scheduleStatus" class="mt-2 text-sm"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mt-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">ថ្ងៃ/ខែ/ឆ្នាំ</label>
                     <input type="date" id="datePicker" class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 text-sm">
@@ -290,6 +365,10 @@
                     <span class="status-legend-dot bg-orange-400"></span>
                     <span>អនុញ្ញាត (Permit)</span>
                 </div>
+                <div class="status-legend-item">
+                    <span class="status-legend-dot bg-gray-300"></span>
+                    <span>មិនមានថ្នាក់ (Not Scheduled)</span>
+                </div>
             </div>
             
             <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
@@ -300,6 +379,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Schedule Status Display -->
+        <div id="scheduleStatusDisplay" class="hidden mb-4"></div>
 
         <!-- Auto Submit Schedule -->
         <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-6 border-l-4 border-indigo-500">
@@ -504,6 +586,9 @@
         let autoCheckInterval = 30; // minutes
         let lastAutoSubmitTime = null;
 
+        // Schedule configuration
+        let scheduleConfig = {};
+
         // ============================================
         // HELPER: Get element safely
         // ============================================
@@ -542,6 +627,161 @@
         }
 
         // ============================================
+        // SCHEDULE CONFIGURATION FUNCTIONS
+        // ============================================
+
+        function getDayName(dayNumber) {
+            const days = ['អាទិត្យ', 'ចន្ទ', 'អង្គារ', 'ពុធ', 'ព្រហស្បតិ៍', 'សុក្រ', 'សៅរ៍'];
+            return days[dayNumber] || '';
+        }
+
+        function getDayNumber(dateStr) {
+            const date = new Date(dateStr);
+            return date.getDay(); // 0=Sunday, 1=Monday, ...
+        }
+
+        function getScheduleKey(classVal, subjectVal, timeVal, semesterVal) {
+            return `${classVal}_${subjectVal}_${timeVal}_${semesterVal}`;
+        }
+
+        function loadScheduleConfig() {
+            const saved = localStorage.getItem('scheduleConfig');
+            if (saved) {
+                try {
+                    scheduleConfig = JSON.parse(saved);
+                    // Update checkboxes based on saved config
+                    const classSelect = getElement('classSelect');
+                    const subjectSelect = getElement('subjectSelect');
+                    const timeSelect = getElement('timeSelect');
+                    const semesterSelect = getElement('semesterSelect');
+                    
+                    if (classSelect && subjectSelect && timeSelect && semesterSelect) {
+                        const key = getScheduleKey(
+                            classSelect.value, 
+                            subjectSelect.value, 
+                            timeSelect.value, 
+                            semesterSelect.value
+                        );
+                        const config = scheduleConfig[key];
+                        if (config && config.days) {
+                            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                                cb.checked = config.days.includes(parseInt(cb.value));
+                            });
+                            updateScheduleStatusDisplay(config);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error loading schedule config:', e);
+                }
+            }
+        }
+
+        function saveScheduleConfig() {
+            const classSelect = getElement('classSelect');
+            const subjectSelect = getElement('subjectSelect');
+            const timeSelect = getElement('timeSelect');
+            const semesterSelect = getElement('semesterSelect');
+
+            if (!classSelect || !subjectSelect || !timeSelect || !semesterSelect) {
+                alert('មានបញ្ហាក្នុងការផ្ទុកទំព័រ');
+                return;
+            }
+
+            const classVal = classSelect.value;
+            const subjectVal = subjectSelect.value;
+            const timeVal = timeSelect.value;
+            const semesterVal = semesterSelect.value;
+
+            if (!classVal) {
+                alert('សូមជ្រើសរើសថ្នាក់');
+                return;
+            }
+
+            const selectedDays = [];
+            document.querySelectorAll('.day-checkbox:checked').forEach(cb => {
+                selectedDays.push(parseInt(cb.value));
+            });
+
+            if (selectedDays.length === 0) {
+                alert('សូមជ្រើសរើសយ៉ាងហោចណាស់ ១ថ្ងៃសម្រាប់ការបង្រៀន');
+                return;
+            }
+
+            const key = getScheduleKey(classVal, subjectVal, timeVal, semesterVal);
+            
+            if (!scheduleConfig[key]) {
+                scheduleConfig[key] = {};
+            }
+            
+            scheduleConfig[key] = {
+                class: classVal,
+                subject: subjectVal,
+                time_slot: timeVal,
+                semester: parseInt(semesterVal),
+                days: selectedDays,
+                updated_at: new Date().toISOString()
+            };
+
+            // Save to localStorage
+            localStorage.setItem('scheduleConfig', JSON.stringify(scheduleConfig));
+
+            // Also save to Supabase if connected
+            if (isConnected && typeof SupabaseConfig !== 'undefined') {
+                SupabaseConfig.saveScheduleConfig({
+                    class: classVal,
+                    subject: subjectVal,
+                    time_slot: timeVal,
+                    semester: parseInt(semesterVal),
+                    days: selectedDays
+                }).catch(e => {
+                    console.warn('Error saving schedule to Supabase:', e);
+                });
+            }
+
+            updateScheduleStatusDisplay(scheduleConfig[key]);
+            alert('✅ បានរក្សាទុកកាលវិភាគរួចរាល់!');
+            addAutoLog(`📅 បានរក្សាទុកកាលវិភាគ ${subjectVal} ថ្ងៃ ${selectedDays.map(d => getDayName(d)).join(', ')}`);
+        }
+
+        function updateScheduleStatusDisplay(config) {
+            const container = getElement('scheduleStatus');
+            if (!container) return;
+            
+            if (!config || !config.days || config.days.length === 0) {
+                container.innerHTML = '<span class="text-red-600">⚠️ មិនទាន់មានការកំណត់ថ្ងៃបង្រៀនសម្រាប់មុខវិជ្ជានេះទេ</span>';
+                return;
+            }
+
+            const dayNames = config.days.map(d => getDayName(d)).join(', ');
+            container.innerHTML = `
+                <span class="text-green-600">✅ កាលវិភាគបង្រៀន៖ ${dayNames}</span>
+                <span class="text-gray-500 text-xs ml-2">(បានរក្សាទុក ${config.updated_at ? new Date(config.updated_at).toLocaleString() : ''})</span>
+            `;
+        }
+
+        function isDayScheduled(dateStr, classVal, subjectVal, timeVal, semesterVal) {
+            const key = getScheduleKey(classVal, subjectVal, timeVal, semesterVal);
+            const config = scheduleConfig[key];
+            
+            if (!config || !config.days || config.days.length === 0) {
+                // If no schedule config, allow all days (backward compatibility)
+                return true;
+            }
+            
+            const dayNumber = getDayNumber(dateStr);
+            return config.days.includes(dayNumber);
+        }
+
+        function getScheduledDays(classVal, subjectVal, timeVal, semesterVal) {
+            const key = getScheduleKey(classVal, subjectVal, timeVal, semesterVal);
+            const config = scheduleConfig[key];
+            if (config && config.days) {
+                return config.days;
+            }
+            return []; // No schedule configured
+        }
+
+        // ============================================
         // INITIALIZATION
         // ============================================
 
@@ -571,6 +811,9 @@
             // Load classes from Supabase
             await loadClasses();
 
+            // Load schedule config
+            loadScheduleConfig();
+
             // Teacher mode toggle
             const teacherMode = getElement('teacherMode');
             if (teacherMode) {
@@ -590,6 +833,32 @@
             
             // Update display
             updateAutoDisplay();
+
+            // Event listeners for schedule config changes
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    // Auto-save when checkbox changes
+                    const classSelect = getElement('classSelect');
+                    const subjectSelect = getElement('subjectSelect');
+                    const timeSelect = getElement('timeSelect');
+                    const semesterSelect = getElement('semesterSelect');
+                    
+                    if (classSelect && subjectSelect && timeSelect && semesterSelect && classSelect.value) {
+                        // Don't auto-save, let user click save button
+                        // Just update status display
+                        const key = getScheduleKey(
+                            classSelect.value, 
+                            subjectSelect.value, 
+                            timeSelect.value, 
+                            semesterSelect.value
+                        );
+                        const config = scheduleConfig[key];
+                        if (config) {
+                            updateScheduleStatusDisplay(config);
+                        }
+                    }
+                });
+            });
         });
 
         // ============================================
@@ -684,7 +953,8 @@
         }
 
         // ============================================
-        // LOAD ATTENDANCE        // ============================================
+        // LOAD ATTENDANCE
+        // ============================================
 
         async function loadAttendance() {
             const classSelect = getElement('classSelect');
@@ -725,6 +995,10 @@
                 if (typeof SupabaseConfig === 'undefined') {
                     throw new Error('SupabaseConfig not loaded');
                 }
+
+                // Check if this day is scheduled for this subject
+                const isScheduled = isDayScheduled(dateVal, classVal, subjectVal, timeVal, semesterVal);
+                const scheduledDays = getScheduledDays(classVal, subjectVal, timeVal, semesterVal);
 
                 // Fetch students from Supabase
                 const students = await SupabaseConfig.fetchStudentsByClass(classVal);
@@ -781,15 +1055,19 @@
                         };
                     });
                 } else {
-                    // Initialize attendance with auto status (which means PRESENT by default)
+                    // Initialize attendance
                     attendanceData[key] = {};
                     students.forEach(student => {
+                        // If the day is not scheduled, mark as 'not-scheduled'
+                        // Otherwise mark as 'auto' (present by system)
+                        const status = isScheduled ? 'auto' : 'not-scheduled';
                         attendanceData[key][student.studentID] = {
-                            status: 'auto', // auto = present automatically
-                            autoAssigned: true,
+                            status: status,
+                            autoAssigned: isScheduled,
                             subject: subjectVal,
                             time_slot: timeVal,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notScheduled: !isScheduled
                         };
                     });
                 }
@@ -797,15 +1075,43 @@
                 // Ensure all students have records
                 students.forEach(student => {
                     if (!attendanceData[key][student.studentID]) {
+                        const status = isScheduled ? 'auto' : 'not-scheduled';
                         attendanceData[key][student.studentID] = {
-                            status: 'auto',
-                            autoAssigned: true,
+                            status: status,
+                            autoAssigned: isScheduled,
                             subject: subjectVal,
                             time_slot: timeVal,
-                            timestamp: new Date().toISOString()
+                            timestamp: new Date().toISOString(),
+                            notScheduled: !isScheduled
                         };
+                    } else if (!attendanceData[key][student.studentID].notScheduled && !isScheduled) {
+                        // If previously had attendance but day is not scheduled, mark as not-scheduled
+                        attendanceData[key][student.studentID].status = 'not-scheduled';
+                        attendanceData[key][student.studentID].notScheduled = true;
+                        attendanceData[key][student.studentID].autoAssigned = false;
                     }
                 });
+
+                // Show schedule info
+                const scheduleDisplay = getElement('scheduleStatusDisplay');
+                if (scheduleDisplay) {
+                    if (!isScheduled) {
+                        scheduleDisplay.className = 'schedule-warning mb-4';
+                        scheduleDisplay.innerHTML = `
+                            ⚠️ <strong>ការជូនដំណឹង៖</strong> ថ្ងៃនេះមិនមែនជាថ្ងៃបង្រៀន ${subjectVal} ទេ។ 
+                            (ថ្ងៃបង្រៀន៖ ${scheduledDays.map(d => getDayName(d)).join(', ') || 'មិនទាន់កំណត់'})
+                            <button onclick="showScheduleConfig()" class="ml-2 text-indigo-600 underline text-sm">កំណត់កាលវិភាគ</button>
+                        `;
+                        scheduleDisplay.classList.remove('hidden');
+                    } else {
+                        scheduleDisplay.className = 'schedule-info mb-4';
+                        scheduleDisplay.innerHTML = `
+                            ✅ <strong>ថ្ងៃបង្រៀន៖</strong> ${scheduledDays.map(d => getDayName(d)).join(', ')} 
+                            <span class="text-green-600">✓ ថ្ងៃនេះជាថ្ងៃបង្រៀន ${subjectVal}</span>
+                        `;
+                        scheduleDisplay.classList.remove('hidden');
+                    }
+                }
 
                 renderAttendanceTable();
                 updateStats();
@@ -815,6 +1121,20 @@
             } finally {
                 const spinner = getElement('loadingSpinner');
                 if (spinner) spinner.classList.add('hidden');
+            }
+        }
+
+        function showScheduleConfig() {
+            document.querySelector('.day-checkbox')?.scrollIntoView({ behavior: 'smooth' });
+            // Highlight the schedule config section
+            const section = document.querySelector('.bg-indigo-50');
+            if (section) {
+                section.style.borderColor = '#f59e0b';
+                section.style.borderWidth = '2px';
+                setTimeout(() => {
+                    section.style.borderColor = '';
+                    section.style.borderWidth = '';
+                }, 3000);
             }
         }
 
@@ -870,12 +1190,18 @@
                 const record = attendanceData[key]?.[student.studentID] || { status: 'auto', autoAssigned: true };
                 const status = record.status || 'auto';
                 const isAuto = record.autoAssigned !== false;
+                const isNotScheduled = record.notScheduled === true || status === 'not-scheduled';
                 
                 // Determine status badge class
-                // auto = present automatically (blue)
                 let badgeClass = 'status-auto';
                 let statusLabel = '🔄 Auto Present';
-                if (status === 'present') { 
+                let isEditable = true;
+
+                if (isNotScheduled) {
+                    badgeClass = 'status-not-scheduled';
+                    statusLabel = '⛔ មិនមានថ្នាក់';
+                    isEditable = false;
+                } else if (status === 'present') { 
                     badgeClass = 'status-present'; 
                     statusLabel = '✅ មក'; 
                 } else if (status === 'absent') { 
@@ -893,10 +1219,10 @@
                     statusLabel = '🤖 Auto Present'; 
                 }
 
-                const canOverride = isTeacherMode;
+                const canOverride = isTeacherMode && isEditable;
 
                 html += `
-                    <tr class="border-b hover:bg-gray-50 transition attendance-card">
+                    <tr class="border-b hover:bg-gray-50 transition attendance-card ${isNotScheduled ? 'opacity-60' : ''}">
                         <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm text-gray-700">${index + 1}</td>
                         <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium text-gray-800">
                             ${student.photo ? `<img src="${student.photo}" class="w-5 h-5 md:w-6 md:h-6 rounded-full inline mr-1">` : ''}
@@ -909,10 +1235,13 @@
                             <span class="px-2 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-medium ${badgeClass}">
                                 ${statusLabel}
                             </span>
-                            ${isAuto && status === 'auto' ? '<span class="ml-1 text-[10px] text-blue-600 auto-badge">⏳</span>' : ''}
+                            ${isAuto && status === 'auto' && !isNotScheduled ? '<span class="ml-1 text-[10px] text-blue-600 auto-badge">⏳</span>' : ''}
+                            ${isNotScheduled ? '<span class="ml-1 text-[10px] text-gray-400">📅</span>' : ''}
                         </td>
                         <td class="px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm hidden sm:table-cell">
-                            ${isAuto && status === 'auto' ? '<span class="text-blue-600 text-[10px] md:text-xs">🤖 កំណត់ដោយប្រព័ន្ធ</span>' : '<span class="text-green-600 text-[10px] md:text-xs">✅ កំណត់ដោយគ្រូ</span>'}
+                            ${isNotScheduled ? '<span class="text-gray-400 text-[10px] md:text-xs">⛔ មិនមានថ្នាក់នៅថ្ងៃនេះ</span>' : 
+                              isAuto && status === 'auto' ? '<span class="text-blue-600 text-[10px] md:text-xs">🤖 កំណត់ដោយប្រព័ន្ធ</span>' : 
+                              '<span class="text-green-600 text-[10px] md:text-xs">✅ កំណត់ដោយគ្រូ</span>'}
                         </td>
                         <td class="px-2 md:px-4 py-2 md:py-3">
                             ${canOverride ? `
@@ -924,7 +1253,9 @@
                                     <button onclick="setStatus('${student.studentID}', 'auto')" class="btn-toggle text-[10px] md:text-xs px-1.5 md:px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600">Auto</button>
                                 </div>
                             ` : `
-                                <span class="text-[10px] md:text-xs text-gray-400">${isTeacherMode ? 'ចុចប៊ូតុងខាងលើ' : 'បើករបៀបគ្រូ'}</span>
+                                <span class="text-[10px] md:text-xs ${isNotScheduled ? 'text-gray-400' : 'text-gray-400'}">
+                                    ${isNotScheduled ? '⛔ គ្មានថ្នាក់' : (isTeacherMode ? 'ចុចប៊ូតុងខាងលើ' : 'បើករបៀបគ្រូ')}
+                                </span>
                             `}
                         </td>
                     </tr>
@@ -966,15 +1297,22 @@
                 attendanceData[key] = {};
             }
 
+            // Check if this day is scheduled
+            const isScheduled = isDayScheduled(dateVal, classVal, subjectVal, timeVal, semesterVal);
+            if (!isScheduled) {
+                alert('⚠️ ថ្ងៃនេះមិនមែនជាថ្ងៃបង្រៀនសម្រាប់មុខវិជ្ជានេះទេ!');
+                return;
+            }
+
             // Update attendance record
-            // Note: 'auto' means present by system, not waiting
             attendanceData[key][studentId] = {
                 status: newStatus,
                 autoAssigned: newStatus === 'auto',
                 subject: subjectVal,
                 time_slot: timeVal,
                 timestamp: new Date().toISOString(),
-                teacherSet: true
+                teacherSet: true,
+                notScheduled: false
             };
 
             renderAttendanceTable();
@@ -1006,13 +1344,15 @@
             const students = currentStudents;
             const total = students.length;
             
-            let present = 0, absent = 0, auto = 0, late = 0;
+            let present = 0, absent = 0, auto = 0, late = 0, notScheduled = 0;
 
             students.forEach(student => {
                 const record = attendanceData[key]?.[student.studentID];
                 if (record) {
                     const status = record.status || 'auto';
-                    if (status === 'present') present++;
+                    if (record.notScheduled || status === 'not-scheduled') {
+                        notScheduled++;
+                    } else if (status === 'present') present++;
                     else if (status === 'absent') absent++;
                     else if (status === 'late') late++;
                     else auto++; // auto = present by system
@@ -1026,10 +1366,18 @@
             setTextContent('absentCount', absent.toString());
             setTextContent('autoCount', auto.toString());
             setTextContent('lateCount', late.toString());
+            
+            // Also show total students with attendance
+            const totalWithAttendance = total - notScheduled;
+            // Update student count to show both
+            const studentCountEl = getElement('studentCount');
+            if (studentCountEl) {
+                studentCountEl.textContent = `${totalWithAttendance}/${total}`;
+            }
         }
 
         // ============================================
-        // AUTO SUBMIT FUNCTIONS
+        // AUTO SUBMIT FUNCTIONS (with schedule check)
         // ============================================
 
         function toggleAutoSchedule() {
@@ -1103,6 +1451,13 @@
             
             if (!classVal || !dateVal) return;
             
+            // Check if today is a scheduled day for this subject
+            const isScheduled = isDayScheduled(dateVal, classVal, subjectVal, timeVal, semesterVal);
+            if (!isScheduled) {
+                // Skip auto submit on non-scheduled days
+                return;
+            }
+            
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
             
             if (!attendanceData[key]) {
@@ -1116,8 +1471,8 @@
             currentStudents.forEach(student => {
                 const record = attendanceData[key]?.[student.studentID];
                 if (record) {
-                    // If teacher hasn't set it (still auto/present by system), we'll auto submit
-                    if (record.autoAssigned !== false && record.status === 'auto') {
+                    // If teacher hasn't set it (still auto/present by system) and not marked as not-scheduled
+                    if (record.autoAssigned !== false && record.status === 'auto' && !record.notScheduled) {
                         needsAutoSubmit = true;
                         autoCount++;
                     }
@@ -1131,14 +1486,16 @@
                 // Auto submit - set all students to present by system (auto)
                 currentStudents.forEach(student => {
                     if (!attendanceData[key][student.studentID] || 
-                        attendanceData[key][student.studentID].autoAssigned !== false) {
+                        (attendanceData[key][student.studentID].autoAssigned !== false && 
+                         !attendanceData[key][student.studentID].notScheduled)) {
                         attendanceData[key][student.studentID] = {
                             status: 'auto', // auto = present by system
                             autoAssigned: true,
                             subject: subjectVal,
                             time_slot: timeVal,
                             timestamp: new Date().toISOString(),
-                            autoSubmitted: true
+                            autoSubmitted: true,
+                            notScheduled: false
                         };
                     }
                 });
@@ -1264,9 +1621,21 @@
                 return;
             }
 
+            // Check if this day is scheduled
+            const isScheduled = isDayScheduled(dateVal, classVal, subjectVal, timeVal, semesterVal);
+            if (!isScheduled) {
+                if (!confirm('⚠️ ថ្ងៃនេះមិនមែនជាថ្ងៃបង្រៀនសម្រាប់មុខវិជ្ជានេះទេ។ តើអ្នកនៅចង់រក្សាទុកវត្តមានមែនទេ?')) {
+                    return;
+                }
+            }
+
             // Prepare attendance records for Supabase
             const records = [];
             for (const [studentId, record] of Object.entries(attendanceData[key])) {
+                // Skip not-scheduled records if this is a scheduled day
+                if (isScheduled && record.notScheduled) {
+                    continue;
+                }
                 records.push({
                     class: classVal,
                     subject: subjectVal,
@@ -1278,7 +1647,8 @@
                     auto_assigned: record.autoAssigned !== false,
                     created_at: record.timestamp || new Date().toISOString(),
                     teacher_set: record.teacherSet || false,
-                    auto_submitted: record.autoSubmitted || false
+                    auto_submitted: record.autoSubmitted || false,
+                    not_scheduled: record.notScheduled || false
                 });
             }
 
@@ -1334,10 +1704,6 @@
         // ============================================
 
         function autoSubmitAll() {
-            if (!confirm('តើអ្នកចង់កំណត់វត្តមានសិស្សទាំងអស់ជា "មក" ដោយស្វ័យប្រវត្តិមែនទេ?')) {
-                return;
-            }
-
             const classSelect = getElement('classSelect');
             const subjectSelect = getElement('subjectSelect');
             const timeSelect = getElement('timeSelect');
@@ -1354,6 +1720,19 @@
             const timeVal = timeSelect.value;
             const semesterVal = semesterSelect.value;
             const dateVal = datePicker.value;
+
+            // Check if today is scheduled
+            const isScheduled = isDayScheduled(dateVal, classVal, subjectVal, timeVal, semesterVal);
+            if (!isScheduled) {
+                if (!confirm(`⚠️ ថ្ងៃនេះមិនមែនជាថ្ងៃបង្រៀន ${subjectVal} ទេ។ តើអ្នកនៅចង់ Auto Present មែនទេ?`)) {
+                    return;
+                }
+            }
+
+            if (!confirm('តើអ្នកចង់កំណត់វត្តមានសិស្សទាំងអស់ជា "មក" ដោយស្វ័យប្រវត្តិមែនទេ?')) {
+                return;
+            }
+
             const key = `${classVal}_${subjectVal}_${timeVal}_${semesterVal}_${dateVal}`;
 
             if (!attendanceData[key]) {
@@ -1367,7 +1746,8 @@
                     subject: subjectVal,
                     time_slot: timeVal,
                     timestamp: new Date().toISOString(),
-                    autoSubmitted: true
+                    autoSubmitted: true,
+                    notScheduled: false
                 };
             });
 
@@ -1383,7 +1763,7 @@
         }
 
         // ============================================
-        // LOAD MONTHLY SUMMARY
+        // LOAD MONTHLY SUMMARY (with schedule filter)
         // ============================================
 
         async function loadMonthlySummary() {
@@ -1449,7 +1829,8 @@
                                                     status: record.status || 'auto',
                                                     subject: record.subject || subjectVal,
                                                     date: savedDate,
-                                                    time_slot: record.time_slot || 'N/A'
+                                                    time_slot: record.time_slot || 'N/A',
+                                                    not_scheduled: record.notScheduled || false
                                                 });
                                             }
                                         } catch (e) {}
@@ -1473,6 +1854,9 @@
                 // Group by student
                 const studentAttendance = {};
                 records.forEach(record => {
+                    // Skip not-scheduled records
+                    if (record.not_scheduled) return;
+                    
                     if (!studentAttendance[record.student_id]) {
                         studentAttendance[record.student_id] = {
                             name: studentMap[record.student_id] || record.student_id,
@@ -1598,6 +1982,7 @@
         async function refreshData() {
             await checkConnection();
             await loadClasses();
+            loadScheduleConfig();
             await loadAttendance();
             await loadMonthlySummary();
             addAutoLog('🔄 Refresh data');
@@ -1695,6 +2080,10 @@
         window.getSubjectClass = getSubjectClass;
         window.toggleAutoSchedule = toggleAutoSchedule;
         window.performAutoSubmit = performAutoSubmit;
+        window.saveScheduleConfig = saveScheduleConfig;
+        window.showScheduleConfig = showScheduleConfig;
+        window.getDayName = getDayName;
+        window.isDayScheduled = isDayScheduled;
     </script>
 </body>
 </html>
