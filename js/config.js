@@ -4,8 +4,8 @@
 
 const SupabaseConfig = {
     // Supabase credentials
-    supabaseUrl: 'https://YOUR_PROJECT_ID.supabase.co',
-    supabaseKey: 'YOUR_SUPABASE_ANON_KEY',
+    supabaseUrl: 'https://xmowdtwlidnwnxrkrysj.supabase.co',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabase: null,
 
     // Tables
