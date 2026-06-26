@@ -105,6 +105,7 @@ class UserManagement {
                 this.loadFromLocalStorage();
                 this.isInitialized = true;
                 console.log('✅ User Management initialized with localStorage fallback');
+                this.updateUI();
                 return;
             }
 
@@ -114,6 +115,7 @@ class UserManagement {
                 console.error('❌ Supabase initialization failed');
                 this.loadFromLocalStorage();
                 this.isInitialized = true;
+                this.updateUI();
                 return;
             }
 
@@ -145,6 +147,7 @@ class UserManagement {
             console.error('❌ Initialization error:', error);
             this.loadFromLocalStorage();
             this.isInitialized = true;
+            this.updateUI();
         }
     }
 
@@ -179,6 +182,13 @@ class UserManagement {
                 } else {
                     console.log('No backup found, creating default admin...');
                     await this.createDefaultAdmin();
+                    // Reload users after creating admin
+                    const reloadedUsers = await SupabaseConfig.getAllUsers();
+                    if (reloadedUsers && reloadedUsers.length > 0) {
+                        this.users = reloadedUsers;
+                        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+                        console.log(`✅ Loaded ${reloadedUsers.length} users from Supabase after creating admin`);
+                    }
                 }
             }
         } catch (error) {
@@ -266,19 +276,23 @@ class UserManagement {
         localStorage.setItem('system_users_backup', JSON.stringify(this.users));
         
         // Try to save to Supabase
-        try {
-            const result = await SupabaseConfig.saveUser(defaultAdmin);
-            if (result.success) {
-                console.log('✅ Default admin created in Supabase: admin / admin123');
-            } else {
-                console.warn('⚠️ Could not create admin in Supabase:', result.error);
+        if (this.isUsingSupabase) {
+            try {
+                const result = await SupabaseConfig.saveUser(defaultAdmin);
+                if (result.success) {
+                    console.log('✅ Default admin created in Supabase: admin / admin123');
+                } else {
+                    console.warn('⚠️ Could not create admin in Supabase:', result.error);
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not create admin in Supabase:', error);
             }
-        } catch (error) {
-            console.warn('⚠️ Could not create admin in Supabase:', error);
         }
     }
 
     async syncToSupabase() {
+        if (!this.isUsingSupabase) return;
+        
         try {
             for (const user of this.users) {
                 await SupabaseConfig.saveUser(user);
@@ -341,7 +355,6 @@ class UserManagement {
         }
         
         const hashedPassword = this.hashPassword(password);
-        console.log(`🔐 Password hash: ${hashedPassword}`);
         
         // Find user in loaded users
         let user = this.users.find(u => 
@@ -349,9 +362,6 @@ class UserManagement {
             u.password === hashedPassword &&
             u.status === 'active'
         );
-
-        console.log(`📋 Users in memory: ${this.users.length}`);
-        console.log(`🔍 User found in memory: ${!!user}`);
 
         // If not found and Supabase is available, try to fetch from Supabase
         if (!user && this.isUsingSupabase) {
@@ -403,7 +413,6 @@ class UserManagement {
         }
 
         console.log(`❌ Login failed for: ${username}`);
-        console.log(`📋 Available users:`, this.users.map(u => ({ username: u.username, role: u.role })));
         
         return { success: false, message: 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' };
     }
@@ -1169,19 +1178,43 @@ class UserManagement {
             alert('❌ ' + result.message);
         }
     }
+
+    // ============================================
+    // HELPER: Get user management status
+    // ============================================
+
+    getStatus() {
+        return {
+            isInitialized: this.isInitialized,
+            isUsingSupabase: this.isUsingSupabase,
+            usersCount: this.users.length,
+            isLoggedIn: this.isLoggedIn(),
+            currentUser: this.currentUser ? {
+                username: this.currentUser.username,
+                role: this.currentUser.role,
+                fullName: this.currentUser.fullName
+            } : null
+        };
+    }
 }
 
 // ============================================
 // INITIALIZE USER MANAGEMENT
 // ============================================
 
-// Create instance
+// Create instance immediately
 const userManagement = new UserManagement();
 window.userManagement = userManagement;
 
-// Also expose to window for debugging
-window.userManagement = userManagement;
+// Force initialization immediately
+if (typeof userManagement.init === 'function') {
+    // Call init but don't await - let it run in background
+    userManagement.init().catch(err => {
+        console.error('Init error:', err);
+    });
+}
 
+// When DOM is ready, update UI
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready, updating UI...');
     if (userManagement && typeof userManagement.updateUI === 'function') {
