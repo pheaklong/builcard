@@ -8,7 +8,6 @@ class UserManagement {
         this.users = [];
         this.isInitialized = false;
         this.isUsingSupabase = false;
-        this.initializationPromise = null;
         this.roles = {
             ADMIN: 'admin',
             EDITOR: 'editor',
@@ -84,7 +83,7 @@ class UserManagement {
             }
         };
         
-        // Start initialization immediately
+        // Start initialization
         this.init();
     }
 
@@ -101,53 +100,38 @@ class UserManagement {
             // Check if SupabaseConfig is available
             if (typeof SupabaseConfig === 'undefined') {
                 console.error('❌ SupabaseConfig is not loaded!');
-                // Try to load from localStorage as fallback
-                this.loadFromLocalStorage();
-                this.isInitialized = true;
-                console.log('✅ User Management initialized with localStorage fallback');
-                this.updateUI();
                 return;
             }
 
             // Initialize Supabase
-            const initResult = SupabaseConfig.init();
-            if (!initResult) {
-                console.error('❌ Supabase initialization failed');
-                this.loadFromLocalStorage();
-                this.isInitialized = true;
-                this.updateUI();
-                return;
-            }
-
+            SupabaseConfig.init();
+            
             // Check connection
             console.log('🔄 Checking Supabase connection...');
             const connected = await SupabaseConfig.checkConnection();
             
-            if (connected) {
-                this.isUsingSupabase = true;
-                console.log('✅ Connected to Supabase');
-                
-                // Load users from Supabase
-                await this.loadUsersFromSupabase();
-            } else {
-                console.warn('⚠️ Cannot connect to Supabase, using localStorage fallback');
-                this.loadFromLocalStorage();
+            if (!connected) {
+                console.error('❌ Cannot connect to Supabase');
+                return;
             }
             
-            this.isInitialized = true;
-            console.log('✅ User Management initialized');
+            this.isUsingSupabase = true;
+            console.log('✅ Connected to Supabase');
+            
+            // Load users from Supabase
+            await this.loadUsersFromSupabase();
             
             // Load current user from session
             this.loadCurrentUser();
+            
+            this.isInitialized = true;
+            console.log('✅ User Management initialized with Supabase');
             
             // Update UI
             this.updateUI();
             
         } catch (error) {
             console.error('❌ Initialization error:', error);
-            this.loadFromLocalStorage();
-            this.isInitialized = true;
-            this.updateUI();
         }
     }
 
@@ -162,91 +146,21 @@ class UserManagement {
             
             if (users && users.length > 0) {
                 this.users = users;
-                // Save to localStorage as backup
-                localStorage.setItem('system_users_backup', JSON.stringify(users));
                 console.log(`✅ Loaded ${users.length} users from Supabase`);
             } else {
-                console.log('No users found in Supabase, checking backup...');
-                // Try to load from backup
-                const backup = localStorage.getItem('system_users_backup');
-                if (backup) {
-                    try {
-                        this.users = JSON.parse(backup);
-                        console.log(`✅ Loaded ${this.users.length} users from backup`);
-                        // Sync to Supabase
-                        await this.syncToSupabase();
-                    } catch (e) {
-                        console.warn('Could not parse backup, creating default admin');
-                        await this.createDefaultAdmin();
-                    }
-                } else {
-                    console.log('No backup found, creating default admin...');
-                    await this.createDefaultAdmin();
-                    // Reload users after creating admin
-                    const reloadedUsers = await SupabaseConfig.getAllUsers();
-                    if (reloadedUsers && reloadedUsers.length > 0) {
-                        this.users = reloadedUsers;
-                        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-                        console.log(`✅ Loaded ${reloadedUsers.length} users from Supabase after creating admin`);
-                    }
+                console.log('No users found in Supabase, creating default admin...');
+                await this.createDefaultAdmin();
+                // Reload users after creating admin
+                const reloadedUsers = await SupabaseConfig.getAllUsers();
+                if (reloadedUsers && reloadedUsers.length > 0) {
+                    this.users = reloadedUsers;
+                    console.log(`✅ Loaded ${reloadedUsers.length} users from Supabase after creating admin`);
                 }
             }
         } catch (error) {
-            console.error('Error loading users from Supabase:', error);
-            // Try backup
-            const backup = localStorage.getItem('system_users_backup');
-            if (backup) {
-                try {
-                    this.users = JSON.parse(backup);
-                    console.log(`✅ Loaded ${this.users.length} users from backup (fallback)`);
-                } catch (e) {
-                    console.warn('Could not parse backup, creating default admin');
-                    await this.createDefaultAdmin();
-                }
-            } else {
-                await this.createDefaultAdmin();
-            }
+            console.error('❌ Error loading users from Supabase:', error);
+            throw error;
         }
-    }
-
-    loadFromLocalStorage() {
-        const saved = localStorage.getItem('system_users_backup');
-        if (saved) {
-            try {
-                this.users = JSON.parse(saved);
-                console.log(`✅ Loaded ${this.users.length} users from localStorage`);
-                return;
-            } catch (e) {
-                console.warn('Error parsing users from localStorage');
-            }
-        }
-        
-        // If no users, create default admin
-        this.createDefaultAdminLocally();
-    }
-
-    createDefaultAdminLocally() {
-        const defaultAdmin = {
-            id: 'admin_001',
-            username: 'admin',
-            password: this.hashPassword('admin123'),
-            email: 'admin@school.edu.kh',
-            fullName: 'Administrator',
-            role: this.roles.ADMIN,
-            createdAt: new Date().toISOString(),
-            status: 'active',
-            permissions: this.permissions.admin,
-            lastLogin: null,
-            class: null,
-            studentId: null,
-            phone: null,
-            parentName: null,
-            parentPhone: null,
-            address: null
-        };
-        this.users = [defaultAdmin];
-        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-        console.log('✅ Default admin created locally: admin / admin123');
     }
 
     async createDefaultAdmin() {
@@ -270,36 +184,12 @@ class UserManagement {
         };
         
         console.log('👤 Creating default admin user...');
-        
-        // Save to localStorage first
-        this.users = [defaultAdmin];
-        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-        
-        // Try to save to Supabase
-        if (this.isUsingSupabase) {
-            try {
-                const result = await SupabaseConfig.saveUser(defaultAdmin);
-                if (result.success) {
-                    console.log('✅ Default admin created in Supabase: admin / admin123');
-                } else {
-                    console.warn('⚠️ Could not create admin in Supabase:', result.error);
-                }
-            } catch (error) {
-                console.warn('⚠️ Could not create admin in Supabase:', error);
-            }
-        }
-    }
-
-    async syncToSupabase() {
-        if (!this.isUsingSupabase) return;
-        
-        try {
-            for (const user of this.users) {
-                await SupabaseConfig.saveUser(user);
-            }
-            console.log('✅ Users synced to Supabase');
-        } catch (error) {
-            console.warn('Could not sync users to Supabase:', error);
+        const result = await SupabaseConfig.saveUser(defaultAdmin);
+        if (result.success) {
+            console.log('✅ Default admin created: admin / admin123');
+        } else {
+            console.error('❌ Failed to create default admin:', result.error);
+            throw new Error('Failed to create default admin: ' + result.error);
         }
     }
 
@@ -363,7 +253,7 @@ class UserManagement {
             u.status === 'active'
         );
 
-        // If not found and Supabase is available, try to fetch from Supabase
+        // If not found, try to fetch from Supabase directly
         if (!user && this.isUsingSupabase) {
             try {
                 console.log(`🔍 Looking for user in Supabase: ${username}`);
@@ -377,13 +267,13 @@ class UserManagement {
                     } else {
                         this.users[existingIndex] = user;
                     }
-                    localStorage.setItem('system_users_backup', JSON.stringify(this.users));
                     console.log(`✅ User found in Supabase: ${username}`);
                 } else {
                     console.log(`❌ User not found in Supabase or password mismatch: ${username}`);
                 }
             } catch (error) {
                 console.error('Error checking user in Supabase:', error);
+                return { success: false, message: 'ប្រព័ន្ធមានបញ្ហា សូមព្យាយាមម្តងទៀត' };
             }
         }
 
@@ -392,15 +282,11 @@ class UserManagement {
             
             // Update last login
             user.lastLogin = new Date().toISOString();
-            localStorage.setItem('system_users_backup', JSON.stringify(this.users));
             
-            // Try to update in Supabase if available
-            if (this.isUsingSupabase) {
-                try {
-                    await SupabaseConfig.updateLastLogin(user.id);
-                } catch (e) {
-                    console.warn('Could not update last login in Supabase:', e);
-                }
+            try {
+                await SupabaseConfig.updateLastLogin(user.id);
+            } catch (e) {
+                console.warn('Could not update last login in Supabase:', e);
             }
             
             // Set current user (without password)
@@ -413,7 +299,6 @@ class UserManagement {
         }
 
         console.log(`❌ Login failed for: ${username}`);
-        
         return { success: false, message: 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' };
     }
 
@@ -493,23 +378,19 @@ class UserManagement {
             address: userData.address || null
         };
 
-        // Save to localStorage
-        this.users.push(newUser);
-        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-
-        // Try to save to Supabase if available
-        if (this.isUsingSupabase) {
-            try {
-                const result = await SupabaseConfig.saveUser(newUser);
-                if (!result.success) {
-                    console.warn('Could not save user to Supabase:', result.error);
-                }
-            } catch (e) {
-                console.warn('Could not save user to Supabase:', e);
-            }
+        console.log(`👤 Creating user: ${userData.username}`);
+        
+        // Save to Supabase
+        const result = await SupabaseConfig.saveUser(newUser);
+        if (!result.success) {
+            return { success: false, message: 'មិនអាចរក្សាទុកអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
         }
+
+        // Update local cache
+        this.users.push(newUser);
         
         const { password, ...userWithoutPassword } = newUser;
+        console.log(`✅ User created: ${userData.username}`);
         return { success: true, user: userWithoutPassword };
     }
 
@@ -535,19 +416,17 @@ class UserManagement {
             updates.password = this.hashPassword(updates.password);
         }
 
-        // Update local cache
+        // Update in Supabase
         const updatedUser = { ...this.users[index], ...updates };
-        this.users[index] = updatedUser;
-        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-
-        // Try to update in Supabase if available
-        if (this.isUsingSupabase) {
-            try {
-                await SupabaseConfig.saveUser(updatedUser);
-            } catch (e) {
-                console.warn('Could not update user in Supabase:', e);
-            }
+        console.log(`✏️ Updating user: ${updatedUser.username}`);
+        
+        const result = await SupabaseConfig.saveUser(updatedUser);
+        if (!result.success) {
+            return { success: false, message: 'មិនអាចរក្សាទុកការកែប្រែក្នុងប្រព័ន្ធ: ' + result.error };
         }
+
+        // Update local cache
+        this.users[index] = updatedUser;
 
         if (this.currentUser && this.currentUser.id === userId) {
             const { password, ...userWithoutPassword } = updatedUser;
@@ -556,6 +435,7 @@ class UserManagement {
             this.updateUI();
         }
 
+        console.log(`✅ User updated: ${updatedUser.username}`);
         return { success: true, user: updatedUser };
     }
 
@@ -574,19 +454,18 @@ class UserManagement {
             return { success: false, message: 'មិនអាចលុប Admin ចុងក្រោយបានទេ' };
         }
 
-        // Delete from localStorage
-        this.users = this.users.filter(u => u.id !== userId);
-        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-
-        // Try to delete from Supabase if available
-        if (this.isUsingSupabase) {
-            try {
-                await SupabaseConfig.deleteUser(userId);
-            } catch (e) {
-                console.warn('Could not delete user from Supabase:', e);
-            }
+        console.log(`🗑️ Deleting user: ${userToDelete?.username || userId}`);
+        
+        // Delete from Supabase
+        const result = await SupabaseConfig.deleteUser(userId);
+        if (!result.success) {
+            return { success: false, message: 'មិនអាចលុបអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
         }
 
+        // Update local cache
+        this.users = this.users.filter(u => u.id !== userId);
+
+        console.log(`✅ User deleted: ${userId}`);
         return { success: true };
     }
 
@@ -653,15 +532,11 @@ class UserManagement {
         }
 
         teacher.permissions = { ...teacher.permissions, ...permissions };
-        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
-
-        // Update in Supabase if available
-        if (this.isUsingSupabase) {
-            try {
-                await SupabaseConfig.updateUserPermissions(teacherId, teacher.permissions);
-            } catch (e) {
-                console.warn('Could not update permissions in Supabase:', e);
-            }
+        
+        // Update in Supabase
+        const result = await SupabaseConfig.updateUserPermissions(teacherId, teacher.permissions);
+        if (!result.success) {
+            return { success: false, message: 'មិនអាចរក្សាទុកសិទ្ធិក្នុងប្រព័ន្ធ: ' + result.error };
         }
 
         return { success: true, user: teacher };
@@ -699,38 +574,21 @@ class UserManagement {
             userIds: userIdsStr
         };
 
-        // Save to localStorage
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        notifications.unshift(notification);
-        localStorage.setItem('notifications', JSON.stringify(notifications));
-
-        // Save to Supabase if available
-        if (this.isUsingSupabase) {
-            try {
-                await SupabaseConfig.saveNotification(notification);
-            } catch (e) {
-                console.warn('Could not save notification to Supabase:', e);
-            }
+        const result = await SupabaseConfig.saveNotification(notification);
+        if (!result.success) {
+            return { success: false, message: 'មិនអាចរក្សាទុកការជូនដំណឹងក្នុងប្រព័ន្ធ: ' + result.error };
         }
 
         return { success: true, notification: notification };
     }
 
-    getNotifications(userId = null) {
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        
+    async getNotifications(userId = null) {
         if (!userId) {
             userId = this.currentUser?.id;
         }
-
         if (!userId) return [];
 
-        return notifications.filter(n => {
-            if (n.userIds === 'all') return true;
-            if (!n.userIds) return false;
-            const userIdsList = n.userIds.split(',');
-            return userIdsList.includes(userId);
-        });
+        return await SupabaseConfig.getNotifications(userId);
     }
 
     async markNotificationRead(notificationId, userId = null) {
@@ -739,24 +597,7 @@ class UserManagement {
         }
         if (!userId) return;
 
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        const notification = notifications.find(n => n.id === notificationId);
-        if (notification) {
-            const readList = notification.readBy ? notification.readBy.split(',') : [];
-            if (!readList.includes(userId)) {
-                readList.push(userId);
-                notification.readBy = readList.join(',');
-                localStorage.setItem('notifications', JSON.stringify(notifications));
-
-                if (this.isUsingSupabase) {
-                    try {
-                        await SupabaseConfig.markNotificationRead(notificationId, userId);
-                    } catch (e) {
-                        console.warn('Could not mark notification as read in Supabase:', e);
-                    }
-                }
-            }
-        }
+        return await SupabaseConfig.markNotificationRead(notificationId, userId);
     }
 
     // ============================================
@@ -1178,43 +1019,15 @@ class UserManagement {
             alert('❌ ' + result.message);
         }
     }
-
-    // ============================================
-    // HELPER: Get user management status
-    // ============================================
-
-    getStatus() {
-        return {
-            isInitialized: this.isInitialized,
-            isUsingSupabase: this.isUsingSupabase,
-            usersCount: this.users.length,
-            isLoggedIn: this.isLoggedIn(),
-            currentUser: this.currentUser ? {
-                username: this.currentUser.username,
-                role: this.currentUser.role,
-                fullName: this.currentUser.fullName
-            } : null
-        };
-    }
 }
 
 // ============================================
 // INITIALIZE USER MANAGEMENT
 // ============================================
 
-// Create instance immediately
 const userManagement = new UserManagement();
 window.userManagement = userManagement;
 
-// Force initialization immediately
-if (typeof userManagement.init === 'function') {
-    // Call init but don't await - let it run in background
-    userManagement.init().catch(err => {
-        console.error('Init error:', err);
-    });
-}
-
-// When DOM is ready, update UI
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM ready, updating UI...');
     if (userManagement && typeof userManagement.updateUI === 'function') {
