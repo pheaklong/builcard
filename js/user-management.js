@@ -83,7 +83,7 @@ class UserManagement {
             }
         };
         
-        // Start initialization
+        // Start initialization immediately
         this.init();
     }
 
