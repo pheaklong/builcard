@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ចូលប្រើប្រព័ន្ធ - BUILCARD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .login-card h1 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4f46e5;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .login-card .subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .login-card .logo {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-login:hover {
+            background: #4338ca;
+        }
+        .btn-login:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+        .test-credentials {
+            margin-top: 20px;
+            padding: 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .test-credentials strong {
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">📚</div>
+        <h1>BUILCARD</h1>
+        <p class="subtitle">ប្រព័ន្ធគ្រប់គ្រងការសិក្សា</p>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username">ឈ្មោះអ្នកប្រើប្រាស់</label>
+                <input type="text" id="username" placeholder="បញ្ចូលឈ្មោះអ្នកប្រើប្រាស់" required>
+            </div>
+            <div class="form-group">
+                <label for="password">ពាក្យសម្ងាត់</label>
+                <input type="password" id="password" placeholder="បញ្ចូលពាក្យសម្ងាត់" required>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">
+                🔐 ចូលប្រើប្រាស់
+            </button>
+        </form>
+
+        <div class="test-credentials">
+            <p><strong>📝 សម្រាប់សាកល្បង៖</strong></p>
+            <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong></p>
+            <p>👨‍🏫 គ្រូ: <strong>teacher</strong> / <strong>teacher123</strong></p>
+            <p>👨‍🎓 សិស្ស: <strong>student</strong> / <strong>student123</strong></p>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/user-management.js"></script>
+    <script>
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('errorMessage');
+            const btn = document.getElementById('loginBtn');
+
+            if (!username || !password) {
+                showError('សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ កំពុងចូលប្រើ...';
+
+            try {
+                const result = userManagement.login(username, password);
+                
+                if (result.success) {
+                    errorEl.classList.remove('show');
+                    // Redirect based on role
+                    const role = result.user.role;
+                    const redirectMap = {
+                        'admin': 'admin-dashboard.html',
+                        'editor': 'editor-dashboard.html',
+                        'teacher': 'teacher-dashboard.html',
+                        'student': 'student-dashboard.html'
+                    };
+                    window.location.href = redirectMap[role] || 'index.html';
+                } else {
+                    showError(result.message || 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ');
+                    btn.disabled = false;
+                    btn.textContent = '🔐 ចូលប្រើប្រាស់';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('មានបញ្ហាក្នុងការចូលប្រើប្រាស់។ សូមព្យាយាមម្តងទៀត។');
+                btn.disabled = false;
+                btn.textContent = '🔐 ចូលប្រើប្រាស់';
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        // Enter key to submit
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
