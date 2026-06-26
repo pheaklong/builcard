@@ -280,16 +280,18 @@
         function renderNotifications() {
             const container = document.getElementById('notificationList');
             if (!container) return;
-            const notifications = userManagement.getNotifications() || [];
-            if (notifications.length === 0) {
-                container.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="text-5xl mb-3">📭</div><p>មិនមានការជូនដំណឹងទេ</p></div>`;
-                return;
-            }
-            container.innerHTML = `<div class="space-y-2 max-h-96 overflow-y-auto pr-1">${notifications.map(n => `
-                <div class="notification-item p-3 rounded-lg border-l-4 ${n.type === 'info' ? 'border-blue-400 bg-blue-50' : n.type === 'success' ? 'border-green-400 bg-green-50' : n.type === 'warning' ? 'border-yellow-400 bg-yellow-50' : 'border-red-400 bg-red-50'}">
-                    <div class="flex justify-between items-start"><h4 class="font-medium text-gray-800">${n.title}</h4><span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span></div>
-                    <p class="text-sm text-gray-600 mt-1">${n.message}</p>
-                </div>`).join('')}</div>`;
+            
+            userManagement.getNotifications().then(notifications => {
+                if (!notifications || notifications.length === 0) {
+                    container.innerHTML = `<div class="text-center py-10 text-gray-500"><div class="text-5xl mb-3">📭</div><p>មិនមានការជូនដំណឹងទេ</p></div>`;
+                    return;
+                }
+                container.innerHTML = `<div class="space-y-2 max-h-96 overflow-y-auto pr-1">${notifications.map(n => `
+                    <div class="notification-item p-3 rounded-lg border-l-4 ${n.type === 'info' ? 'border-blue-400 bg-blue-50' : n.type === 'success' ? 'border-green-400 bg-green-50' : n.type === 'warning' ? 'border-yellow-400 bg-yellow-50' : 'border-red-400 bg-red-50'}">
+                        <div class="flex justify-between items-start"><h4 class="font-medium text-gray-800">${n.title}</h4><span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span></div>
+                        <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                    </div>`).join('')}</div>`;
+            });
         }
 
         function handleCreateNotification(event) {
