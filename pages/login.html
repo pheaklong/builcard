@@ -24,7 +24,7 @@
             border-radius: 20px;
             padding: 40px 36px;
             width: 100%;
-            max-width: 420px;
+            max-width: 450px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             animation: fadeIn 0.5s ease;
         }
@@ -126,10 +126,13 @@
             color: #a5f3fc;
             border-radius: 8px;
             font-size: 12px;
-            font-family: monospace;
-            max-height: 200px;
+            font-family: 'Courier New', monospace;
+            max-height: 250px;
             overflow-y: auto;
             display: none;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.6;
         }
         .debug-info.show { display: block; }
         .debug-toggle {
@@ -157,9 +160,7 @@
             justify-content: center;
             z-index: 1000;
         }
-        .loading-overlay.show {
-            display: flex;
-        }
+        .loading-overlay.show { display: flex; }
         .loading-box {
             background: white;
             padding: 30px 40px;
@@ -176,14 +177,29 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 12px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .loading-box p { color: #4b5563; font-size: 14px; }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
         }
-        .loading-box p {
-            color: #4b5563;
-            font-size: 14px;
+        .status-badge.success { background: #dcfce7; color: #166534; }
+        .status-badge.error { background: #fee2e2; color: #991b1b; }
+        .status-badge.warning { background: #fef3c7; color: #92400e; }
+        .status-badge.info { background: #dbeafe; color: #1e40af; }
+        .connection-status {
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            display: none;
         }
+        .connection-status.show { display: block; }
+        .connection-status.connected { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .connection-status.disconnected { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .connection-status.checking { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
     </style>
 </head>
 <body>
@@ -191,7 +207,8 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-box">
             <div class="spinner"></div>
-            <p>កំពុងភ្ជាប់ប្រព័ន្ធ...</p>
+            <p id="loadingText">កំពុងភ្ជាប់ប្រព័ន្ធ...</p>
+            <p id="loadingDetail" style="font-size:12px;color:#9ca3af;margin-top:8px;"></p>
         </div>
     </div>
 
@@ -199,6 +216,11 @@
         <div class="logo">📚</div>
         <h1>BUILCARD</h1>
         <p class="subtitle">ប្រព័ន្ធគ្រប់គ្រងការសិក្សា</p>
+
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="connection-status checking show">
+            🔄 កំពុងពិនិត្យការតភ្ជាប់...
+        </div>
 
         <div id="errorMessage" class="error-message"></div>
 
@@ -217,10 +239,14 @@
         <div class="test-credentials">
             <p><strong>📝 សម្រាប់សាកល្បង៖</strong></p>
             <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong> <span class="role-badge admin">Admin</span></p>
+            <p style="font-size:12px;color:#9ca3af;margin-top:8px;">
+                💡 ប្រសិនបើ Login មិនចូល សូមចុច "បង្ហាញព័ត៌មាន Debug"
+            </p>
         </div>
 
         <div class="debug-toggle">
             <button onclick="toggleDebug()">🔧 បង្ហាញព័ត៌មាន Debug</button>
+            <button onclick="testDirectLogin()" style="margin-left:12px;">🧪 សាកល្បង Login ដោយផ្ទាល់</button>
         </div>
         <div id="debugInfo" class="debug-info">
             <div id="debugContent">កំពុងរង់ចាំ...</div>
@@ -235,20 +261,36 @@
         // ============================================
         
         let debugLogs = [];
+        let debugStartTime = Date.now();
 
-        function addDebugLog(message, data = null) {
-            const timestamp = new Date().toLocaleTimeString();
-            const log = { timestamp, message, data };
+        function getTimestamp() {
+            const elapsed = ((Date.now() - debugStartTime) / 1000).toFixed(1);
+            return `${elapsed}s`;
+        }
+
+        function addDebugLog(message, data = null, type = 'info') {
+            const timestamp = getTimestamp();
+            const log = { timestamp, message, data, type };
             debugLogs.push(log);
             updateDebugDisplay();
-            console.log(`[${timestamp}] ${message}`, data || '');
+            
+            // Console log with colors
+            const emoji = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            console.log(`[${timestamp}] ${emoji} ${message}`, data || '');
         }
 
         function updateDebugDisplay() {
             const container = document.getElementById('debugContent');
             if (!container) return;
             
-            const logs = debugLogs.slice(-20).map(log => {
+            const logs = debugLogs.slice(-30).map(log => {
+                const colors = {
+                    error: '#fca5a5',
+                    success: '#86efac',
+                    warning: '#fcd34d',
+                    info: '#93c5fd'
+                };
+                const color = colors[log.type] || '#a5f3fc';
                 let dataStr = '';
                 if (log.data) {
                     try {
@@ -257,10 +299,16 @@
                         dataStr = ' ' + String(log.data);
                     }
                 }
-                return `<div>${log.timestamp} - ${log.message}${dataStr}</div>`;
+                const emoji = log.type === 'error' ? '❌' : log.type === 'success' ? '✅' : log.type === 'warning' ? '⚠️' : 'ℹ️';
+                return `<div style="color:${color}">[${log.timestamp}] ${emoji} ${log.message}${dataStr}</div>`;
             }).join('');
             
             container.innerHTML = logs || 'មិនមានទិន្នន័យ';
+            // Auto scroll to bottom
+            const debugEl = document.getElementById('debugInfo');
+            if (debugEl && debugEl.classList.contains('show')) {
+                debugEl.scrollTop = debugEl.scrollHeight;
+            }
         }
 
         function toggleDebug() {
@@ -272,68 +320,133 @@
         }
 
         // ============================================
+        // CONNECTION TEST
+        // ============================================
+
+        async function testSupabaseConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.className = 'connection-status checking show';
+            statusEl.textContent = '🔄 កំពុងពិនិត្យការតភ្ជាប់ទៅ Supabase...';
+            addDebugLog('Testing Supabase connection...');
+
+            try {
+                // Test 1: Check if SupabaseConfig exists
+                if (typeof SupabaseConfig === 'undefined') {
+                    statusEl.className = 'connection-status disconnected show';
+                    statusEl.textContent = '❌ SupabaseConfig មិនត្រូវបានផ្ទុក';
+                    addDebugLog('SupabaseConfig is undefined', null, 'error');
+                    return false;
+                }
+                addDebugLog('✅ SupabaseConfig loaded');
+
+                // Test 2: Direct fetch to Supabase
+                addDebugLog('Testing direct fetch to Supabase...');
+                const url = 'https://xmodwtwlidnwnxrkrvsj.supabase.co/rest/v1/users?select=count&limit=1';
+                const response = await fetch(url, {
+                    headers: {
+                        'apikey': SupabaseConfig.supabaseKey,
+                        'Authorization': `Bearer ${SupabaseConfig.supabaseKey}`
+                    }
+                });
+                
+                addDebugLog(`Fetch response status: ${response.status}`, null, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addDebugLog(`✅ Supabase connection successful!`, { count: data.length }, 'success');
+                    statusEl.className = 'connection-status connected show';
+                    statusEl.textContent = `✅ តភ្ជាប់ទៅ Supabase បានជោគជ័យ (${data.length} users)`;
+                    return true;
+                } else {
+                    const errorText = await response.text();
+                    addDebugLog(`❌ Supabase connection failed: ${response.status}`, { error: errorText }, 'error');
+                    statusEl.className = 'connection-status disconnected show';
+                    statusEl.textContent = `❌ មិនអាចតភ្ជាប់ទៅ Supabase (${response.status})`;
+                    return false;
+                }
+            } catch (error) {
+                addDebugLog(`❌ Connection error: ${error.message}`, null, 'error');
+                statusEl.className = 'connection-status disconnected show';
+                statusEl.textContent = `❌ កំហុសក្នុងការតភ្ជាប់: ${error.message}`;
+                return false;
+            }
+        }
+
+        // ============================================
+        // DIRECT LOGIN TEST
+        // ============================================
+
+        async function testDirectLogin() {
+            addDebugLog('🧪 Testing direct login...', null, 'info');
+            
+            try {
+                // Get users from localStorage
+                const users = JSON.parse(localStorage.getItem('system_users_backup') || '[]');
+                addDebugLog(`📋 Users in localStorage: ${users.length}`, users.map(u => ({ username: u.username, role: u.role })), 'info');
+                
+                // Find admin
+                const admin = users.find(u => u.username === 'admin');
+                if (!admin) {
+                    addDebugLog('❌ Admin not found in localStorage', null, 'error');
+                    alert('Admin not found in localStorage!');
+                    return;
+                }
+                addDebugLog('✅ Admin found', { username: admin.username, password: admin.password.substring(0, 10) + '...' }, 'success');
+                
+                // Hash the password
+                const hashed = userManagement.hashPassword('admin123');
+                addDebugLog(`🔐 Hashed password: ${hashed}`, null, 'info');
+                addDebugLog(`🔐 Stored password: ${admin.password}`, null, 'info');
+                addDebugLog(`🔐 Match: ${admin.password === hashed}`, null, admin.password === hashed ? 'success' : 'error');
+                
+                if (admin.password === hashed) {
+                    addDebugLog('✅ Password match! Login should work.', null, 'success');
+                    alert('✅ Password is correct! Try logging in with admin/admin123');
+                } else {
+                    addDebugLog('❌ Password mismatch!', null, 'error');
+                    alert('❌ Password mismatch! Please check the password hash.');
+                }
+            } catch (error) {
+                addDebugLog(`❌ Test error: ${error.message}`, null, 'error');
+                alert('Error during test: ' + error.message);
+            }
+        }
+
+        // ============================================
         // WAIT FOR USER MANAGEMENT
         // ============================================
 
         function waitForUserManagement() {
             return new Promise((resolve) => {
                 let attempts = 0;
-                const maxAttempts = 30; // 30 * 200ms = 6 seconds
+                const maxAttempts = 50;
                 
-                addDebugLog('⏳ Waiting for userManagement to initialize...');
+                addDebugLog('⏳ Waiting for userManagement...', null, 'info');
                 
-                // First check if userManagement exists
                 if (typeof userManagement === 'undefined') {
-                    addDebugLog('⚠️ userManagement is undefined, waiting...');
                     const checkInterval = setInterval(() => {
                         attempts++;
                         if (typeof userManagement !== 'undefined') {
                             clearInterval(checkInterval);
-                            addDebugLog('✅ userManagement found');
-                            // Now wait for initialization
-                            waitForInit(resolve);
+                            addDebugLog('✅ userManagement found', {
+                                isInitialized: userManagement.isInitialized,
+                                usersCount: userManagement.users?.length || 0
+                            }, 'success');
+                            resolve();
                         } else if (attempts >= maxAttempts) {
                             clearInterval(checkInterval);
-                            addDebugLog('❌ userManagement not found after timeout');
+                            addDebugLog('❌ userManagement not found after timeout', null, 'error');
                             resolve();
                         }
                     }, 200);
                 } else {
-                    waitForInit(resolve);
+                    addDebugLog('✅ userManagement already loaded', {
+                        isInitialized: userManagement.isInitialized,
+                        usersCount: userManagement.users?.length || 0
+                    }, 'success');
+                    resolve();
                 }
             });
-        }
-
-        function waitForInit(resolve) {
-            let attempts = 0;
-            const maxAttempts = 30;
-            
-            const checkInterval = setInterval(() => {
-                attempts++;
-                if (userManagement.isInitialized) {
-                    clearInterval(checkInterval);
-                    addDebugLog('✅ userManagement initialized', { 
-                        isUsingSupabase: userManagement.isUsingSupabase,
-                        usersCount: userManagement.users?.length || 0
-                    });
-                    resolve();
-                } else if (attempts >= maxAttempts) {
-                    clearInterval(checkInterval);
-                    addDebugLog('⚠️ userManagement not initialized after timeout, forcing...');
-                    // Force initialization
-                    if (typeof userManagement.init === 'function') {
-                        userManagement.init().then(() => {
-                            addDebugLog('✅ userManagement forced init complete');
-                            resolve();
-                        }).catch(err => {
-                            addDebugLog('❌ Force init failed', { error: err.message });
-                            resolve();
-                        });
-                    } else {
-                        resolve();
-                    }
-                }
-            }, 200);
         }
 
         // ============================================
@@ -349,31 +462,31 @@
             const btn = document.getElementById('loginBtn');
             const overlay = document.getElementById('loadingOverlay');
 
-            addDebugLog('🔄 Starting login', { username });
+            addDebugLog(`🔄 Login attempt for: ${username}`, null, 'info');
 
-            // Reset error
             errorEl.classList.remove('show');
             errorEl.textContent = '';
 
-            // Validate
             if (!username || !password) {
                 showError('សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់');
-                addDebugLog('❌ Validation failed: empty fields');
+                addDebugLog('❌ Validation failed: empty fields', null, 'error');
                 return;
             }
 
-            // Show loading overlay
             overlay.classList.add('show');
+            document.getElementById('loadingText').textContent = 'កំពុងចូលប្រើប្រាស់...';
+            document.getElementById('loadingDetail').textContent = `អ្នកប្រើប្រាស់: ${username}`;
+            
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> កំពុងចូលប្រើ...';
 
             try {
-                // Wait for userManagement to be ready
+                // Wait for userManagement
                 await waitForUserManagement();
 
                 // Check if userManagement is available
                 if (typeof userManagement === 'undefined') {
-                    addDebugLog('❌ userManagement is undefined!');
+                    addDebugLog('❌ userManagement is undefined!', null, 'error');
                     showError('ប្រព័ន្ធមិនទាន់ត្រៀមខ្លួន សូមផ្ទុកទំព័រឡើងវិញ');
                     overlay.classList.remove('show');
                     btn.disabled = false;
@@ -381,38 +494,38 @@
                     return;
                 }
 
-                addDebugLog('✅ userManagement ready', { 
+                // Check if userManagement is initialized
+                if (!userManagement.isInitialized) {
+                    addDebugLog('⏳ userManagement not initialized, forcing init...', null, 'warning');
+                    await userManagement.init();
+                    addDebugLog('✅ userManagement initialized after force', {
+                        isInitialized: userManagement.isInitialized,
+                        usersCount: userManagement.users?.length || 0
+                    }, 'success');
+                }
+
+                addDebugLog('📋 UserManagement status', {
                     isInitialized: userManagement.isInitialized,
                     isUsingSupabase: userManagement.isUsingSupabase,
                     usersCount: userManagement.users?.length || 0
-                });
+                }, 'info');
 
-                // If no users, create default admin
+                // Check if users exist
                 if (userManagement.users.length === 0) {
-                    addDebugLog('👤 No users found, creating default admin...');
+                    addDebugLog('⚠️ No users found, creating default admin...', null, 'warning');
                     await userManagement.createDefaultAdmin();
-                    // Reload users
-                    await userManagement.loadUsersFromSupabase();
-                    addDebugLog(`✅ Users loaded: ${userManagement.users.length}`);
-                }
-
-                // Check if admin exists
-                const adminExists = userManagement.users.find(u => u.username === 'admin');
-                addDebugLog(`👑 Admin exists: ${!!adminExists}`);
-                if (!adminExists) {
-                    addDebugLog('👤 Creating admin user...');
-                    await userManagement.createDefaultAdmin();
+                    addDebugLog(`✅ Users after creation: ${userManagement.users.length}`, null, 'success');
                 }
 
                 // Attempt login
-                addDebugLog('🔑 Attempting login...');
+                addDebugLog('🔑 Calling userManagement.login()...', null, 'info');
                 const result = await userManagement.login(username, password);
                 
-                addDebugLog('📩 Login result', { 
+                addDebugLog('📩 Login result', {
                     success: result.success,
-                    user: result.user ? { username: result.user.username, role: result.user.role } : null,
-                    message: result.message
-                });
+                    message: result.message,
+                    user: result.user ? { username: result.user.username, role: result.user.role } : null
+                }, result.success ? 'success' : 'error');
                 
                 if (result.success) {
                     errorEl.classList.remove('show');
@@ -425,7 +538,7 @@
                     };
                     const redirectUrl = redirectMap[role] || 'index.html';
                     
-                    addDebugLog(`✅ Login successful! Redirecting to: ${redirectUrl}`);
+                    addDebugLog(`✅ Login successful! Redirecting to: ${redirectUrl}`, null, 'success');
                     
                     btn.innerHTML = '✅ ចូលប្រើដោយជោគជ័យ!';
                     btn.style.background = '#22c55e';
@@ -446,10 +559,7 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                addDebugLog('❌ Login exception', { 
-                    message: error.message,
-                    stack: error.stack 
-                });
+                addDebugLog(`❌ Login exception: ${error.message}`, { stack: error.stack }, 'error');
                 showError('មានបញ្ហាក្នុងការចូលប្រើប្រាស់។ សូមព្យាយាមម្តងទៀត។ ' + error.message);
                 overlay.classList.remove('show');
                 btn.disabled = false;
@@ -462,7 +572,7 @@
             const errorEl = document.getElementById('errorMessage');
             errorEl.textContent = message;
             errorEl.classList.add('show');
-            addDebugLog(`❌ Error: ${message}`);
+            addDebugLog(`❌ Error: ${message}`, null, 'error');
         }
 
         // ============================================
@@ -483,61 +593,76 @@
         // PAGE LOAD
         // ============================================
 
-        document.addEventListener('DOMContentLoaded', function() {
-            addDebugLog('📄 Page loaded');
+        document.addEventListener('DOMContentLoaded', async function() {
+            addDebugLog('📄 Page loaded', null, 'info');
             
             // Show loading overlay
             document.getElementById('loadingOverlay').classList.add('show');
-            
+            document.getElementById('loadingText').textContent = 'កំពុងផ្ទុកប្រព័ន្ធ...';
+            document.getElementById('loadingDetail').textContent = 'សូមមេត្តារង់ចាំ...';
+
+            // Test Supabase connection
+            await testSupabaseConnection();
+
             // Check if userManagement is available
-            if (typeof userManagement !== 'undefined') {
-                addDebugLog('✅ userManagement loaded', { 
-                    isInitialized: userManagement.isInitialized,
-                    isUsingSupabase: userManagement.isUsingSupabase 
-                });
-                
-                // Wait for initialization
-                waitForUserManagement().then(() => {
-                    document.getElementById('loadingOverlay').classList.remove('show');
-                    
-                    // Check if already logged in
-                    if (userManagement.isLoggedIn()) {
-                        const user = userManagement.getCurrentUser();
-                        addDebugLog('ℹ️ User already logged in', { username: user.username, role: user.role });
-                        const redirectMap = {
-                            'admin': 'admin-dashboard.html',
-                            'editor': 'editor-dashboard.html',
-                            'teacher': 'teacher-dashboard.html',
-                            'student': 'student-dashboard.html'
-                        };
-                        window.location.href = redirectMap[user.role] || 'index.html';
-                        return;
-                    }
-                    
-                    // Focus on username field
-                    document.getElementById('username').focus();
-                });
-            } else {
-                addDebugLog('⚠️ userManagement not loaded, waiting...');
-                // Wait for userManagement
+            await waitForUserManagement();
+
+            // Check if userManagement is initialized
+            if (typeof userManagement !== 'undefined' && !userManagement.isInitialized) {
+                addDebugLog('⏳ Waiting for userManagement to initialize...', null, 'warning');
                 let attempts = 0;
-                const checkInterval = setInterval(() => {
-                    attempts++;
-                    if (typeof userManagement !== 'undefined') {
-                        clearInterval(checkInterval);
-                        addDebugLog('✅ userManagement loaded (delayed)');
-                        waitForUserManagement().then(() => {
-                            document.getElementById('loadingOverlay').classList.remove('show');
-                            document.getElementById('username').focus();
-                        });
-                    } else if (attempts > 30) {
-                        clearInterval(checkInterval);
-                        addDebugLog('❌ userManagement not loaded after 30 attempts');
-                        document.getElementById('loadingOverlay').classList.remove('show');
-                        showError('ប្រព័ន្ធមិនអាចផ្ទុកបានទេ សូមផ្ទុកទំព័រឡើងវិញ');
-                    }
-                }, 200);
+                const maxAttempts = 30;
+                await new Promise((resolve) => {
+                    const checkInterval = setInterval(() => {
+                        attempts++;
+                        if (userManagement.isInitialized) {
+                            clearInterval(checkInterval);
+                            addDebugLog('✅ userManagement initialized', {
+                                isUsingSupabase: userManagement.isUsingSupabase,
+                                usersCount: userManagement.users?.length || 0
+                            }, 'success');
+                            resolve();
+                        } else if (attempts >= maxAttempts) {
+                            clearInterval(checkInterval);
+                            addDebugLog('⚠️ userManagement not initialized after timeout', null, 'warning');
+                            // Force init
+                            userManagement.init().then(() => {
+                                addDebugLog('✅ userManagement forced init complete', null, 'success');
+                                resolve();
+                            }).catch(err => {
+                                addDebugLog('❌ Force init failed', { error: err.message }, 'error');
+                                resolve();
+                            });
+                        }
+                    }, 200);
+                });
             }
+
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').classList.remove('show');
+
+            // Check if already logged in
+            if (typeof userManagement !== 'undefined' && userManagement.isLoggedIn()) {
+                const user = userManagement.getCurrentUser();
+                addDebugLog(`ℹ️ User already logged in: ${user.username} (${user.role})`, null, 'info');
+                const redirectMap = {
+                    'admin': 'admin-dashboard.html',
+                    'editor': 'editor-dashboard.html',
+                    'teacher': 'teacher-dashboard.html',
+                    'student': 'student-dashboard.html'
+                };
+                window.location.href = redirectMap[user.role] || 'index.html';
+                return;
+            }
+
+            // Show debug info
+            addDebugLog('🔓 Ready for login', null, 'success');
+            
+            // Focus on username field
+            document.getElementById('username').focus();
+
+            // Update debug display
+            updateDebugDisplay();
         });
 
         // ============================================
@@ -548,6 +673,8 @@
         window.toggleDebug = toggleDebug;
         window.addDebugLog = addDebugLog;
         window.waitForUserManagement = waitForUserManagement;
+        window.testSupabaseConnection = testSupabaseConnection;
+        window.testDirectLogin = testDirectLogin;
     </script>
 </body>
 </html>
