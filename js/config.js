@@ -37,10 +37,10 @@ const SupabaseConfig = {
                 return false;
             }
 
-            // Create Supabase client
+            // Create Supabase client using 'supabaseKey' (Anon Key) for client-side security
             this.supabase = supabase.createClient(
                 this.supabaseUrl,
-                this.supabaseServiceKey, // Use service role key for admin access
+                this.supabaseKey, 
                 {
                     auth: {
                         persistSession: false,
@@ -57,7 +57,7 @@ const SupabaseConfig = {
             );
             
             this.isInitialized = true;
-            console.log('✅ Supabase client initialized with service role');
+            console.log('✅ Supabase client initialized with anon key');
             return true;
         } catch (error) {
             console.error('❌ Supabase initialization error:', error);
