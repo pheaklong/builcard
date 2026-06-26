@@ -17,6 +17,8 @@
             left: 0;
             padding: 20px 0;
             color: white;
+            z-index: 100;
+            overflow-y: auto;
         }
         .sidebar .brand {
             text-align: center;
@@ -96,6 +98,12 @@
         .tab-content.active {
             display: block;
         }
+        .notification-item {
+            transition: all 0.2s;
+        }
+        .notification-item:hover {
+            background: #f3f4f6;
+        }
     </style>
 </head>
 <body>
@@ -170,7 +178,7 @@
                         <div class="text-2xl">📋</div>
                         <p class="text-sm font-medium text-gray-700">ស្រង់វត្តមាន</p>
                     </a>
-                    <a href="index.html" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center">
+                    <a href="../index.html" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition text-center">
                         <div class="text-2xl">🏠</div>
                         <p class="text-sm font-medium text-gray-700">ទំព័រដើម</p>
                     </a>
@@ -242,7 +250,7 @@
                         <label class="block text-sm font-medium text-gray-700">ឆ្នាំសិក្សា</label>
                         <select class="w-full max-w-md border rounded-lg px-3 py-2 text-sm">
                             <option>2024-2025</option>
-                            <option>2025-2026</option>
+                            <option selected>2025-2026</option>
                         </select>
                     </div>
                     <div>
@@ -251,6 +259,13 @@
                             <option>ភាសាខ្មែរ</option>
                             <option>English</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">ការតភ្ជាប់ Supabase</label>
+                        <div class="flex items-center gap-2">
+                            <span id="supabaseStatus" class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">កំពុងពិនិត្យ...</span>
+                            <button onclick="checkSupabaseConnection()" class="text-indigo-600 hover:text-indigo-800 text-sm">ពិនិត្យម្តងទៀត</button>
+                        </div>
                     </div>
                     <button class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                         💾 រក្សាទុកការកំណត់
@@ -267,7 +282,13 @@
         // PAGE INITIALIZATION
         // ============================================
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Wait for user management to initialize
+            if (typeof userManagement === 'undefined') {
+                console.error('User management not loaded');
+                return;
+            }
+
             // Check if user is logged in and is admin
             if (!userManagement.isLoggedIn()) {
                 window.location.href = 'login.html';
@@ -286,13 +307,16 @@
             document.getElementById('roleBadge').textContent = 'Admin';
 
             // Load stats
-            updateStats();
+            await updateStats();
 
             // Load user management
             userManagement.renderUserManagement('userManagementContainer');
 
             // Load notifications
             renderNotifications();
+
+            // Check Supabase connection
+            await checkSupabaseConnection();
 
             // Update UI
             userManagement.updateUI();
@@ -340,20 +364,53 @@
         }
 
         // ============================================
+        // SUPABASE CONNECTION CHECK
+        // ============================================
+
+        async function checkSupabaseConnection() {
+            const statusEl = document.getElementById('supabaseStatus');
+            if (!statusEl) return;
+
+            try {
+                if (typeof SupabaseConfig !== 'undefined') {
+                    const connected = await SupabaseConfig.checkConnection();
+                    if (connected) {
+                        statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs';
+                        statusEl.textContent = '✅ តភ្ជាប់ដោយជោគជ័យ';
+                    } else {
+                        statusEl.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs';
+                        statusEl.textContent = '❌ មិនអាចតភ្ជាប់';
+                    }
+                } else {
+                    statusEl.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs';
+                    statusEl.textContent = '❌ Config.js មិនត្រូវបានផ្ទុក';
+                }
+            } catch (error) {
+                statusEl.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs';
+                statusEl.textContent = '❌ កំហុសក្នុងការតភ្ជាប់';
+                console.error('Connection check error:', error);
+            }
+        }
+
+        // ============================================
         // STATS
         // ============================================
 
-        function updateStats() {
-            const users = userManagement.getUsers();
-            const total = users.length;
-            const teachers = users.filter(u => u.role === 'teacher').length;
-            const students = users.filter(u => u.role === 'student').length;
-            const notifications = JSON.parse(localStorage.getItem('notifications') || '[]').length;
+        async function updateStats() {
+            try {
+                const users = userManagement.getUsers();
+                const total = users.length;
+                const teachers = users.filter(u => u.role === 'teacher').length;
+                const students = users.filter(u => u.role === 'student').length;
+                const notifications = JSON.parse(localStorage.getItem('notifications') || '[]').length;
 
-            document.getElementById('totalUsers').textContent = total;
-            document.getElementById('totalTeachers').textContent = teachers;
-            document.getElementById('totalStudents').textContent = students;
-            document.getElementById('totalNotifications').textContent = notifications;
+                document.getElementById('totalUsers').textContent = total;
+                document.getElementById('totalTeachers').textContent = teachers;
+                document.getElementById('totalStudents').textContent = students;
+                document.getElementById('totalNotifications').textContent = notifications;
+            } catch (error) {
+                console.error('Error updating stats:', error);
+            }
         }
 
         // ============================================
@@ -362,6 +419,8 @@
 
         function renderNotifications() {
             const container = document.getElementById('notificationList');
+            if (!container) return;
+
             const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
 
             if (notifications.length === 0) {
@@ -375,18 +434,30 @@
 
             container.innerHTML = `
                 <div class="space-y-2 max-h-96 overflow-y-auto">
-                    ${notifications.map(n => `
-                        <div class="p-3 bg-gray-50 border rounded-lg">
-                            <div class="flex justify-between items-start">
-                                <h4 class="font-medium text-gray-800">${n.title}</h4>
-                                <span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span>
+                    ${notifications.map(n => {
+                        // Format user_ids for display
+                        let audienceDisplay = 'ទាំងអស់គ្នា';
+                        if (n.userIds && n.userIds !== 'all') {
+                            const userIdsList = n.userIds.split(',');
+                            const userNames = userIdsList.map(id => {
+                                const user = userManagement.getUserById(id);
+                                return user ? user.fullName : id;
+                            });
+                            audienceDisplay = userNames.join(', ');
+                        }
+                        return `
+                            <div class="notification-item p-3 bg-gray-50 border rounded-lg">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="font-medium text-gray-800">${n.title}</h4>
+                                    <span class="text-xs text-gray-400">${new Date(n.createdAt).toLocaleString()}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1">${n.message}</p>
+                                <span class="text-xs text-gray-400 mt-1 block">
+                                    អ្នកទទួល៖ ${audienceDisplay}
+                                </span>
                             </div>
-                            <p class="text-sm text-gray-600 mt-1">${n.message}</p>
-                            <span class="text-xs text-gray-400 mt-1 block">
-                                អ្នកទទួល៖ ${n.userIds === 'all' ? 'ទាំងអស់គ្នា' : n.userIds.join(', ')}
-                            </span>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
         }
@@ -405,17 +476,16 @@
             }
 
             // Determine user IDs based on audience
-            let userIds = 'all';
+            let userIds = null;
             if (audience !== 'all') {
                 const users = userManagement.getUsers();
-                userIds = users
-                    .filter(u => {
-                        if (audience === 'teachers') return u.role === 'teacher';
-                        if (audience === 'students') return u.role === 'student';
-                        if (audience === 'admins') return u.role === 'admin';
-                        return true;
-                    })
-                    .map(u => u.id);
+                const filteredUsers = users.filter(u => {
+                    if (audience === 'teachers') return u.role === 'teacher';
+                    if (audience === 'students') return u.role === 'student';
+                    if (audience === 'admins') return u.role === 'admin';
+                    return true;
+                });
+                userIds = filteredUsers.map(u => u.id);
             }
 
             const result = userManagement.createNotification(title, message, type, userIds);
@@ -451,6 +521,7 @@
         window.handleCreateNotification = handleCreateNotification;
         window.renderNotifications = renderNotifications;
         window.updateStats = updateStats;
+        window.checkSupabaseConnection = checkSupabaseConnection;
     </script>
 </body>
 </html>
