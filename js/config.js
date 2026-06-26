@@ -3,15 +3,16 @@
 // ============================================
 
 const SupabaseConfig = {
-    // Supabase credentials - សូមប្តូរតាមគម្រោងរបស់អ្នក
+    // Supabase credentials
     supabaseUrl: 'https://xmodwtwlidnwnxrkrvsj.supabase.co',
     supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabaseServiceKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQzMjYwMCwiZXhwIjoyMDk2MDA4NjAwfQ.rNPt8E7eoNHon1oTLj64DU8DDVBZ-SZp4ZJmREHH8N8',
     supabase: null,
     supabaseAdmin: null,
     isInitialized: false,
+    connectionAttempts: 0,
+    maxConnectionAttempts: 5,
 
-    // Tables
     tables: {
         users: 'users',
         attendance: 'attendance',
@@ -31,36 +32,60 @@ const SupabaseConfig = {
         if (this.isInitialized) return true;
         
         try {
-            if (typeof supabase !== 'undefined' && supabase.createClient) {
-                // Regular client
-                this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey, {
-                    auth: {
-                        persistSession: true,
-                        autoRefreshToken: true
-                    }
-                });
-                
-                // Admin client with service role (bypass RLS)
-                if (this.supabaseServiceKey && this.supabaseServiceKey !== 'YOUR_SUPABASE_SERVICE_ROLE_KEY') {
-                    this.supabaseAdmin = supabase.createClient(this.supabaseUrl, this.supabaseServiceKey, {
-                        auth: {
-                            persistSession: false
-                        }
-                    });
-                    console.log('✅ Supabase admin client initialized with service role');
-                } else {
-                    console.warn('⚠️ Service role key not configured, using regular client');
-                    this.supabaseAdmin = this.supabase;
-                }
-                
-                this.isInitialized = true;
-                console.log('✅ Supabase initialized successfully');
-                return true;
-            } else {
+            // Check if supabase library is loaded
+            if (typeof supabase === 'undefined' || typeof supabase.createClient !== 'function') {
                 console.warn('⚠️ Supabase library not loaded yet, will retry...');
-                setTimeout(() => this.init(), 500);
+                if (this.connectionAttempts < this.maxConnectionAttempts) {
+                    this.connectionAttempts++;
+                    setTimeout(() => this.init(), 1000);
+                } else {
+                    console.error('❌ Supabase library not loaded after maximum attempts');
+                }
                 return false;
             }
+
+            // Regular client for authentication
+            this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                },
+                global: {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                }
+            });
+            
+            // Admin client with service role (bypass RLS)
+            if (this.supabaseServiceKey && this.supabaseServiceKey !== 'YOUR_SUPABASE_SERVICE_ROLE_KEY') {
+                this.supabaseAdmin = supabase.createClient(this.supabaseUrl, this.supabaseServiceKey, {
+                    auth: {
+                        persistSession: false,
+                        autoRefreshToken: false
+                    },
+                    global: {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'apikey': this.supabaseServiceKey,
+                            'Authorization': `Bearer ${this.supabaseServiceKey}`
+                        }
+                    }
+                });
+                console.log('✅ Supabase admin client initialized with service role');
+            } else {
+                console.warn('⚠️ Service role key not configured, using regular client');
+                this.supabaseAdmin = this.supabase;
+            }
+            
+            this.isInitialized = true;
+            this.connectionAttempts = 0;
+            console.log('✅ Supabase initialized successfully');
+            console.log(`📡 URL: ${this.supabaseUrl}`);
+            return true;
         } catch (error) {
             console.error('❌ Supabase initialization error:', error);
             return false;
@@ -74,11 +99,15 @@ const SupabaseConfig = {
     async checkConnection() {
         try {
             if (!this.isInitialized) {
-                this.init();
+                const initResult = this.init();
+                if (!initResult) {
+                    console.warn('⚠️ Supabase not initialized');
+                    return false;
+                }
             }
             
             if (!this.supabase) {
-                console.warn('⚠️ Supabase not initialized');
+                console.warn('⚠️ Supabase client not available');
                 return false;
             }
             
@@ -116,56 +145,69 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
 
+            console.log(`📝 Saving user: ${user.username} (${user.id})`);
+
+            // Check if user exists
             const { data: existing, error: checkError } = await client
                 .from(this.tables.users)
-                .select('id')
+                .select('id, username')
                 .eq('id', user.id)
                 .maybeSingle();
 
             let result;
             if (existing) {
+                // Update existing user
+                console.log(`🔄 Updating existing user: ${user.username}`);
+                const updateData = {
+                    username: user.username,
+                    email: user.email,
+                    full_name: user.fullName,
+                    role: user.role,
+                    status: user.status || 'active',
+                    permissions: user.permissions || {},
+                    class: user.class || null,
+                    student_id: user.studentId || null,
+                    phone: user.phone || null,
+                    parent_name: user.parentName || null,
+                    parent_phone: user.parentPhone || null,
+                    address: user.address || null,
+                    last_login: user.lastLogin || null,
+                    updated_at: new Date().toISOString()
+                };
+                
                 result = await client
                     .from(this.tables.users)
-                    .update({
-                        username: user.username,
-                        email: user.email,
-                        full_name: user.fullName,
-                        role: user.role,
-                        status: user.status || 'active',
-                        permissions: user.permissions || {},
-                        class: user.class || null,
-                        student_id: user.studentId || null,
-                        phone: user.phone || null,
-                        parent_name: user.parentName || null,
-                        parent_phone: user.parentPhone || null,
-                        address: user.address || null,
-                        last_login: user.lastLogin || null,
-                        updated_at: new Date().toISOString()
-                    })
+                    .update(updateData)
                     .eq('id', user.id);
             } else {
+                // Insert new user
+                console.log(`➕ Inserting new user: ${user.username}`);
+                const insertData = {
+                    id: user.id,
+                    username: user.username,
+                    password: user.password,
+                    email: user.email,
+                    full_name: user.fullName,
+                    role: user.role,
+                    status: user.status || 'active',
+                    permissions: user.permissions || {},
+                    class: user.class || null,
+                    student_id: user.studentId || null,
+                    phone: user.phone || null,
+                    parent_name: user.parentName || null,
+                    parent_phone: user.parentPhone || null,
+                    address: user.address || null,
+                    created_at: user.createdAt || new Date().toISOString(),
+                    last_login: user.lastLogin || null
+                };
+                
                 result = await client
                     .from(this.tables.users)
-                    .insert({
-                        id: user.id,
-                        username: user.username,
-                        password: user.password,
-                        email: user.email,
-                        full_name: user.fullName,
-                        role: user.role,
-                        status: user.status || 'active',
-                        permissions: user.permissions || {},
-                        class: user.class || null,
-                        student_id: user.studentId || null,
-                        phone: user.phone || null,
-                        parent_name: user.parentName || null,
-                        parent_phone: user.parentPhone || null,
-                        address: user.address || null,
-                        created_at: user.createdAt || new Date().toISOString(),
-                        last_login: user.lastLogin || null
-                    });
+                    .insert(insertData);
             }
 
             if (result.error) {
@@ -173,6 +215,7 @@ const SupabaseConfig = {
                 throw result.error;
             }
             
+            console.log(`✅ User saved successfully: ${user.username}`);
             return { success: true, data: result.data };
         } catch (error) {
             console.error('Error saving user:', error);
@@ -190,7 +233,11 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
+
+            console.log('📋 Fetching all users...');
 
             const { data, error } = await client
                 .from(this.tables.users)
@@ -203,8 +250,11 @@ const SupabaseConfig = {
             }
             
             if (!data || data.length === 0) {
+                console.log('📭 No users found');
                 return [];
             }
+
+            console.log(`✅ Fetched ${data.length} users`);
 
             return data.map(user => ({
                 id: user.id,
@@ -240,7 +290,11 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
+
+            console.log(`🔍 Fetching user by ID: ${userId}`);
 
             const { data, error } = await client
                 .from(this.tables.users)
@@ -253,7 +307,10 @@ const SupabaseConfig = {
                 return null;
             }
             
-            if (!data) return null;
+            if (!data) {
+                console.log(`📭 User not found: ${userId}`);
+                return null;
+            }
             
             return {
                 id: data.id,
@@ -289,7 +346,11 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
+
+            console.log(`🔍 Fetching user by username: ${username}`);
 
             const { data, error } = await client
                 .from(this.tables.users)
@@ -302,7 +363,12 @@ const SupabaseConfig = {
                 return null;
             }
             
-            if (!data) return null;
+            if (!data) {
+                console.log(`📭 User not found: ${username}`);
+                return null;
+            }
+            
+            console.log(`✅ Found user: ${username}`);
             
             return {
                 id: data.id,
@@ -338,42 +404,26 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
+
+            console.log(`🗑️ Deleting user: ${userId}`);
 
             const { error } = await client
                 .from(this.tables.users)
                 .delete()
                 .eq('id', userId);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error deleting user:', error);
+                throw error;
+            }
+            
+            console.log(`✅ User deleted: ${userId}`);
             return { success: true };
         } catch (error) {
             console.error('Error deleting user:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    /**
-     * Update user status
-     */
-    async updateUserStatus(userId, status) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { error } = await client
-                .from(this.tables.users)
-                .update({ status: status, updated_at: new Date().toISOString() })
-                .eq('id', userId);
-
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Error updating user status:', error);
             return { success: false, error: error.message };
         }
     },
@@ -388,7 +438,11 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
+
+            console.log(`🔑 Updating permissions for user: ${userId}`);
 
             const { error } = await client
                 .from(this.tables.users)
@@ -398,7 +452,12 @@ const SupabaseConfig = {
                 })
                 .eq('id', userId);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error updating user permissions:', error);
+                throw error;
+            }
+            
+            console.log(`✅ Permissions updated for user: ${userId}`);
             return { success: true };
         } catch (error) {
             console.error('Error updating user permissions:', error);
@@ -416,45 +475,24 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
 
             const { error } = await client
                 .from(this.tables.users)
                 .update({ last_login: new Date().toISOString() })
                 .eq('id', userId);
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error updating last login:', error);
+                throw error;
+            }
+            
             return { success: true };
         } catch (error) {
             console.error('Error updating last login:', error);
             return { success: false, error: error.message };
-        }
-    },
-
-    /**
-     * Get users by role
-     */
-    async getUsersByRole(role) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { data, error } = await client
-                .from(this.tables.users)
-                .select('*')
-                .eq('role', role)
-                .eq('status', 'active')
-                .order('full_name');
-
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error fetching users by role:', error);
-            return [];
         }
     },
 
@@ -469,7 +507,11 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
+
+            console.log(`📝 Saving notification: ${notification.title}`);
 
             const { error } = await client
                 .from(this.tables.notifications)
@@ -483,7 +525,12 @@ const SupabaseConfig = {
                     created_at: notification.createdAt || new Date().toISOString()
                 });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error saving notification:', error);
+                throw error;
+            }
+            
+            console.log(`✅ Notification saved: ${notification.title}`);
             return { success: true };
         } catch (error) {
             console.error('Error saving notification:', error);
@@ -498,14 +545,19 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
 
             const { data, error } = await client
                 .from(this.tables.notifications)
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching notifications:', error);
+                return [];
+            }
 
             if (!data || data.length === 0) return [];
 
@@ -528,7 +580,9 @@ const SupabaseConfig = {
             }
             
             const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
+            if (!client) {
+                throw new Error('Supabase not initialized');
+            }
 
             const { data, error } = await client
                 .from(this.tables.notifications)
@@ -536,7 +590,10 @@ const SupabaseConfig = {
                 .eq('id', notificationId)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching notification:', error);
+                throw error;
+            }
 
             let readBy = data.read_by || '';
             const readList = readBy ? readBy.split(',') : [];
@@ -550,333 +607,14 @@ const SupabaseConfig = {
                 .update({ read_by: readBy })
                 .eq('id', notificationId);
 
-            if (updateError) throw updateError;
+            if (updateError) {
+                console.error('Error marking notification as read:', updateError);
+                throw updateError;
+            }
+            
             return { success: true };
         } catch (error) {
             console.error('Error marking notification as read:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    // ============================================
-    // SCHEDULE CONFIGURATION
-    // ============================================
-
-    async saveScheduleConfig(schedule) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { error } = await client
-                .from(this.tables.schedule)
-                .upsert({
-                    class: schedule.class,
-                    subject: schedule.subject,
-                    time_slot: schedule.time_slot,
-                    semester: schedule.semester,
-                    days: schedule.days,
-                    updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'class,subject,time_slot,semester'
-                });
-
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Error saving schedule:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    async getScheduleConfig(classVal, subjectVal, timeVal, semesterVal) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { data, error } = await client
-                .from(this.tables.schedule)
-                .select('*')
-                .eq('class', classVal)
-                .eq('subject', subjectVal)
-                .eq('time_slot', timeVal)
-                .eq('semester', semesterVal)
-                .single();
-
-            if (error && error.code !== 'PGRST116') throw error;
-            return data || null;
-        } catch (error) {
-            console.error('Error fetching schedule:', error);
-            return null;
-        }
-    },
-
-    // ============================================
-    // ATTENDANCE FUNCTIONS
-    // ============================================
-
-    async fetchAttendance(classVal, semester, date) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            let query = client
-                .from(this.tables.attendance)
-                .select('*')
-                .eq('class', classVal);
-
-            if (semester) {
-                query = query.eq('semester', parseInt(semester));
-            }
-            if (date) {
-                query = query.eq('date', date);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error fetching attendance:', error);
-            return [];
-        }
-    },
-
-    async saveAttendanceToSupabase(records) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            if (records.length === 0) return true;
-
-            const first = records[0];
-            await client
-                .from(this.tables.attendance)
-                .delete()
-                .eq('class', first.class)
-                .eq('subject', first.subject)
-                .eq('date', first.date)
-                .eq('time_slot', first.time_slot);
-
-            const { error } = await client
-                .from(this.tables.attendance)
-                .insert(records.map(r => ({
-                    class: r.class,
-                    subject: r.subject,
-                    time_slot: r.time_slot,
-                    semester: r.semester,
-                    date: r.date,
-                    student_id: r.student_id,
-                    status: r.status,
-                    auto_assigned: r.auto_assigned || false,
-                    teacher_set: r.teacher_set || false,
-                    auto_submitted: r.auto_submitted || false,
-                    not_scheduled: r.not_scheduled || false,
-                    created_at: r.created_at || new Date().toISOString()
-                })));
-
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error saving attendance:', error);
-            return false;
-        }
-    },
-
-    // ============================================
-    // STUDENT FUNCTIONS
-    // ============================================
-
-    async fetchStudentsByClass(classVal) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { data, error } = await client
-                .from(this.tables.students)
-                .select('*')
-                .eq('class', classVal)
-                .order('name');
-
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-                return data.map(s => ({
-                    studentID: s.student_id || s.id,
-                    name: s.name,
-                    class: s.class,
-                    sex: s.sex || 'N/A',
-                    photo: s.photo || null,
-                    phone: s.phone || null,
-                    parentName: s.parent_name || null,
-                    parentPhone: s.parent_phone || null,
-                    address: s.address || null
-                }));
-            }
-
-            const { data: userData, error: userError } = await client
-                .from(this.tables.users)
-                .select('*')
-                .eq('role', 'student')
-                .eq('class', classVal)
-                .eq('status', 'active')
-                .order('full_name');
-
-            if (userError) throw userError;
-
-            if (userData && userData.length > 0) {
-                return userData.map(s => ({
-                    studentID: s.student_id || s.id,
-                    name: s.full_name,
-                    class: s.class,
-                    sex: 'N/A',
-                    photo: null,
-                    phone: s.phone || null,
-                    parentName: s.parent_name || null,
-                    parentPhone: s.parent_phone || null,
-                    address: s.address || null
-                }));
-            }
-
-            return [];
-        } catch (error) {
-            console.error('Error fetching students:', error);
-            return [];
-        }
-    },
-
-    async fetchAllClasses() {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { data, error } = await client
-                .from(this.tables.students)
-                .select('class')
-                .not('class', 'is', null);
-
-            if (error) throw error;
-
-            const classes = [...new Set(data.map(s => s.class))].filter(Boolean);
-            
-            if (classes.length > 0) {
-                return classes.sort();
-            }
-
-            const { data: userData, error: userError } = await client
-                .from(this.tables.users)
-                .select('class')
-                .eq('role', 'student')
-                .not('class', 'is', null);
-
-            if (userError) throw userError;
-
-            const userClasses = [...new Set(userData.map(s => s.class))].filter(Boolean);
-            return userClasses.sort();
-        } catch (error) {
-            console.error('Error fetching classes:', error);
-            return ['12A', '12B', '12C', '11A', '11B', '10A', '10B'];
-        }
-    },
-
-    // ============================================
-    // CERTIFICATE FUNCTIONS
-    // ============================================
-
-    async requestCertificate(studentId, type, details) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { error } = await client
-                .from(this.tables.certificates)
-                .insert({
-                    student_id: studentId,
-                    type: type,
-                    details: details || {},
-                    status: 'pending',
-                    requested_at: new Date().toISOString()
-                });
-
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Error requesting certificate:', error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    async getCertificates(studentId) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { data, error } = await client
-                .from(this.tables.certificates)
-                .select('*')
-                .eq('student_id', studentId)
-                .order('requested_at', { ascending: false });
-
-            if (error) throw error;
-            return data || [];
-        } catch (error) {
-            console.error('Error fetching certificates:', error);
-            return [];
-        }
-    },
-
-    async updateCertificateStatus(certificateId, status) {
-        try {
-            if (!this.isInitialized) {
-                this.init();
-            }
-            
-            const client = this.supabaseAdmin || this.supabase;
-            if (!client) throw new Error('Supabase not initialized');
-
-            const { error } = await client
-                .from(this.tables.certificates)
-                .update({ 
-                    status: status,
-                    updated_at: new Date().toISOString(),
-                    completed_at: status === 'completed' ? new Date().toISOString() : null
-                })
-                .eq('id', certificateId);
-
-            if (error) throw error;
-            return { success: true };
-        } catch (error) {
-            console.error('Error updating certificate:', error);
             return { success: false, error: error.message };
         }
     }
@@ -886,12 +624,17 @@ const SupabaseConfig = {
 // AUTO-INITIALIZE
 // ============================================
 
+// Try to initialize immediately
+console.log('🚀 Initializing Supabase...');
 SupabaseConfig.init();
 
+// Also try again when DOM is ready
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('📄 DOM ready, ensuring Supabase is initialized...');
         SupabaseConfig.init();
     });
 }
 
+// Make available globally
 window.SupabaseConfig = SupabaseConfig;
