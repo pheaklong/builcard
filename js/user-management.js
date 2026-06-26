@@ -8,6 +8,7 @@ class UserManagement {
         this.users = [];
         this.isInitialized = false;
         this.isUsingSupabase = false;
+        this.initializationPromise = null;
         this.roles = {
             ADMIN: 'admin',
             EDITOR: 'editor',
@@ -83,73 +84,159 @@ class UserManagement {
             }
         };
         
+        // Start initialization immediately
         this.init();
     }
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
 
     async init() {
         if (this.isInitialized) return;
         
         console.log('🔧 Initializing User Management with Supabase...');
         
-        // Check if SupabaseConfig is available
-        if (typeof SupabaseConfig === 'undefined') {
-            console.error('❌ SupabaseConfig is not loaded!');
-            return;
-        }
+        try {
+            // Check if SupabaseConfig is available
+            if (typeof SupabaseConfig === 'undefined') {
+                console.error('❌ SupabaseConfig is not loaded!');
+                // Try to load from localStorage as fallback
+                this.loadFromLocalStorage();
+                this.isInitialized = true;
+                console.log('✅ User Management initialized with localStorage fallback');
+                return;
+            }
 
-        // Initialize Supabase
-        const initResult = SupabaseConfig.init();
-        if (!initResult) {
-            console.error('❌ Supabase initialization failed');
-            return;
-        }
+            // Initialize Supabase
+            const initResult = SupabaseConfig.init();
+            if (!initResult) {
+                console.error('❌ Supabase initialization failed');
+                this.loadFromLocalStorage();
+                this.isInitialized = true;
+                return;
+            }
 
-        // Check connection
-        const connected = await SupabaseConfig.checkConnection();
-        if (!connected) {
-            console.error('❌ Cannot connect to Supabase');
-            return;
+            // Check connection
+            console.log('🔄 Checking Supabase connection...');
+            const connected = await SupabaseConfig.checkConnection();
+            
+            if (connected) {
+                this.isUsingSupabase = true;
+                console.log('✅ Connected to Supabase');
+                
+                // Load users from Supabase
+                await this.loadUsersFromSupabase();
+            } else {
+                console.warn('⚠️ Cannot connect to Supabase, using localStorage fallback');
+                this.loadFromLocalStorage();
+            }
+            
+            this.isInitialized = true;
+            console.log('✅ User Management initialized');
+            
+            // Load current user from session
+            this.loadCurrentUser();
+            
+            // Update UI
+            this.updateUI();
+            
+        } catch (error) {
+            console.error('❌ Initialization error:', error);
+            this.loadFromLocalStorage();
+            this.isInitialized = true;
         }
-
-        this.isUsingSupabase = true;
-        
-        // Load users from Supabase
-        await this.loadUsers();
-        
-        // Load current user from session
-        this.loadCurrentUser();
-        
-        this.isInitialized = true;
-        console.log('✅ User Management initialized with Supabase');
-        
-        // Update UI
-        this.updateUI();
     }
 
     // ============================================
     // LOAD USERS FROM SUPABASE
     // ============================================
 
-    async loadUsers() {
+    async loadUsersFromSupabase() {
         try {
+            console.log('📋 Loading users from Supabase...');
             const users = await SupabaseConfig.getAllUsers();
+            
             if (users && users.length > 0) {
                 this.users = users;
+                // Save to localStorage as backup
+                localStorage.setItem('system_users_backup', JSON.stringify(users));
                 console.log(`✅ Loaded ${users.length} users from Supabase`);
             } else {
-                console.log('No users found in Supabase, creating default admin...');
-                await this.createDefaultAdmin();
-                // Reload users after creating admin
-                const reloadedUsers = await SupabaseConfig.getAllUsers();
-                if (reloadedUsers && reloadedUsers.length > 0) {
-                    this.users = reloadedUsers;
-                    console.log(`✅ Loaded ${reloadedUsers.length} users from Supabase`);
+                console.log('No users found in Supabase, checking backup...');
+                // Try to load from backup
+                const backup = localStorage.getItem('system_users_backup');
+                if (backup) {
+                    try {
+                        this.users = JSON.parse(backup);
+                        console.log(`✅ Loaded ${this.users.length} users from backup`);
+                        // Sync to Supabase
+                        await this.syncToSupabase();
+                    } catch (e) {
+                        console.warn('Could not parse backup, creating default admin');
+                        await this.createDefaultAdmin();
+                    }
+                } else {
+                    console.log('No backup found, creating default admin...');
+                    await this.createDefaultAdmin();
                 }
             }
         } catch (error) {
             console.error('Error loading users from Supabase:', error);
-            throw error;
+            // Try backup
+            const backup = localStorage.getItem('system_users_backup');
+            if (backup) {
+                try {
+                    this.users = JSON.parse(backup);
+                    console.log(`✅ Loaded ${this.users.length} users from backup (fallback)`);
+                } catch (e) {
+                    console.warn('Could not parse backup, creating default admin');
+                    await this.createDefaultAdmin();
+                }
+            } else {
+                await this.createDefaultAdmin();
+            }
         }
+    }
+
+    loadFromLocalStorage() {
+        const saved = localStorage.getItem('system_users_backup');
+        if (saved) {
+            try {
+                this.users = JSON.parse(saved);
+                console.log(`✅ Loaded ${this.users.length} users from localStorage`);
+                return;
+            } catch (e) {
+                console.warn('Error parsing users from localStorage');
+            }
+        }
+        
+        // If no users, create default admin
+        this.createDefaultAdminLocally();
+    }
+
+    createDefaultAdminLocally() {
+        const defaultAdmin = {
+            id: 'admin_001',
+            username: 'admin',
+            password: this.hashPassword('admin123'),
+            email: 'admin@school.edu.kh',
+            fullName: 'Administrator',
+            role: this.roles.ADMIN,
+            createdAt: new Date().toISOString(),
+            status: 'active',
+            permissions: this.permissions.admin,
+            lastLogin: null,
+            class: null,
+            studentId: null,
+            phone: null,
+            parentName: null,
+            parentPhone: null,
+            address: null
+        };
+        this.users = [defaultAdmin];
+        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+        console.log('✅ Default admin created locally: admin / admin123');
     }
 
     async createDefaultAdmin() {
@@ -173,11 +260,32 @@ class UserManagement {
         };
         
         console.log('👤 Creating default admin user...');
-        const result = await SupabaseConfig.saveUser(defaultAdmin);
-        if (result.success) {
-            console.log('✅ Default admin created: admin / admin123');
-        } else {
-            console.error('❌ Failed to create default admin:', result.error);
+        
+        // Save to localStorage first
+        this.users = [defaultAdmin];
+        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+        
+        // Try to save to Supabase
+        try {
+            const result = await SupabaseConfig.saveUser(defaultAdmin);
+            if (result.success) {
+                console.log('✅ Default admin created in Supabase: admin / admin123');
+            } else {
+                console.warn('⚠️ Could not create admin in Supabase:', result.error);
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not create admin in Supabase:', error);
+        }
+    }
+
+    async syncToSupabase() {
+        try {
+            for (const user of this.users) {
+                await SupabaseConfig.saveUser(user);
+            }
+            console.log('✅ Users synced to Supabase');
+        } catch (error) {
+            console.warn('Could not sync users to Supabase:', error);
         }
     }
 
@@ -204,7 +312,7 @@ class UserManagement {
         if (saved) {
             try {
                 this.currentUser = JSON.parse(saved);
-                // Verify user still exists in Supabase
+                // Verify user still exists
                 const userData = this.users.find(u => u.id === this.currentUser.id);
                 if (userData) {
                     const { password, ...userWithoutPassword } = userData;
@@ -224,7 +332,16 @@ class UserManagement {
     // ============================================
 
     async login(username, password) {
+        console.log(`🔑 Login attempt for: ${username}`);
+        
+        // Wait for initialization if not done
+        if (!this.isInitialized) {
+            console.log('⏳ Waiting for initialization...');
+            await this.init();
+        }
+        
         const hashedPassword = this.hashPassword(password);
+        console.log(`🔐 Password hash: ${hashedPassword}`);
         
         // Find user in loaded users
         let user = this.users.find(u => 
@@ -233,10 +350,13 @@ class UserManagement {
             u.status === 'active'
         );
 
-        // If not found, try to fetch from Supabase directly
-        if (!user) {
+        console.log(`📋 Users in memory: ${this.users.length}`);
+        console.log(`🔍 User found in memory: ${!!user}`);
+
+        // If not found and Supabase is available, try to fetch from Supabase
+        if (!user && this.isUsingSupabase) {
             try {
-                console.log(`🔍 Looking for user: ${username}`);
+                console.log(`🔍 Looking for user in Supabase: ${username}`);
                 const supabaseUser = await SupabaseConfig.getUserByUsername(username);
                 if (supabaseUser && supabaseUser.password === hashedPassword && supabaseUser.status === 'active') {
                     user = supabaseUser;
@@ -247,23 +367,30 @@ class UserManagement {
                     } else {
                         this.users[existingIndex] = user;
                     }
+                    localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+                    console.log(`✅ User found in Supabase: ${username}`);
+                } else {
+                    console.log(`❌ User not found in Supabase or password mismatch: ${username}`);
                 }
             } catch (error) {
                 console.error('Error checking user in Supabase:', error);
-                return { success: false, message: 'ប្រព័ន្ធមានបញ្ហា សូមព្យាយាមម្តងទៀត' };
             }
         }
 
         if (user) {
-            console.log(`✅ User found: ${username}`);
+            console.log(`✅ Login successful for: ${username}`);
             
             // Update last login
             user.lastLogin = new Date().toISOString();
+            localStorage.setItem('system_users_backup', JSON.stringify(this.users));
             
-            try {
-                await SupabaseConfig.updateLastLogin(user.id);
-            } catch (e) {
-                console.warn('Could not update last login:', e);
+            // Try to update in Supabase if available
+            if (this.isUsingSupabase) {
+                try {
+                    await SupabaseConfig.updateLastLogin(user.id);
+                } catch (e) {
+                    console.warn('Could not update last login in Supabase:', e);
+                }
             }
             
             // Set current user (without password)
@@ -275,7 +402,9 @@ class UserManagement {
             return { success: true, user: userWithoutPassword };
         }
 
-        console.log(`❌ User not found: ${username}`);
+        console.log(`❌ Login failed for: ${username}`);
+        console.log(`📋 Available users:`, this.users.map(u => ({ username: u.username, role: u.role })));
+        
         return { success: false, message: 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ' };
     }
 
@@ -355,19 +484,23 @@ class UserManagement {
             address: userData.address || null
         };
 
-        console.log(`👤 Creating user: ${userData.username}`);
-        
-        // Save to Supabase
-        const result = await SupabaseConfig.saveUser(newUser);
-        if (!result.success) {
-            return { success: false, message: 'មិនអាចរក្សាទុកអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
-        }
-
-        // Update local cache
+        // Save to localStorage
         this.users.push(newUser);
+        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+
+        // Try to save to Supabase if available
+        if (this.isUsingSupabase) {
+            try {
+                const result = await SupabaseConfig.saveUser(newUser);
+                if (!result.success) {
+                    console.warn('Could not save user to Supabase:', result.error);
+                }
+            } catch (e) {
+                console.warn('Could not save user to Supabase:', e);
+            }
+        }
         
         const { password, ...userWithoutPassword } = newUser;
-        console.log(`✅ User created: ${userData.username}`);
         return { success: true, user: userWithoutPassword };
     }
 
@@ -393,17 +526,19 @@ class UserManagement {
             updates.password = this.hashPassword(updates.password);
         }
 
-        // Update in Supabase
-        const updatedUser = { ...this.users[index], ...updates };
-        console.log(`✏️ Updating user: ${updatedUser.username}`);
-        
-        const result = await SupabaseConfig.saveUser(updatedUser);
-        if (!result.success) {
-            return { success: false, message: 'មិនអាចរក្សាទុកការកែប្រែក្នុងប្រព័ន្ធ: ' + result.error };
-        }
-
         // Update local cache
+        const updatedUser = { ...this.users[index], ...updates };
         this.users[index] = updatedUser;
+        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+
+        // Try to update in Supabase if available
+        if (this.isUsingSupabase) {
+            try {
+                await SupabaseConfig.saveUser(updatedUser);
+            } catch (e) {
+                console.warn('Could not update user in Supabase:', e);
+            }
+        }
 
         if (this.currentUser && this.currentUser.id === userId) {
             const { password, ...userWithoutPassword } = updatedUser;
@@ -412,7 +547,6 @@ class UserManagement {
             this.updateUI();
         }
 
-        console.log(`✅ User updated: ${updatedUser.username}`);
         return { success: true, user: updatedUser };
     }
 
@@ -431,18 +565,19 @@ class UserManagement {
             return { success: false, message: 'មិនអាចលុប Admin ចុងក្រោយបានទេ' };
         }
 
-        console.log(`🗑️ Deleting user: ${userToDelete?.username || userId}`);
-        
-        // Delete from Supabase
-        const result = await SupabaseConfig.deleteUser(userId);
-        if (!result.success) {
-            return { success: false, message: 'មិនអាចលុបអ្នកប្រើប្រាស់ក្នុងប្រព័ន្ធ: ' + result.error };
+        // Delete from localStorage
+        this.users = this.users.filter(u => u.id !== userId);
+        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+
+        // Try to delete from Supabase if available
+        if (this.isUsingSupabase) {
+            try {
+                await SupabaseConfig.deleteUser(userId);
+            } catch (e) {
+                console.warn('Could not delete user from Supabase:', e);
+            }
         }
 
-        // Update local cache
-        this.users = this.users.filter(u => u.id !== userId);
-
-        console.log(`✅ User deleted: ${userId}`);
         return { success: true };
     }
 
@@ -509,11 +644,15 @@ class UserManagement {
         }
 
         teacher.permissions = { ...teacher.permissions, ...permissions };
-        
-        // Update in Supabase
-        const result = await SupabaseConfig.updateUserPermissions(teacherId, teacher.permissions);
-        if (!result.success) {
-            return { success: false, message: 'មិនអាចរក្សាទុកសិទ្ធិក្នុងប្រព័ន្ធ: ' + result.error };
+        localStorage.setItem('system_users_backup', JSON.stringify(this.users));
+
+        // Update in Supabase if available
+        if (this.isUsingSupabase) {
+            try {
+                await SupabaseConfig.updateUserPermissions(teacherId, teacher.permissions);
+            } catch (e) {
+                console.warn('Could not update permissions in Supabase:', e);
+            }
         }
 
         return { success: true, user: teacher };
@@ -551,21 +690,38 @@ class UserManagement {
             userIds: userIdsStr
         };
 
-        const result = await SupabaseConfig.saveNotification(notification);
-        if (!result.success) {
-            return { success: false, message: 'មិនអាចរក្សាទុកការជូនដំណឹងក្នុងប្រព័ន្ធ: ' + result.error };
+        // Save to localStorage
+        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        notifications.unshift(notification);
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+
+        // Save to Supabase if available
+        if (this.isUsingSupabase) {
+            try {
+                await SupabaseConfig.saveNotification(notification);
+            } catch (e) {
+                console.warn('Could not save notification to Supabase:', e);
+            }
         }
 
         return { success: true, notification: notification };
     }
 
-    async getNotifications(userId = null) {
+    getNotifications(userId = null) {
+        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        
         if (!userId) {
             userId = this.currentUser?.id;
         }
+
         if (!userId) return [];
 
-        return await SupabaseConfig.getNotifications(userId);
+        return notifications.filter(n => {
+            if (n.userIds === 'all') return true;
+            if (!n.userIds) return false;
+            const userIdsList = n.userIds.split(',');
+            return userIdsList.includes(userId);
+        });
     }
 
     async markNotificationRead(notificationId, userId = null) {
@@ -574,7 +730,24 @@ class UserManagement {
         }
         if (!userId) return;
 
-        return await SupabaseConfig.markNotificationRead(notificationId, userId);
+        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+        const notification = notifications.find(n => n.id === notificationId);
+        if (notification) {
+            const readList = notification.readBy ? notification.readBy.split(',') : [];
+            if (!readList.includes(userId)) {
+                readList.push(userId);
+                notification.readBy = readList.join(',');
+                localStorage.setItem('notifications', JSON.stringify(notifications));
+
+                if (this.isUsingSupabase) {
+                    try {
+                        await SupabaseConfig.markNotificationRead(notificationId, userId);
+                    } catch (e) {
+                        console.warn('Could not mark notification as read in Supabase:', e);
+                    }
+                }
+            }
+        }
     }
 
     // ============================================
@@ -1002,7 +1175,11 @@ class UserManagement {
 // INITIALIZE USER MANAGEMENT
 // ============================================
 
+// Create instance
 const userManagement = new UserManagement();
+window.userManagement = userManagement;
+
+// Also expose to window for debugging
 window.userManagement = userManagement;
 
 document.addEventListener('DOMContentLoaded', function() {
