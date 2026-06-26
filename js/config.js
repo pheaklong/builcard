@@ -5,8 +5,8 @@
 const SupabaseConfig = {
     // Supabase credentials - សូមប្តូរតាមគម្រោងរបស់អ្នក
     supabaseUrl: 'https://xmodwtwlidnwnxrkrvsj.supabase.co',
-    supabaseKey: 'YOUR_SUPABASE_ANON_KEY',
-    supabaseServiceKey: 'YOUR_SUPABASE_SERVICE_ROLE_KEY',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
+    supabaseServiceKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQzMjYwMCwiZXhwIjoyMDk2MDA4NjAwfQ.rNPt8E7eoNHon1oTLj64DU8DDVBZ-SZp4ZJmREHH8N8',
     supabase: null,
     supabaseAdmin: null,
     isInitialized: false,
