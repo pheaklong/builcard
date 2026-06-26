@@ -1,9 +1,9 @@
 // ============================================
-// SUPABASE CONFIGURATION - DIRECT FETCH
+// SUPABASE CONFIGURATION
 // ============================================
 
 const SupabaseConfig = {
-    // Supabase credentials
+    // Supabase credentials - សូមប្តូរតាមគម្រោងរបស់អ្នក
     supabaseUrl: 'https://xmodwtwlidnwnxrkrvsj.supabase.co',
     supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabaseServiceKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQzMjYwMCwiZXhwIjoyMDk2MDA4NjAwfQ.rNPt8E7eoNHon1oTLj64DU8DDVBZ-SZp4ZJmREHH8N8',
@@ -46,7 +46,93 @@ const SupabaseConfig = {
                 });
                 console.log('✅ Supabase client initialized');
             } else {
-                console.warn('⚠️ Supabase library not loaded, using direct fetch only');
+                console.warn('⚠️ Supabase library not loaded');
+                // Create a mock client for direct fetch
+                this.supabase = {
+                    auth: {
+                        getSession: async () => ({ data: { session: null }, error: null }),
+                        signIn: async () => ({ data: null, error: null }),
+                        signOut: async () => ({ error: null })
+                    },
+                    from: (table) => ({
+                        select: (columns) => ({
+                            eq: (column, value) => ({
+                                order: (orderBy) => ({
+                                    single: async () => {
+                                        const result = await SupabaseConfig.fetchFromSupabase(
+                                            `${table}?select=${columns}&${column}=eq.${encodeURIComponent(value)}&order=${orderBy}.asc`,
+                                            { useServiceRole: true }
+                                        );
+                                        return { data: result.data?.[0] || null, error: result.error };
+                                    },
+                                    maybeSingle: async () => {
+                                        const result = await SupabaseConfig.fetchFromSupabase(
+                                            `${table}?select=${columns}&${column}=eq.${encodeURIComponent(value)}`,
+                                            { useServiceRole: true }
+                                        );
+                                        return { data: result.data?.[0] || null, error: result.error };
+                                    }
+                                }),
+                                maybeSingle: async () => {
+                                    const result = await SupabaseConfig.fetchFromSupabase(
+                                        `${table}?select=${columns}&${column}=eq.${encodeURIComponent(value)}`,
+                                        { useServiceRole: true }
+                                    );
+                                    return { data: result.data?.[0] || null, error: result.error };
+                                }
+                            })
+                        }),
+                        insert: (data) => ({
+                            select: () => ({
+                                single: async () => {
+                                    const result = await SupabaseConfig.fetchFromSupabase(
+                                        table,
+                                        {
+                                            method: 'POST',
+                                            useServiceRole: true,
+                                            body: JSON.stringify(data)
+                                        }
+                                    );
+                                    return { data: result.data?.[0] || null, error: result.error };
+                                }
+                            })
+                        }),
+                        update: (data) => ({
+                            eq: (column, value) => ({
+                                select: () => ({
+                                    single: async () => {
+                                        const result = await SupabaseConfig.fetchFromSupabase(
+                                            `${table}?${column}=eq.${encodeURIComponent(value)}`,
+                                            {
+                                                method: 'PATCH',
+                                                useServiceRole: true,
+                                                body: JSON.stringify(data)
+                                            }
+                                        );
+                                        return { data: result.data?.[0] || null, error: result.error };
+                                    }
+                                })
+                            })
+                        }),
+                        delete: () => ({
+                            eq: (column, value) => ({
+                                select: () => ({
+                                    single: async () => {
+                                        const result = await SupabaseConfig.fetchFromSupabase(
+                                            `${table}?${column}=eq.${encodeURIComponent(value)}`,
+                                            {
+                                                method: 'DELETE',
+                                                useServiceRole: true
+                                            }
+                                        );
+                                        return { data: null, error: result.error };
+                                    }
+                                })
+                            })
+                        })
+                    })
+                };
+                console.log('⚠️ Using fallback client with direct fetch');
             }
             
             this.isInitialized = true;
@@ -68,7 +154,8 @@ const SupabaseConfig = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'apikey': key,
-            'Authorization': `Bearer ${key}`
+            'Authorization': `Bearer ${key}`,
+            'Prefer': 'return=representation'
         };
     },
 
@@ -79,6 +166,8 @@ const SupabaseConfig = {
         
         const fetchOptions = {
             method: options.method || 'GET',
+            mode: 'cors',
+            cache: 'no-cache',
             headers: {
                 ...headers,
                 ...(options.headers || {})
@@ -102,7 +191,7 @@ const SupabaseConfig = {
             const data = await response.json();
             return { data, error: null };
         } catch (error) {
-            console.error('Fetch error:', error);
+            console.error('❌ Fetch error:', error);
             return { data: null, error: error };
         }
     },
@@ -115,6 +204,7 @@ const SupabaseConfig = {
         try {
             console.log('🔍 Checking Supabase connection...');
             
+            // Try with service role key
             const result = await this.fetchFromSupabase('users?select=count&limit=1', {
                 useServiceRole: true
             });
