@@ -5,10 +5,10 @@
 const SupabaseConfig = {
     // Supabase credentials - សូមប្តូរតាមគម្រោងរបស់អ្នក
     supabaseUrl: 'https://xmodwtwlidnwnxrkrvsj.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
-    supabaseServiceKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDQzMjYwMCwiZXhwIjoyMDk2MDA4NjAwfQ.rNPt8E7eoNHon1oTLj64DU8DDVBZ-SZp4ZJmREHH8N8', // សូមបន្ថែម Service Role Key
+    supabaseKey: 'YOUR_SUPABASE_ANON_KEY',
+    supabaseServiceKey: 'YOUR_SUPABASE_SERVICE_ROLE_KEY',
     supabase: null,
-    supabaseAdmin: null, // Admin client with service role
+    supabaseAdmin: null,
     isInitialized: false,
 
     // Tables
@@ -31,14 +31,22 @@ const SupabaseConfig = {
         if (this.isInitialized) return true;
         
         try {
-            // Check if supabase is available globally
             if (typeof supabase !== 'undefined' && supabase.createClient) {
-                // Regular client (for authenticated users)
-                this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey);
+                // Regular client
+                this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseKey, {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true
+                    }
+                });
                 
                 // Admin client with service role (bypass RLS)
                 if (this.supabaseServiceKey && this.supabaseServiceKey !== 'YOUR_SUPABASE_SERVICE_ROLE_KEY') {
-                    this.supabaseAdmin = supabase.createClient(this.supabaseUrl, this.supabaseServiceKey);
+                    this.supabaseAdmin = supabase.createClient(this.supabaseUrl, this.supabaseServiceKey, {
+                        auth: {
+                            persistSession: false
+                        }
+                    });
                     console.log('✅ Supabase admin client initialized with service role');
                 } else {
                     console.warn('⚠️ Service role key not configured, using regular client');
@@ -74,8 +82,8 @@ const SupabaseConfig = {
                 return false;
             }
             
-            // Try with admin client first
             const client = this.supabaseAdmin || this.supabase;
+            
             const { data, error } = await client
                 .from(this.tables.users)
                 .select('count')
@@ -85,6 +93,7 @@ const SupabaseConfig = {
                 console.error('Connection error:', error);
                 return false;
             }
+            
             console.log('✅ Supabase connection successful');
             return true;
         } catch (error) {
@@ -94,7 +103,7 @@ const SupabaseConfig = {
     },
 
     // ============================================
-    // USER MANAGEMENT FUNCTIONS (using admin client)
+    // USER MANAGEMENT FUNCTIONS
     // ============================================
 
     /**
@@ -106,26 +115,17 @@ const SupabaseConfig = {
                 this.init();
             }
             
-            // Use admin client to bypass RLS
             const client = this.supabaseAdmin || this.supabase;
             if (!client) throw new Error('Supabase not initialized');
 
-            // Check if user exists
             const { data: existing, error: checkError } = await client
                 .from(this.tables.users)
                 .select('id')
                 .eq('id', user.id)
-                .single();
-
-            // If error is not "not found", throw it
-            if (checkError && checkError.code !== 'PGRST116') {
-                console.warn('Check user error:', checkError);
-                // Continue anyway, try to insert
-            }
+                .maybeSingle();
 
             let result;
             if (existing) {
-                // Update existing user
                 result = await client
                     .from(this.tables.users)
                     .update({
@@ -146,7 +146,6 @@ const SupabaseConfig = {
                     })
                     .eq('id', user.id);
             } else {
-                // Insert new user
                 result = await client
                     .from(this.tables.users)
                     .insert({
@@ -247,11 +246,11 @@ const SupabaseConfig = {
                 .from(this.tables.users)
                 .select('*')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             if (error) {
-                if (error.code === 'PGRST116') return null;
-                throw error;
+                console.error('Error fetching user:', error);
+                return null;
             }
             
             if (!data) return null;
@@ -296,11 +295,11 @@ const SupabaseConfig = {
                 .from(this.tables.users)
                 .select('*')
                 .eq('username', username)
-                .single();
+                .maybeSingle();
 
             if (error) {
-                if (error.code === 'PGRST116') return null;
-                throw error;
+                console.error('Error fetching user by username:', error);
+                return null;
             }
             
             if (!data) return null;
@@ -463,9 +462,6 @@ const SupabaseConfig = {
     // NOTIFICATION FUNCTIONS
     // ============================================
 
-    /**
-     * Save notification to Supabase
-     */
     async saveNotification(notification) {
         try {
             if (!this.isInitialized) {
@@ -495,9 +491,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Get notifications for a user
-     */
     async getNotifications(userId) {
         try {
             if (!this.isInitialized) {
@@ -516,7 +509,6 @@ const SupabaseConfig = {
 
             if (!data || data.length === 0) return [];
 
-            // Filter notifications for this user
             return data.filter(n => {
                 if (n.user_ids === 'all') return true;
                 if (!n.user_ids) return false;
@@ -529,9 +521,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Mark notification as read
-     */
     async markNotificationRead(notificationId, userId) {
         try {
             if (!this.isInitialized) {
@@ -541,7 +530,6 @@ const SupabaseConfig = {
             const client = this.supabaseAdmin || this.supabase;
             if (!client) throw new Error('Supabase not initialized');
 
-            // Get current notification
             const { data, error } = await client
                 .from(this.tables.notifications)
                 .select('read_by')
@@ -574,9 +562,6 @@ const SupabaseConfig = {
     // SCHEDULE CONFIGURATION
     // ============================================
 
-    /**
-     * Save schedule configuration
-     */
     async saveScheduleConfig(schedule) {
         try {
             if (!this.isInitialized) {
@@ -607,9 +592,6 @@ const SupabaseConfig = {
         }
     },
 
-    /**
-     * Get schedule configuration
-     */
     async getScheduleConfig(classVal, subjectVal, timeVal, semesterVal) {
         try {
             if (!this.isInitialized) {
@@ -681,7 +663,6 @@ const SupabaseConfig = {
 
             if (records.length === 0) return true;
 
-            // Delete existing records for the same class, subject, date
             const first = records[0];
             await client
                 .from(this.tables.attendance)
@@ -691,7 +672,6 @@ const SupabaseConfig = {
                 .eq('date', first.date)
                 .eq('time_slot', first.time_slot);
 
-            // Insert new records
             const { error } = await client
                 .from(this.tables.attendance)
                 .insert(records.map(r => ({
@@ -730,7 +710,6 @@ const SupabaseConfig = {
             const client = this.supabaseAdmin || this.supabase;
             if (!client) throw new Error('Supabase not initialized');
 
-            // First try to get from students table
             const { data, error } = await client
                 .from(this.tables.students)
                 .select('*')
@@ -753,7 +732,6 @@ const SupabaseConfig = {
                 }));
             }
 
-            // If no students in students table, try to get from users table
             const { data: userData, error: userError } = await client
                 .from(this.tables.users)
                 .select('*')
@@ -794,7 +772,6 @@ const SupabaseConfig = {
             const client = this.supabaseAdmin || this.supabase;
             if (!client) throw new Error('Supabase not initialized');
 
-            // Get distinct classes from students table
             const { data, error } = await client
                 .from(this.tables.students)
                 .select('class')
@@ -808,7 +785,6 @@ const SupabaseConfig = {
                 return classes.sort();
             }
 
-            // If no classes in students, try from users
             const { data: userData, error: userError } = await client
                 .from(this.tables.users)
                 .select('class')
@@ -910,15 +886,12 @@ const SupabaseConfig = {
 // AUTO-INITIALIZE
 // ============================================
 
-// Try to initialize immediately
 SupabaseConfig.init();
 
-// Also try again when DOM is ready
 if (typeof document !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function() {
         SupabaseConfig.init();
     });
 }
 
-// Make available globally
 window.SupabaseConfig = SupabaseConfig;
