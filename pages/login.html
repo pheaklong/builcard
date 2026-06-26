@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ចូលប្រើប្រព័ន្ធ - BUILCARD</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Khmer&display=swap" rel="stylesheet">
     <style>
         * { font-family: 'Khmer', 'Khmer OS Moul Light', sans-serif; }
@@ -14,32 +16,39 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0;
+            padding: 20px;
         }
         .login-card {
             background: white;
             border-radius: 20px;
-            padding: 40px;
+            padding: 40px 36px;
             width: 100%;
             max-width: 420px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .login-card .logo {
+            text-align: center;
+            font-size: 52px;
+            margin-bottom: 8px;
         }
         .login-card h1 {
             font-size: 28px;
             font-weight: bold;
             color: #4f46e5;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         .login-card .subtitle {
             text-align: center;
             color: #6b7280;
             font-size: 14px;
-            margin-bottom: 30px;
-        }
-        .login-card .logo {
-            text-align: center;
-            font-size: 48px;
-            margin-bottom: 16px;
+            margin-bottom: 28px;
         }
         .form-group {
             margin-bottom: 18px;
@@ -53,16 +62,21 @@
         }
         .form-group input {
             width: 100%;
-            padding: 10px 14px;
+            padding: 11px 14px;
             border: 2px solid #e5e7eb;
             border-radius: 10px;
             font-size: 14px;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
         }
         .form-group input:focus {
             outline: none;
             border-color: #4f46e5;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        .form-group input:disabled {
+            background: #f3f4f6;
+            cursor: not-allowed;
         }
         .btn-login {
             width: 100%;
@@ -74,14 +88,18 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: background 0.3s, transform 0.1s;
         }
         .btn-login:hover {
             background: #4338ca;
         }
+        .btn-login:active {
+            transform: scale(0.98);
+        }
         .btn-login:disabled {
             opacity: 0.7;
             cursor: not-allowed;
+            transform: none;
         }
         .error-message {
             background: #fee2e2;
@@ -91,20 +109,71 @@
             font-size: 14px;
             margin-bottom: 16px;
             display: none;
+            border-left: 4px solid #991b1b;
         }
         .error-message.show {
             display: block;
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
         }
         .test-credentials {
             margin-top: 20px;
-            padding: 12px;
+            padding: 14px 16px;
             background: #f3f4f6;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 13px;
             color: #6b7280;
+            border: 1px solid #e5e7eb;
+        }
+        .test-credentials p {
+            margin: 4px 0;
         }
         .test-credentials strong {
             color: #374151;
+        }
+        .test-credentials .role-badge {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+        .role-badge.admin { background: #fee2e2; color: #991b1b; }
+        .role-badge.teacher { background: #dcfce7; color: #166534; }
+        .role-badge.student { background: #dbeafe; color: #1e40af; }
+        .loading-spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid #fff;
+            border-top: 3px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .footer-text {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 28px 20px;
+            }
+            .login-card h1 {
+                font-size: 22px;
+            }
         }
     </style>
 </head>
@@ -119,7 +188,7 @@
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label for="username">ឈ្មោះអ្នកប្រើប្រាស់</label>
-                <input type="text" id="username" placeholder="បញ្ចូលឈ្មោះអ្នកប្រើប្រាស់" required>
+                <input type="text" id="username" placeholder="បញ្ចូលឈ្មោះអ្នកប្រើប្រាស់" required autofocus>
             </div>
             <div class="form-group">
                 <label for="password">ពាក្យសម្ងាត់</label>
@@ -132,16 +201,26 @@
 
         <div class="test-credentials">
             <p><strong>📝 សម្រាប់សាកល្បង៖</strong></p>
-            <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong></p>
-            <p>👨‍🏫 គ្រូ: <strong>teacher</strong> / <strong>teacher123</strong></p>
-            <p>👨‍🎓 សិស្ស: <strong>student</strong> / <strong>student123</strong></p>
+            <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong> <span class="role-badge admin">Admin</span></p>
+            <p>👨‍🏫 គ្រូ: <strong>teacher</strong> / <strong>teacher123</strong> <span class="role-badge teacher">គ្រូ</span></p>
+            <p>👨‍🎓 សិស្ស: <strong>student</strong> / <strong>student123</strong> <span class="role-badge student">សិស្ស</span></p>
+            <p class="text-xs text-gray-400 mt-2">💡 ប្រសិនបើមិនទាន់មានគណនី សូមទាក់ទង Admin</p>
+        </div>
+
+        <div class="footer-text">
+            BUILCARD v2.0 © 2025
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="../js/config.js"></script>
     <script src="../js/user-management.js"></script>
     <script>
-        function handleLogin(event) {
+        // ============================================
+        // LOGIN HANDLER
+        // ============================================
+
+        async function handleLogin(event) {
             event.preventDefault();
             
             const username = document.getElementById('username').value.trim();
@@ -149,16 +228,27 @@
             const errorEl = document.getElementById('errorMessage');
             const btn = document.getElementById('loginBtn');
 
+            // Reset error
+            errorEl.classList.remove('show');
+            errorEl.textContent = '';
+
+            // Validate
             if (!username || !password) {
                 showError('សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់');
                 return;
             }
 
+            // Disable button
             btn.disabled = true;
-            btn.textContent = '⏳ កំពុងចូលប្រើ...';
+            btn.innerHTML = '<span class="loading-spinner"></span> កំពុងចូលប្រើ...';
 
             try {
-                const result = userManagement.login(username, password);
+                // Wait for user management to be ready
+                if (typeof userManagement === 'undefined') {
+                    await waitForUserManagement();
+                }
+
+                const result = await userManagement.login(username, password);
                 
                 if (result.success) {
                     errorEl.classList.remove('show');
@@ -170,17 +260,30 @@
                         'teacher': 'teacher-dashboard.html',
                         'student': 'student-dashboard.html'
                     };
-                    window.location.href = redirectMap[role] || 'index.html';
+                    const redirectUrl = redirectMap[role] || 'index.html';
+                    
+                    // Show success briefly before redirect
+                    btn.innerHTML = '✅ ចូលប្រើដោយជោគជ័យ!';
+                    btn.style.background = '#22c55e';
+                    
+                    setTimeout(() => {
+                        window.location.href = redirectUrl;
+                    }, 500);
                 } else {
                     showError(result.message || 'ឈ្មោះអ្នកប្រើប្រាស់ ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ');
                     btn.disabled = false;
-                    btn.textContent = '🔐 ចូលប្រើប្រាស់';
+                    btn.innerHTML = '🔐 ចូលប្រើប្រាស់';
+                    btn.style.background = '';
+                    // Focus on username field
+                    document.getElementById('username').focus();
+                    document.getElementById('username').select();
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 showError('មានបញ្ហាក្នុងការចូលប្រើប្រាស់។ សូមព្យាយាមម្តងទៀត។');
                 btn.disabled = false;
-                btn.textContent = '🔐 ចូលប្រើប្រាស់';
+                btn.innerHTML = '🔐 ចូលប្រើប្រាស់';
+                btn.style.background = '';
             }
         }
 
@@ -190,12 +293,66 @@
             errorEl.classList.add('show');
         }
 
-        // Enter key to submit
+        function waitForUserManagement() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 20;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    if (typeof userManagement !== 'undefined') {
+                        clearInterval(checkInterval);
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.error('User management not loaded after max attempts');
+                        resolve();
+                    }
+                }, 200);
+            });
+        }
+
+        // ============================================
+        // ENTER KEY SUPPORT
+        // ============================================
+
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                const form = document.getElementById('loginForm');
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.id === 'username' || activeElement.id === 'password')) {
+                    form.dispatchEvent(new Event('submit'));
+                }
             }
         });
+
+        // ============================================
+        // AUTO-FOCUS ON LOAD
+        // ============================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already logged in
+            if (typeof userManagement !== 'undefined' && userManagement.isLoggedIn()) {
+                const user = userManagement.getCurrentUser();
+                const redirectMap = {
+                    'admin': 'admin-dashboard.html',
+                    'editor': 'editor-dashboard.html',
+                    'teacher': 'teacher-dashboard.html',
+                    'student': 'student-dashboard.html'
+                };
+                window.location.href = redirectMap[user.role] || 'index.html';
+                return;
+            }
+            
+            // Focus on username field
+            document.getElementById('username').focus();
+        });
+
+        // ============================================
+        // MAKE FUNCTIONS GLOBAL
+        // ============================================
+
+        window.handleLogin = handleLogin;
+        window.waitForUserManagement = waitForUserManagement;
     </script>
 </body>
 </html>
