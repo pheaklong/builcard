@@ -3,9 +3,9 @@
 // ============================================
 
 const SupabaseConfig = {
-    // Supabase credentials
+    // Supabase credentials - សូមប្តូរតាមគម្រោងរបស់អ្នក
     supabaseUrl: 'https://xmowdtwlidnwnxrkrysj.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
+    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAAeyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA',
     supabase: null,
 
     // Tables
@@ -101,7 +101,7 @@ const SupabaseConfig = {
                         full_name: user.fullName,
                         role: user.role,
                         status: user.status,
-                        permissions: user.permissions,
+                        permissions: user.permissions || {},
                         class: user.class || null,
                         student_id: user.studentId || null,
                         phone: user.phone || null,
@@ -124,7 +124,7 @@ const SupabaseConfig = {
                         full_name: user.fullName,
                         role: user.role,
                         status: user.status,
-                        permissions: user.permissions,
+                        permissions: user.permissions || {},
                         class: user.class || null,
                         student_id: user.studentId || null,
                         phone: user.phone || null,
@@ -159,7 +159,10 @@ const SupabaseConfig = {
 
             if (error) throw error;
             
-            // Map to match the user management format
+            if (!data || data.length === 0) {
+                return [];
+            }
+
             return data.map(user => ({
                 id: user.id,
                 username: user.username,
@@ -200,6 +203,8 @@ const SupabaseConfig = {
 
             if (error) throw error;
             
+            if (!data) return null;
+            
             return {
                 id: data.id,
                 username: data.username,
@@ -238,7 +243,11 @@ const SupabaseConfig = {
                 .eq('username', username)
                 .single();
 
-            if (error) throw error;
+            if (error && error.code !== 'PGRST116') {
+                throw error;
+            }
+            
+            if (!data) return null;
             
             return {
                 id: data.id,
@@ -367,7 +376,7 @@ const SupabaseConfig = {
                 .order('full_name');
 
             if (error) throw error;
-            return data;
+            return data || [];
         } catch (error) {
             console.error('Error fetching users by role:', error);
             return [];
@@ -392,10 +401,10 @@ const SupabaseConfig = {
                     id: notification.id,
                     title: notification.title,
                     message: notification.message,
-                    type: notification.type,
+                    type: notification.type || 'info',
                     user_ids: notification.userIds || 'all',
-                    created_at: notification.createdAt || new Date().toISOString(),
-                    read_by: notification.readBy || []
+                    read_by: notification.readBy || '',
+                    created_at: notification.createdAt || new Date().toISOString()
                 });
 
             if (error) throw error;
@@ -421,11 +430,14 @@ const SupabaseConfig = {
 
             if (error) throw error;
 
+            if (!data || data.length === 0) return [];
+
             // Filter notifications for this user
             return data.filter(n => {
                 if (n.user_ids === 'all') return true;
-                if (Array.isArray(n.user_ids)) return n.user_ids.includes(userId);
-                return false;
+                if (!n.user_ids) return false;
+                const userIdsList = n.user_ids.split(',');
+                return userIdsList.includes(userId);
             });
         } catch (error) {
             console.error('Error fetching notifications:', error);
@@ -450,9 +462,11 @@ const SupabaseConfig = {
 
             if (error) throw error;
 
-            const readBy = data.read_by || [];
-            if (!readBy.includes(userId)) {
-                readBy.push(userId);
+            let readBy = data.read_by || '';
+            const readList = readBy ? readBy.split(',') : [];
+            if (!readList.includes(userId)) {
+                readList.push(userId);
+                readBy = readList.join(',');
             }
 
             const { error: updateError } = await this.supabase
@@ -561,17 +575,17 @@ const SupabaseConfig = {
             if (!this.supabase) this.init();
             if (!this.supabase) throw new Error('Supabase not initialized');
 
+            if (records.length === 0) return true;
+
             // Delete existing records for the same class, subject, date
-            if (records.length > 0) {
-                const first = records[0];
-                await this.supabase
-                    .from(this.tables.attendance)
-                    .delete()
-                    .eq('class', first.class)
-                    .eq('subject', first.subject)
-                    .eq('date', first.date)
-                    .eq('time_slot', first.time_slot);
-            }
+            const first = records[0];
+            await this.supabase
+                .from(this.tables.attendance)
+                .delete()
+                .eq('class', first.class)
+                .eq('subject', first.subject)
+                .eq('date', first.date)
+                .eq('time_slot', first.time_slot);
 
             // Insert new records
             const { error } = await this.supabase
@@ -695,7 +709,6 @@ const SupabaseConfig = {
             return userClasses.sort();
         } catch (error) {
             console.error('Error fetching classes:', error);
-            // Return default classes
             return ['12A', '12B', '12C', '11A', '11B', '10A', '10B'];
         }
     },
@@ -714,7 +727,7 @@ const SupabaseConfig = {
                 .insert({
                     student_id: studentId,
                     type: type,
-                    details: details,
+                    details: details || {},
                     status: 'pending',
                     requested_at: new Date().toISOString()
                 });
@@ -755,7 +768,8 @@ const SupabaseConfig = {
                 .from(this.tables.certificates)
                 .update({ 
                     status: status,
-                    updated_at: new Date().toISOString()
+                    updated_at: new Date().toISOString(),
+                    completed_at: status === 'completed' ? new Date().toISOString() : null
                 })
                 .eq('id', certificateId);
 
@@ -778,3 +792,6 @@ if (typeof document !== 'undefined') {
         SupabaseConfig.init();
     });
 }
+
+// Make available globally
+window.SupabaseConfig = SupabaseConfig;
