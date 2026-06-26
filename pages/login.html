@@ -119,6 +119,32 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .debug-info {
+            margin-top: 16px;
+            padding: 12px;
+            background: #1e293b;
+            color: #a5f3fc;
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: monospace;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+        }
+        .debug-info.show { display: block; }
+        .debug-toggle {
+            margin-top: 12px;
+            text-align: center;
+        }
+        .debug-toggle button {
+            background: none;
+            border: none;
+            color: #6b7280;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .debug-toggle button:hover { color: #374151; }
     </style>
 </head>
 <body>
@@ -144,14 +170,64 @@
         <div class="test-credentials">
             <p><strong>📝 សម្រាប់សាកល្បង៖</strong></p>
             <p>👑 Admin: <strong>admin</strong> / <strong>admin123</strong> <span class="role-badge admin">Admin</span></p>
-            <p>👨‍🏫 គ្រូ: <strong>teacher</strong> / <strong>teacher123</strong> <span class="role-badge teacher">គ្រូ</span></p>
-            <p>👨‍🎓 សិស្ស: <strong>student</strong> / <strong>student123</strong> <span class="role-badge student">សិស្ស</span></p>
+        </div>
+
+        <div class="debug-toggle">
+            <button onclick="toggleDebug()">🔧 បង្ហាញព័ត៌មាន Debug</button>
+        </div>
+        <div id="debugInfo" class="debug-info">
+            <div id="debugContent">កំពុងរង់ចាំ...</div>
         </div>
     </div>
 
     <script src="../js/config.js"></script>
     <script src="../js/user-management.js"></script>
     <script>
+        // ============================================
+        // DEBUG FUNCTIONS
+        // ============================================
+        
+        let debugLogs = [];
+
+        function addDebugLog(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const log = { timestamp, message, data };
+            debugLogs.push(log);
+            updateDebugDisplay();
+            console.log(`[${timestamp}] ${message}`, data || '');
+        }
+
+        function updateDebugDisplay() {
+            const container = document.getElementById('debugContent');
+            if (!container) return;
+            
+            const logs = debugLogs.slice(-20).map(log => {
+                let dataStr = '';
+                if (log.data) {
+                    try {
+                        dataStr = ' ' + JSON.stringify(log.data, null, 2);
+                    } catch (e) {
+                        dataStr = ' ' + String(log.data);
+                    }
+                }
+                return `<div>${log.timestamp} - ${log.message}${dataStr}</div>`;
+            }).join('');
+            
+            container.innerHTML = logs || 'មិនមានទិន្នន័យ';
+        }
+
+        function toggleDebug() {
+            const el = document.getElementById('debugInfo');
+            el.classList.toggle('show');
+            if (el.classList.contains('show')) {
+                updateDebugDisplay();
+            }
+        }
+
+        // ============================================
+        // LOGIN HANDLER
+        // ============================================
+
         async function handleLogin(event) {
             event.preventDefault();
             
@@ -160,19 +236,61 @@
             const errorEl = document.getElementById('errorMessage');
             const btn = document.getElementById('loginBtn');
 
+            addDebugLog('🔄 ចាប់ផ្ដើម Login', { username });
+
+            // Reset error
             errorEl.classList.remove('show');
             errorEl.textContent = '';
 
+            // Validate
             if (!username || !password) {
                 showError('សូមបញ្ចូលឈ្មោះអ្នកប្រើប្រាស់ និងពាក្យសម្ងាត់');
+                addDebugLog('❌ Validation failed: empty fields');
                 return;
             }
 
+            // Disable button
             btn.disabled = true;
             btn.innerHTML = '<span class="loading-spinner"></span> កំពុងចូលប្រើ...';
 
             try {
+                // Check if userManagement is available
+                if (typeof userManagement === 'undefined') {
+                    addDebugLog('❌ userManagement is undefined!');
+                    showError('ប្រព័ន្ធមិនទាន់ត្រៀមខ្លួន សូមផ្ទុកទំព័រឡើងវិញ');
+                    btn.disabled = false;
+                    btn.innerHTML = '🔐 ចូលប្រើប្រាស់';
+                    return;
+                }
+
+                addDebugLog('✅ userManagement found', { 
+                    isInitialized: userManagement.isInitialized,
+                    isUsingSupabase: userManagement.isUsingSupabase,
+                    usersCount: userManagement.users?.length || 0
+                });
+
+                // Check Supabase connection
+                if (typeof SupabaseConfig !== 'undefined') {
+                    addDebugLog('🔄 Checking Supabase connection...');
+                    const connected = await SupabaseConfig.checkConnection();
+                    addDebugLog(`📡 Supabase connection: ${connected ? '✅ Success' : '❌ Failed'}`);
+                    
+                    if (connected) {
+                        // Try to get users
+                        const users = await SupabaseConfig.getAllUsers();
+                        addDebugLog(`📋 Users in Supabase: ${users?.length || 0}`);
+                    }
+                }
+
+                // Attempt login
+                addDebugLog('🔑 Attempting login...');
                 const result = await userManagement.login(username, password);
+                
+                addDebugLog('📩 Login result', { 
+                    success: result.success,
+                    user: result.user ? { username: result.user.username, role: result.user.role } : null,
+                    message: result.message
+                });
                 
                 if (result.success) {
                     errorEl.classList.remove('show');
@@ -184,6 +302,8 @@
                         'student': 'student-dashboard.html'
                     };
                     const redirectUrl = redirectMap[role] || 'index.html';
+                    
+                    addDebugLog(`✅ Login successful! Redirecting to: ${redirectUrl}`);
                     
                     btn.innerHTML = '✅ ចូលប្រើដោយជោគជ័យ!';
                     btn.style.background = '#22c55e';
@@ -201,7 +321,11 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('មានបញ្ហាក្នុងការចូលប្រើប្រាស់។ សូមព្យាយាមម្តងទៀត។');
+                addDebugLog('❌ Login exception', { 
+                    message: error.message,
+                    stack: error.stack 
+                });
+                showError('មានបញ្ហាក្នុងការចូលប្រើប្រាស់។ សូមព្យាយាមម្តងទៀត។ ' + error.message);
                 btn.disabled = false;
                 btn.innerHTML = '🔐 ចូលប្រើប្រាស់';
                 btn.style.background = '';
@@ -212,7 +336,12 @@
             const errorEl = document.getElementById('errorMessage');
             errorEl.textContent = message;
             errorEl.classList.add('show');
+            addDebugLog(`❌ Error: ${message}`);
         }
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -224,9 +353,42 @@
             }
         });
 
+        // ============================================
+        // PAGE LOAD
+        // ============================================
+
         document.addEventListener('DOMContentLoaded', function() {
+            addDebugLog('📄 Page loaded');
+            
+            // Check if userManagement is available
+            if (typeof userManagement !== 'undefined') {
+                addDebugLog('✅ userManagement loaded', { 
+                    isInitialized: userManagement.isInitialized,
+                    isUsingSupabase: userManagement.isUsingSupabase 
+                });
+            } else {
+                addDebugLog('⚠️ userManagement not loaded yet, waiting...');
+                // Wait for userManagement
+                let attempts = 0;
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    if (typeof userManagement !== 'undefined') {
+                        clearInterval(checkInterval);
+                        addDebugLog('✅ userManagement loaded (delayed)', { 
+                            isInitialized: userManagement.isInitialized,
+                            isUsingSupabase: userManagement.isUsingSupabase 
+                        });
+                    } else if (attempts > 20) {
+                        clearInterval(checkInterval);
+                        addDebugLog('❌ userManagement not loaded after 20 attempts');
+                    }
+                }, 200);
+            }
+            
+            // Check if already logged in
             if (typeof userManagement !== 'undefined' && userManagement.isLoggedIn()) {
                 const user = userManagement.getCurrentUser();
+                addDebugLog('ℹ️ User already logged in', { username: user.username, role: user.role });
                 const redirectMap = {
                     'admin': 'admin-dashboard.html',
                     'editor': 'editor-dashboard.html',
@@ -236,10 +398,18 @@
                 window.location.href = redirectMap[user.role] || 'index.html';
                 return;
             }
+            
+            // Focus on username field
             document.getElementById('username').focus();
         });
 
+        // ============================================
+        // MAKE FUNCTIONS GLOBAL
+        // ============================================
+
         window.handleLogin = handleLogin;
+        window.toggleDebug = toggleDebug;
+        window.addDebugLog = addDebugLog;
     </script>
 </body>
 </html>
