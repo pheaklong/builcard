@@ -63,7 +63,6 @@
             background: #888;
             border-radius: 4px;
         }
-        /* Table styles */
         .student-table {
             border-collapse: separate;
             border-spacing: 0;
@@ -82,18 +81,15 @@
         }
     </style>
     <script src="../js/auth.js"></script>
-<script>
-    // Protect page
-    if (typeof window.protectPage !== 'undefined') {
-        window.protectPage();
-    }
-    
-    // Display username if element exists
-    const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (user && document.getElementById('username')) {
-        document.getElementById('username').innerText = user.username;
-    }
-</script>
+    <script>
+        if (typeof window.protectPage !== 'undefined') {
+            window.protectPage();
+        }
+        const user = window.getCurrentUser ? window.getCurrentUser() : null;
+        if (user && document.getElementById('username')) {
+            document.getElementById('username').innerText = user.username;
+        }
+    </script>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
@@ -105,7 +101,6 @@
         
         <!-- Search Section -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-8 no-print">
-            <!-- Class Filter Dropdown -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">🏫 ជ្រើសរើសថ្នាក់</label>
                 <select id="classSelect" class="w-full md:w-1/2 rounded-lg border border-gray-300 p-2.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -113,7 +108,6 @@
                 </select>
             </div>
             
-            <!-- Quick Class Badges with Search -->
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">📚 ថ្នាក់ទាំងអស់ (ចុចដើម្បីស្វែងរក)</label>
                 <div class="bg-gray-50 rounded-lg p-3 border border-gray-200">
@@ -136,7 +130,7 @@
             </div>
         </div>
         
-        <!-- Search Results with Selection -->
+        <!-- Search Results -->
         <div class="bg-white rounded-xl shadow-lg p-6">
             <div class="flex flex-wrap justify-between items-center mb-5 gap-3">
                 <div class="flex items-center space-x-3">
@@ -187,7 +181,6 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE_NAME = 'table_student';
     
-    // Global variables
     let currentStudents = [];
     let selectedStudents = new Map();
     let allClassNamesList = [];
@@ -234,7 +227,7 @@
     }
     
     // ============================================
-    // LOAD UNIQUE CLASS NAMES WITH PAGINATION
+    // LOAD UNIQUE CLASS NAMES
     // ============================================
     async function loadClassNames() {
         try {
@@ -334,7 +327,7 @@
     window.filterClasses = filterClasses;
     
     // ============================================
-    // LOAD ALL STUDENTS WITH PAGINATION
+    // LOAD ALL STUDENTS
     // ============================================
     async function loadAllStudents() {
         showInfoBanner('កំពុងផ្ទុកទិន្នន័យសិស្ស...', false);
@@ -393,7 +386,7 @@
     }
     
     // ============================================
-    // SEARCH STUDENTS WITH CLASS AND NAME FILTERS
+    // SEARCH STUDENTS
     // ============================================
     async function searchStudents() {
         const selectedClass = document.getElementById('classSelect')?.value || '';
@@ -465,7 +458,7 @@
     }
     
     // ============================================
-    // DISPLAY SEARCH RESULTS - CORRECT TABLE STRUCTURE
+    // DISPLAY SEARCH RESULTS
     // ============================================
     function displaySearchResults(students) {
         const container = document.getElementById('searchResults');
@@ -555,7 +548,6 @@
         
         container.innerHTML = tableHtml;
         
-        // Add event listeners to checkboxes
         document.querySelectorAll('.student-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
                 const studentID = e.target.value;
@@ -570,7 +562,6 @@
             });
         });
         
-        // Handle "Select All" checkbox
         const selectAllCheckbox = document.getElementById('selectAllCheckbox');
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', (e) => {
@@ -675,8 +666,9 @@
     };
     
     // ============================================
-    // BUTTON HANDLERS
+    // BUTTON HANDLERS - FIXED VERSION
     // ============================================
+    
     document.getElementById('selectAllBtn')?.addEventListener('click', () => {
         currentStudents.forEach(student => {
             if (!selectedStudents.has(student.studentID)) {
@@ -697,25 +689,102 @@
         displaySearchResults(currentStudents);
     });
     
+    // ✅ FIXED: Add Selected Students - APPEND instead of OVERWRITE
     document.getElementById('addSelectedBtn')?.addEventListener('click', () => {
         if (selectedStudents.size === 0) {
             alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
             return;
         }
         
-        const selectedArray = Array.from(selectedStudents.values());
-        localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
-        alert(`✅ បានរក្សាទុកសិស្ស ${selectedStudents.size} នាក់!`);
+        // Get existing students from localStorage
+        let existingStudents = [];
+        const stored = localStorage.getItem('selectedStudents');
+        if (stored) {
+            try {
+                existingStudents = JSON.parse(stored);
+                if (!Array.isArray(existingStudents)) {
+                    existingStudents = [];
+                }
+            } catch(e) {
+                console.error('Error parsing existing students:', e);
+                existingStudents = [];
+            }
+        }
+        
+        // Create a Set of existing student IDs for quick lookup
+        const existingIds = new Set(existingStudents.map(s => s.studentID));
+        
+        // Get newly selected students
+        const newSelected = Array.from(selectedStudents.values());
+        
+        // Merge: keep existing + add new ones that don't already exist
+        const mergedStudents = [...existingStudents];
+        let addedCount = 0;
+        
+        newSelected.forEach(student => {
+            if (!existingIds.has(student.studentID)) {
+                mergedStudents.push(student);
+                addedCount++;
+            }
+        });
+        
+        // Save merged list back to localStorage
+        localStorage.setItem('selectedStudents', JSON.stringify(mergedStudents));
+        
+        // Update the selectedStudents Map to include all merged students
+        selectedStudents.clear();
+        mergedStudents.forEach(student => {
+            selectedStudents.set(student.studentID, student);
+        });
+        
+        // Update UI
+        updateSelectedCount();
+        updateSelectedSummary();
+        
+        // Show success message with details
+        if (addedCount > 0) {
+            alert(`✅ បានបន្ថែមសិស្សថ្មី ${addedCount} នាក់! (សរុប ${mergedStudents.length} នាក់)`);
+        } else {
+            alert(`ℹ️ សិស្សទាំងអស់ដែលបានជ្រើសរើសមានរួចហើយ (សរុប ${mergedStudents.length} នាក់)`);
+        }
+        
+        // Update the display to reflect current selection
+        displaySearchResults(currentStudents);
     });
     
+    // Go to Generate page
     document.getElementById('goToGenerateBtn')?.addEventListener('click', () => {
-        if (selectedStudents.size === 0) {
+        // Get current selected students from localStorage
+        const stored = localStorage.getItem('selectedStudents');
+        let allSelected = [];
+        if (stored) {
+            try {
+                allSelected = JSON.parse(stored);
+                if (!Array.isArray(allSelected)) {
+                    allSelected = [];
+                }
+            } catch(e) {
+                console.error('Error parsing:', e);
+                allSelected = [];
+            }
+        }
+        
+        // Also add any currently selected in the UI that might not be in localStorage
+        const uiSelected = Array.from(selectedStudents.values());
+        const existingIds = new Set(allSelected.map(s => s.studentID));
+        
+        uiSelected.forEach(student => {
+            if (!existingIds.has(student.studentID)) {
+                allSelected.push(student);
+            }
+        });
+        
+        if (allSelected.length === 0) {
             alert('សូមជ្រើសរើសសិស្សយ៉ាងហោចណាស់ម្នាក់');
             return;
         }
         
-        const selectedArray = Array.from(selectedStudents.values());
-        localStorage.setItem('selectedStudents', JSON.stringify(selectedArray));
+        localStorage.setItem('selectedStudents', JSON.stringify(allSelected));
         window.location.href = 'generate.html';
     });
     
