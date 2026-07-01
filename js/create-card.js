@@ -59,6 +59,104 @@ const TABLE_NAME = 'table_student';
 let currentPhotoBase64 = null;
 let capturedPhotoData = null;
 
+// ============ GET URL PARAMETERS ============
+function getUrlParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
+// ============ LOAD STUDENT FROM URL ============
+async function loadStudentFromUrl() {
+    const studentID = getUrlParameter('studentID');
+    if (studentID) {
+        console.log('📥 Loading student from URL:', studentID);
+        document.getElementById('searchStudentID').value = studentID;
+        await searchStudentById(studentID);
+    } else {
+        console.log('ℹ️ No studentID parameter found in URL');
+    }
+}
+
+// ============ SEARCH STUDENT BY ID ============
+async function searchStudentById(studentID) {
+    try {
+        // Check if supabaseClient is initialized
+        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+            console.error('❌ Supabase client not available');
+            alert('❌ Supabase client not initialized. Please refresh the page.');
+            return false;
+        }
+
+        console.log('🔍 Searching for student:', studentID);
+        
+        const { data, error } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*')
+            .eq('studentID', studentID)
+            .maybeSingle();
+        
+        if (error) {
+            console.error('❌ Search error:', error);
+            
+            if (error.code === '401' || error.message.includes('Unauthorized')) {
+                alert('❌ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized) ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
+            } else {
+                alert('❌ កំហុសក្នុងការស្វែងរក: ' + error.message);
+            }
+            return false;
+        }
+        
+        if (!data) {
+            alert('❌ រកមិនឃើញសិស្សដែលមានលេខ ID: ' + studentID);
+            return false;
+        }
+        
+        console.log('✅ Found student:', data.name);
+        
+        // Fill form
+        document.getElementById('studentID').value = data.studentID || '';
+        document.getElementById('name').value = data.name || '';
+        document.getElementById('sex').value = data.sex || 'ប្រុស';
+        document.getElementById('date_of_birth').value = data.date_of_birth || '';
+        document.getElementById('phonenumber').value = data.phonenumber || '';
+        document.getElementById('address').value = data.address || '';
+        document.getElementById('fathername').value = data.fathername || '';
+        document.getElementById('fatherphone').value = data.fatherphone || '';
+        document.getElementById('fatherjob').value = data.fatherjob || '';
+        document.getElementById('mothername').value = data.mothername || '';
+        document.getElementById('motherphone').value = data.motherphone || '';
+        document.getElementById('motherjob').value = data.motherjob || '';
+        document.getElementById('class').value = data.class || '';
+        
+        // Handle photo
+        if (data.photo && data.photo !== 'null' && data.photo !== '') {
+            currentPhotoBase64 = data.photo;
+            const preview = document.getElementById('photoPreview');
+            const defaultIcon = document.getElementById('defaultPhotoIcon');
+            if (preview) {
+                preview.src = currentPhotoBase64;
+                preview.classList.remove('hidden');
+            }
+            if (defaultIcon) {
+                defaultIcon.classList.add('hidden');
+            }
+            console.log('📸 Photo loaded successfully');
+        } else {
+            resetPhotoPreview();
+            console.log('ℹ️ No photo found for this student');
+        }
+        
+        // Display card
+        displayCard(data);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Search error:', error);
+        alert('❌ កំហុស: ' + error.message);
+        return false;
+    }
+}
+
 // ============ CHECK TABLE ACCESS ============
 async function checkTableAccess() {
     try {
@@ -574,84 +672,14 @@ async function saveStudent() {
     }
 }
 
-// ============ SEARCH STUDENT ============
+// ============ SEARCH STUDENT FROM INPUT ============
 async function searchStudent() {
     const studentID = document.getElementById('searchStudentID').value.trim();
     if (!studentID) {
         alert('សូមបញ្ចូល Student ID');
         return;
     }
-    
-    try {
-        // Check if supabaseClient is initialized
-        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
-            alert('❌ Supabase client not initialized. Please refresh the page.');
-            console.error('Supabase client not available:', supabaseClient);
-            return;
-        }
-        
-        console.log('Searching for student:', studentID);
-        
-        const { data, error } = await supabaseClient
-            .from(TABLE_NAME)
-            .select('*')
-            .eq('studentID', studentID)
-            .maybeSingle();
-        
-        if (error) {
-            console.error('Search error:', error);
-            
-            if (error.code === '401' || error.message.includes('Unauthorized')) {
-                alert('❌ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized) ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
-            } else {
-                alert('❌ កំហុស: ' + error.message);
-            }
-            return;
-        }
-        
-        if (!data) {
-            alert('❌ រកមិនឃើញសិស្សទេ!');
-            return;
-        }
-        
-        console.log('Found student:', data);
-        
-        // Fill form
-        document.getElementById('studentID').value = data.studentID || '';
-        document.getElementById('name').value = data.name || '';
-        document.getElementById('sex').value = data.sex || 'ប្រុស';
-        document.getElementById('date_of_birth').value = data.date_of_birth || '';
-        document.getElementById('phonenumber').value = data.phonenumber || '';
-        document.getElementById('address').value = data.address || '';
-        document.getElementById('fathername').value = data.fathername || '';
-        document.getElementById('fatherphone').value = data.fatherphone || '';
-        document.getElementById('fatherjob').value = data.fatherjob || '';
-        document.getElementById('mothername').value = data.mothername || '';
-        document.getElementById('motherphone').value = data.motherphone || '';
-        document.getElementById('motherjob').value = data.motherjob || '';
-        document.getElementById('class').value = data.class || '';
-        
-        if (data.photo && data.photo !== 'null') {
-            currentPhotoBase64 = data.photo;
-            const preview = document.getElementById('photoPreview');
-            const defaultIcon = document.getElementById('defaultPhotoIcon');
-            if (preview) {
-                preview.src = currentPhotoBase64;
-                preview.classList.remove('hidden');
-            }
-            if (defaultIcon) {
-                defaultIcon.classList.add('hidden');
-            }
-        } else {
-            resetPhotoPreview();
-        }
-        
-        displayCard(data);
-        
-    } catch (error) {
-        console.error('Search error:', error);
-        alert('❌ កំហុស: ' + error.message);
-    }
+    await searchStudentById(studentID);
 }
 
 // ============ PRINT CARD ============
@@ -799,6 +827,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // ⭐ IMPORTANT: Load student from URL parameter when page loads
+    setTimeout(() => {
+        loadStudentFromUrl();
+    }, 500);
+    
     // Check table access after a short delay
     setTimeout(() => {
         checkTableAccess();
@@ -858,6 +891,8 @@ setTimeout(() => {
 // Export functions for use in HTML if needed
 window.saveStudent = saveStudent;
 window.searchStudent = searchStudent;
+window.searchStudentById = searchStudentById;
+window.loadStudentFromUrl = loadStudentFromUrl;
 window.printCard = printCard;
 window.downloadCard = downloadCard;
 window.openCamera = openCamera;
