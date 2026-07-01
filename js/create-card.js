@@ -1,7 +1,7 @@
 // ============ SUPABASE CONFIGURATION ============
 // សូមប្តូរតម្លៃខាងក្រោមតាមគណនី Supabase របស់អ្នក!!!
 const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
 
 // Initialize Supabase client - fixed version
 let supabaseClient;
@@ -9,18 +9,32 @@ let supabaseClient;
 try {
     // Check if supabase is available globally
     if (typeof supabase !== 'undefined' && supabase.createClient) {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true
+            }
+        });
         console.log('✅ Supabase client initialized from global supabase');
     } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true
+            }
+        });
         console.log('✅ Supabase client initialized from window.supabase');
     } else {
         // Try to use the supabase-js library directly
         console.warn('⚠️ supabase not found globally, attempting to use from window');
-        // Some versions expose it differently
         const supabaseLib = window.supabase || window.__SUPABASE__ || supabase;
         if (supabaseLib && supabaseLib.createClient) {
-            supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true
+                }
+            });
             console.log('✅ Supabase client initialized from fallback');
         } else {
             throw new Error('Supabase library not found. Please ensure supabase-js is loaded.');
@@ -44,6 +58,46 @@ const TABLE_NAME = 'table_student';
 // Global variables
 let currentPhotoBase64 = null;
 let capturedPhotoData = null;
+
+// ============ CHECK TABLE ACCESS ============
+async function checkTableAccess() {
+    try {
+        console.log('Checking table access for:', TABLE_NAME);
+        
+        // Try to get a single record to check access
+        const { data, error, count } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*', { count: 'exact', head: true })
+            .limit(1);
+        
+        if (error) {
+            console.error('❌ Table access error:', error);
+            
+            if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
+                console.error('🔒 Permission denied. Please check Row Level Security (RLS) policies.');
+                alert('⚠️ គ្មានសិទ្ធិចូលប្រើតារាង ' + TABLE_NAME + ' ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
+            } else if (error.code === '42P01' || error.message.includes('does not exist')) {
+                console.error('📋 Table does not exist. Please create the table first.');
+                alert('⚠️ តារាង ' + TABLE_NAME + ' មិនមានទេ។ សូមបង្កើតតារាងនៅលើ Supabase Dashboard ។');
+            } else if (error.code === '401' || error.message.includes('Unauthorized')) {
+                console.error('🔑 Unauthorized. Please check your ANON_KEY.');
+                alert('⚠️ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized)។ សូមពិនិត្យ ANON_KEY និងការកំណត់ RLS ។');
+            } else {
+                alert('⚠️ កំហុស: ' + error.message);
+            }
+            return false;
+        }
+        
+        console.log('✅ Table access successful!');
+        console.log('Total records:', count || 0);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Table access check failed:', error);
+        alert('⚠️ កំហុស: ' + error.message);
+        return false;
+    }
+}
 
 // ============ IMAGE PROCESSING FUNCTIONS ============
 
@@ -472,7 +526,12 @@ async function saveStudent() {
         
         if (findError && findError.code !== 'PGRST116') {
             console.error('Find error:', findError);
-            alert('❌ កំហុសក្នុងការស្វែងរក: ' + findError.message);
+            
+            if (findError.code === '401' || findError.message.includes('Unauthorized')) {
+                alert('❌ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized) ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
+            } else {
+                alert('❌ កំហុសក្នុងការស្វែងរក: ' + findError.message);
+            }
             return false;
         }
         
@@ -540,7 +599,13 @@ async function searchStudent() {
             .maybeSingle();
         
         if (error) {
-            alert('❌ កំហុស: ' + error.message);
+            console.error('Search error:', error);
+            
+            if (error.code === '401' || error.message.includes('Unauthorized')) {
+                alert('❌ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized) ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
+            } else {
+                alert('❌ កំហុស: ' + error.message);
+            }
             return;
         }
         
@@ -733,6 +798,11 @@ document.addEventListener('DOMContentLoaded', () => {
             closeCamera();
         }
     });
+    
+    // Check table access after a short delay
+    setTimeout(() => {
+        checkTableAccess();
+    }, 1500);
 });
 
 // ============ TEST CONNECTION ============
@@ -747,14 +817,27 @@ async function testConnection() {
             return;
         }
         
+        // Test with a simple query
         const { data, error, count } = await supabaseClient
             .from(TABLE_NAME)
-            .select('*', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true })
+            .limit(1);
         
         if (error) {
             console.warn('⚠️ Connection test warning:', error);
-            console.warn('Please check your SUPABASE_URL and SUPABASE_ANON_KEY');
-            console.warn('Make sure the table "' + TABLE_NAME + '" exists');
+            
+            if (error.code === '401' || error.message.includes('Unauthorized')) {
+                console.error('🔑 401 Unauthorized - Please check:');
+                console.error('  1. ANON_KEY is correct');
+                console.error('  2. Table "' + TABLE_NAME + '" exists');
+                console.error('  3. RLS policies allow ANON access');
+                console.error('  4. Table is exposed via API');
+            } else if (error.code === '42P01' || error.message.includes('does not exist')) {
+                console.error('📋 Table "' + TABLE_NAME + '" does not exist. Please create it first.');
+            } else {
+                console.warn('Please check your SUPABASE_URL and SUPABASE_ANON_KEY');
+                console.warn('Make sure the table "' + TABLE_NAME + '" exists');
+            }
         } else {
             console.log('✅ Supabase connected successfully!');
             console.log('Table:', TABLE_NAME);
@@ -770,7 +853,7 @@ async function testConnection() {
 // Run connection test after a short delay to ensure everything is loaded
 setTimeout(() => {
     testConnection();
-}, 1000);
+}, 2000);
 
 // Export functions for use in HTML if needed
 window.saveStudent = saveStudent;
@@ -783,3 +866,4 @@ window.capturePhoto = capturePhoto;
 window.confirmPhoto = confirmPhoto;
 window.retakePhoto = retakePhoto;
 window.supabaseClient = supabaseClient;
+window.checkTableAccess = checkTableAccess;
