@@ -3,26 +3,42 @@
 const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
-// Initialize Supabase client - check if already defined
-let supabaseClientInstance;
+// Initialize Supabase client - fixed version
+let supabaseClient;
+
 try {
-    // Try to get existing instance or create new one
-    if (typeof supabase !== 'undefined' && supabase) {
-        supabaseClientInstance = supabase;
-    } else if (typeof window.supabase !== 'undefined' && window.supabase) {
-        supabaseClientInstance = window.supabase;
+    // Check if supabase is available globally
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized from global supabase');
+    } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client initialized from window.supabase');
     } else {
-        // Create new instance if not exists
-        const { createClient } = supabase;
-        supabaseClientInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Try to use the supabase-js library directly
+        console.warn('⚠️ supabase not found globally, attempting to use from window');
+        // Some versions expose it differently
+        const supabaseLib = window.supabase || window.__SUPABASE__ || supabase;
+        if (supabaseLib && supabaseLib.createClient) {
+            supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase client initialized from fallback');
+        } else {
+            throw new Error('Supabase library not found. Please ensure supabase-js is loaded.');
+        }
     }
 } catch (error) {
-    console.warn('Supabase client initialization fallback:', error);
-    // Fallback for older versions
-    supabaseClientInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.error('❌ Failed to initialize Supabase client:', error);
+    // Create a dummy client that shows error messages
+    supabaseClient = {
+        from: () => {
+            throw new Error('Supabase client not initialized. Please refresh the page.');
+        }
+    };
 }
 
-const supabaseClient = supabaseClientInstance;
+// Make sure supabaseClient is available globally
+window.supabaseClient = supabaseClient;
+
 const TABLE_NAME = 'table_student';
 
 // Global variables
@@ -410,6 +426,13 @@ function displayCard(data) {
 // ============ SAVE STUDENT ============
 async function saveStudent() {
     try {
+        // Check if supabaseClient is initialized
+        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+            alert('❌ Supabase client not initialized. Please refresh the page.');
+            console.error('Supabase client not available:', supabaseClient);
+            return false;
+        }
+
         // Get form values
         const studentData = {
             studentID: document.getElementById('studentID').value.trim(),
@@ -501,6 +524,13 @@ async function searchStudent() {
     }
     
     try {
+        // Check if supabaseClient is initialized
+        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+            alert('❌ Supabase client not initialized. Please refresh the page.');
+            console.error('Supabase client not available:', supabaseClient);
+            return;
+        }
+        
         console.log('Searching for student:', studentID);
         
         const { data, error } = await supabaseClient
@@ -621,6 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, setting up event listeners...');
     console.log('TABLE_NAME:', TABLE_NAME);
     console.log('Supabase URL:', SUPABASE_URL);
+    console.log('Supabase client available:', !!supabaseClient);
     
     // Save button
     const saveBtn = document.getElementById('saveBtn');
@@ -708,24 +739,38 @@ document.addEventListener('DOMContentLoaded', () => {
 async function testConnection() {
     try {
         console.log('Testing Supabase connection...');
+        
+        // Check if supabaseClient is available
+        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+            console.error('❌ Supabase client not available or not a function');
+            console.log('supabaseClient:', supabaseClient);
+            return;
+        }
+        
         const { data, error, count } = await supabaseClient
             .from(TABLE_NAME)
             .select('*', { count: 'exact', head: true });
         
         if (error) {
-            console.warn('Connection test warning:', error);
+            console.warn('⚠️ Connection test warning:', error);
             console.warn('Please check your SUPABASE_URL and SUPABASE_ANON_KEY');
+            console.warn('Make sure the table "' + TABLE_NAME + '" exists');
         } else {
             console.log('✅ Supabase connected successfully!');
             console.log('Table:', TABLE_NAME);
+            console.log('Total records:', count || 0);
         }
     } catch (error) {
-        console.error('Connection test failed:', error);
+        console.error('❌ Connection test failed:', error);
+        console.error('Error details:', error.message);
+        console.error('Stack:', error.stack);
     }
 }
 
-// Run connection test
-testConnection();
+// Run connection test after a short delay to ensure everything is loaded
+setTimeout(() => {
+    testConnection();
+}, 1000);
 
 // Export functions for use in HTML if needed
 window.saveStudent = saveStudent;
@@ -737,3 +782,4 @@ window.closeCamera = closeCamera;
 window.capturePhoto = capturePhoto;
 window.confirmPhoto = confirmPhoto;
 window.retakePhoto = retakePhoto;
+window.supabaseClient = supabaseClient;
