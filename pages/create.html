@@ -10,31 +10,85 @@
     <link href="https://fonts.googleapis.com/css2?family=Khmer&family=Moul&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/card-style.css">
     <!-- QR Code Library for high quality printing -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-<style>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <style>
         canvas {
             image-rendering: crisp-edges;
             image-rendering: pixelated;
         }
-​
+
         * { font-family: 'Khmer', 'Moul', 'Arial', sans-serif; }
         .card-preview { transition: all 0.3s ease; }
         @media print { .no-print { display: none; } }
+        
+        /* Camera popup styles */
+        #cameraModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #cameraModal.active {
+            display: flex;
+        }
+        #cameraModal .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            max-width: 500px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        #cameraModal video {
+            width: 100%;
+            border-radius: 8px;
+            background: #1a1a2e;
+        }
+        #cameraModal canvas {
+            display: none;
+        }
+        .camera-btn {
+            transition: all 0.3s ease;
+        }
+        .camera-btn:hover {
+            transform: scale(1.05);
+        }
+        #capturedPhotoPreview {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #d97706;
+        }
+        .photo-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
     </style>
 
-   <script src="../js/auth.js"></script>
-<script>
-    // Protect page
-    if (typeof window.protectPage !== 'undefined') {
-        window.protectPage();
-    }
-    
-    // Display username if element exists
-    const user = window.getCurrentUser ? window.getCurrentUser() : null;
-    if (user && document.getElementById('username')) {
-        document.getElementById('username').innerText = user.username;
-    }
-</script>
+    <script src="../js/auth.js"></script>
+    <script>
+        // Protect page
+        if (typeof window.protectPage !== 'undefined') {
+            window.protectPage();
+        }
+        
+        // Display username if element exists
+        const user = window.getCurrentUser ? window.getCurrentUser() : null;
+        if (user && document.getElementById('username')) {
+            document.getElementById('username').innerText = user.username;
+        }
+    </script>
 </head>
 <body class="bg-gradient-to-br from-amber-100 to-yellow-100">
     <div class="container mx-auto px-4 py-8">
@@ -59,10 +113,16 @@
                                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
-                            <div class="flex-1">
-                                <input type="file" id="photo" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                            <div class="flex-1 space-y-2">
+                                <div class="flex flex-wrap gap-2">
+                                    <input type="file" id="photo" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                                </div>
+                                <button type="button" id="openCameraBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 camera-btn text-sm w-full">
+                                    📷 ថតរូបដោយកាមេរ៉ា
+                                </button>
                             </div>
                         </div>
+                        <div id="photoSizeInfo" class="text-xs text-gray-500 mt-1 hidden"></div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
@@ -130,303 +190,36 @@
             </div>
         </div>
     </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">📷 ថតរូបដោយកាមេរ៉ា</h3>
+                <button id="closeCameraBtn" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+            </div>
+            <div class="relative">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+            </div>
+            <div class="mt-4 flex flex-col items-center">
+                <div id="capturedPhotoContainer" class="hidden mb-3">
+                    <p class="text-sm text-gray-600 mb-2">រូបភាពដែលបានថត៖</p>
+                    <img id="capturedPhotoPreview" src="" alt="Captured">
+                    <div class="photo-actions mt-3">
+                        <button id="retakePhotoBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 camera-btn">🔄 ថតម្តងទៀត</button>
+                        <button id="confirmPhotoBtn" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 camera-btn">✅ យល់ព្រម</button>
+                    </div>
+                </div>
+                <button id="captureBtn" class="bg-red-600 text-white px-8 py-3 rounded-full hover:bg-red-700 camera-btn text-lg">
+                    📸 ថត
+                </button>
+                <p class="text-xs text-gray-500 mt-2">រូបភាពនឹងត្រូវបានបង្រួមទំហំ 4x6 និងមិនលើស 50KB</p>
+            </div>
+        </div>
+    </div>
     
     <script src="../js/card-template.js"></script>
-    <script>
-        // ============================================
-        // SUPABASE CONFIGURATION
-        // ============================================
-        const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const TABLE_NAME = 'table_student';
-        let currentPhotoBase64 = null;
-        
-        // ============================================
-        // GET URL PARAMETERS
-        // ============================================
-        function getUrlParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-        
-        // ============================================
-        // LOAD STUDENT FROM URL PARAMETER
-        // ============================================
-        async function loadStudentFromUrl() {
-            const studentID = getUrlParameter('studentID');
-            if (studentID) {
-                console.log('Loading student from URL:', studentID);
-                document.getElementById('searchStudentID').value = studentID;
-                await searchStudentById(studentID);
-            }
-        }
-        
-        // ============================================
-        // SEARCH STUDENT BY ID
-        // ============================================
-        async function searchStudentById(studentID) {
-            try {
-                console.log('Searching for student:', studentID);
-                
-                const { data, error } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .eq('studentID', studentID)
-                    .maybeSingle();
-                
-                if (error) {
-                    console.error('Search error:', error);
-                    alert('❌ កំហុស: ' + error.message);
-                    return false;
-                }
-                
-                if (!data) {
-                    alert('❌ រកមិនឃើញសិស្សទេ!');
-                    return false;
-                }
-                
-                console.log('Found student:', data.name);
-                
-                // Fill form
-                document.getElementById('studentID').value = data.studentID || '';
-                document.getElementById('name').value = data.name || '';
-                document.getElementById('sex').value = data.sex || 'ប្រុស';
-                document.getElementById('date_of_birth').value = data.date_of_birth || '';
-                document.getElementById('phonenumber').value = data.phonenumber || '';
-                document.getElementById('address').value = data.address || '';
-                document.getElementById('fathername').value = data.fathername || '';
-                document.getElementById('fatherphone').value = data.fatherphone || '';
-                document.getElementById('fatherjob').value = data.fatherjob || '';
-                document.getElementById('mothername').value = data.mothername || '';
-                document.getElementById('motherphone').value = data.motherphone || '';
-                document.getElementById('motherjob').value = data.motherjob || '';
-                document.getElementById('class').value = data.class || '';
-                
-                // Handle photo
-                if (data.photo && data.photo !== 'null') {
-                    currentPhotoBase64 = data.photo;
-                    const preview = document.getElementById('photoPreview');
-                    const defaultIcon = document.getElementById('defaultPhotoIcon');
-                    if (preview) {
-                        preview.src = currentPhotoBase64;
-                        preview.classList.remove('hidden');
-                    }
-                    if (defaultIcon) {
-                        defaultIcon.classList.add('hidden');
-                    }
-                } else {
-                    resetPhotoPreview();
-                }
-                
-                // Display card
-                displayCard(data);
-                return true;
-                
-            } catch (error) {
-                console.error('Search error:', error);
-                alert('❌ កំហុស: ' + error.message);
-                return false;
-            }
-        }
-        
-        // ============================================
-        // PHOTO HANDLING
-        // ============================================
-        function resetPhotoPreview() {
-            currentPhotoBase64 = null;
-            const preview = document.getElementById('photoPreview');
-            const defaultIcon = document.getElementById('defaultPhotoIcon');
-            if (preview) {
-                preview.src = '';
-                preview.classList.add('hidden');
-            }
-            if (defaultIcon) {
-                defaultIcon.classList.remove('hidden');
-            }
-        }
-        
-        document.getElementById('photo')?.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    currentPhotoBase64 = event.target.result;
-                    const preview = document.getElementById('photoPreview');
-                    const defaultIcon = document.getElementById('defaultPhotoIcon');
-                    preview.src = currentPhotoBase64;
-                    preview.classList.remove('hidden');
-                    defaultIcon.classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else {
-                resetPhotoPreview();
-            }
-        });
-        
-        // ============================================
-        // CARD DISPLAY
-        // ============================================
-        function displayCard(data) {
-            const cardContainer = document.getElementById('studentCard');
-            if (cardContainer) {
-                cardContainer.innerHTML = generateCardHTML(data);
-            }
-        }
-        
-        // ============================================
-        // SAVE STUDENT
-        // ============================================
-        async function saveStudent() {
-            try {
-                const studentData = {
-                    studentID: document.getElementById('studentID').value.trim(),
-                    name: document.getElementById('name').value.trim(),
-                    sex: document.getElementById('sex').value,
-                    date_of_birth: document.getElementById('date_of_birth').value || null,
-                    phonenumber: document.getElementById('phonenumber').value.trim(),
-                    address: document.getElementById('address').value.trim(),
-                    fathername: document.getElementById('fathername').value.trim(),
-                    fatherphone: document.getElementById('fatherphone').value.trim(),
-                    fatherjob: document.getElementById('fatherjob').value.trim(),
-                    mothername: document.getElementById('mothername').value.trim(),
-                    motherphone: document.getElementById('motherphone').value.trim(),
-                    motherjob: document.getElementById('motherjob').value.trim(),
-                    class: document.getElementById('class').value.trim(),
-                    photo: currentPhotoBase64 || null
-                };
-                
-                if (!studentData.studentID) {
-                    alert('សូមបញ្ចូល Student ID');
-                    return;
-                }
-                if (!studentData.name) {
-                    alert('សូមបញ្ចូលឈ្មោះសិស្ស');
-                    return;
-                }
-                
-                const { data: existing, error: findError } = await supabaseClient
-                    .from(TABLE_NAME)
-                    .select('*')
-                    .eq('studentID', studentData.studentID)
-                    .maybeSingle();
-                
-                let result;
-                if (existing) {
-                    result = await supabaseClient
-                        .from(TABLE_NAME)
-                        .update(studentData)
-                        .eq('studentID', studentData.studentID);
-                    if (!result.error) {
-                        alert('✅ បានកែប្រែព័ត៌មានសិស្សដោយជោគជ័យ!');
-                        displayCard(studentData);
-                    } else {
-                        alert('❌ កំហុស: ' + result.error.message);
-                    }
-                } else {
-                    result = await supabaseClient
-                        .from(TABLE_NAME)
-                        .insert([studentData]);
-                    if (!result.error) {
-                        alert('✅ បានរក្សាទុកព័ត៌មានសិស្សដោយជោគជ័យ!');
-                        displayCard(studentData);
-                    } else {
-                        alert('❌ កំហុស: ' + result.error.message);
-                    }
-                }
-            } catch (error) {
-                console.error('Save error:', error);
-                alert('❌ កំហុសប្រព័ន្ធ: ' + error.message);
-            }
-        }
-        
-        // ============================================
-        // SEARCH STUDENT FROM INPUT
-        // ============================================
-        async function searchStudentFromInput() {
-            const studentID = document.getElementById('searchStudentID').value.trim();
-            if (!studentID) {
-                alert('សូមបញ្ចូល Student ID');
-                return;
-            }
-            await searchStudentById(studentID);
-        }
-        
-        // ============================================
-        // PRINT CARD
-        // ============================================
-        function printCard() {
-            const cardContent = document.getElementById('studentCard').innerHTML;
-            if (!cardContent || cardContent.includes('បំពេញព័ត៌មានសិស្ស')) {
-                alert('មិនមានកាតដើម្បីបោះពុម្ពទេ');
-                return;
-            }
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>បោះពុម្ពកាតសិស្ស</title>
-                        <meta charset="UTF-8">
-                        <style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;}</style>
-                    </head>
-                    <body>${cardContent}</body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        }
-        
-        // ============================================
-        // DOWNLOAD CARD
-        // ============================================
-        async function downloadCard() {
-            const cardElement = document.querySelector('#studentCard > div');
-            if (!cardElement || (cardElement.innerHTML && cardElement.innerHTML.includes('បំពេញព័ត៌មានសិស្ស'))) {
-                alert('មិនមានកាតដើម្បីទាញយកទេ');
-                return;
-            }
-            try {
-                const canvas = await html2canvas(cardElement, { scale: 2, backgroundColor: null });
-                const link = document.createElement('a');
-                const studentID = document.getElementById('studentID').value || 'card';
-                link.download = `student_card_${studentID}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-                alert('✅ បានទាញយកដោយជោគជ័យ!');
-            } catch (error) {
-                alert('កើតមានបញ្ហា: ' + error.message);
-            }
-        }
-        
-        // ============================================
-        // EVENT LISTENERS
-        // ============================================
-        document.getElementById('saveBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            saveStudent();
-        });
-        
-        document.getElementById('fetchStudentBtn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            searchStudentFromInput();
-        });
-        
-        document.getElementById('printCard')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            printCard();
-        });
-        
-        document.getElementById('downloadCard')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            downloadCard();
-        });
-        
-        // ============================================
-        // INITIALIZE
-        // ============================================
-        // Load student from URL parameter when page loads
-        loadStudentFromUrl();
-    </script>
+    <script src="create-card.js"></script>
 </body>
 </html>
