@@ -3,8 +3,26 @@
 const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
-// Initialize Supabase client
-const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Initialize Supabase client - check if already defined
+let supabaseClientInstance;
+try {
+    // Try to get existing instance or create new one
+    if (typeof supabase !== 'undefined' && supabase) {
+        supabaseClientInstance = supabase;
+    } else if (typeof window.supabase !== 'undefined' && window.supabase) {
+        supabaseClientInstance = window.supabase;
+    } else {
+        // Create new instance if not exists
+        const { createClient } = supabase;
+        supabaseClientInstance = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+} catch (error) {
+    console.warn('Supabase client initialization fallback:', error);
+    // Fallback for older versions
+    supabaseClientInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+const supabaseClient = supabaseClientInstance;
 const TABLE_NAME = 'table_student';
 
 // Global variables
@@ -423,7 +441,7 @@ async function saveStudent() {
         console.log('Saving student:', studentData);
         
         // Check if student exists
-        const { data: existing, error: findError } = await supabase
+        const { data: existing, error: findError } = await supabaseClient
             .from(TABLE_NAME)
             .select('*')
             .eq('studentID', studentData.studentID)
@@ -438,7 +456,7 @@ async function saveStudent() {
         let result;
         if (existing) {
             // Update
-            result = await supabase
+            result = await supabaseClient
                 .from(TABLE_NAME)
                 .update(studentData)
                 .eq('studentID', studentData.studentID);
@@ -453,7 +471,7 @@ async function saveStudent() {
             }
         } else {
             // Insert
-            result = await supabase
+            result = await supabaseClient
                 .from(TABLE_NAME)
                 .insert([studentData]);
             
@@ -485,7 +503,7 @@ async function searchStudent() {
     try {
         console.log('Searching for student:', studentID);
         
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from(TABLE_NAME)
             .select('*')
             .eq('studentID', studentID)
@@ -690,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function testConnection() {
     try {
         console.log('Testing Supabase connection...');
-        const { data, error, count } = await supabase
+        const { data, error, count } = await supabaseClient
             .from(TABLE_NAME)
             .select('*', { count: 'exact', head: true });
         
@@ -708,3 +726,14 @@ async function testConnection() {
 
 // Run connection test
 testConnection();
+
+// Export functions for use in HTML if needed
+window.saveStudent = saveStudent;
+window.searchStudent = searchStudent;
+window.printCard = printCard;
+window.downloadCard = downloadCard;
+window.openCamera = openCamera;
+window.closeCamera = closeCamera;
+window.capturePhoto = capturePhoto;
+window.confirmPhoto = confirmPhoto;
+window.retakePhoto = retakePhoto;
