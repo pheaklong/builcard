@@ -146,7 +146,7 @@ async function searchStudentById(studentID) {
             console.log('ℹ️ No photo found for this student');
         }
         
-        // Display card
+        // Display card using card-template.js
         displayCard(data);
         return true;
         
@@ -497,21 +497,34 @@ function resetPhotoPreview() {
     }
 }
 
-// ============ CARD GENERATION FUNCTIONS ============
-function getPhotoHTML(photoData) {
-    if (photoData && photoData !== 'null' && photoData !== '') {
-        return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
+// ============ CARD DISPLAY FUNCTIONS (using card-template.js) ============
+
+/**
+ * Display card using the template from card-template.js
+ * This function calls the global generateCardHTML function
+ */
+function displayCard(data) {
+    const cardContainer = document.getElementById('studentCard');
+    if (cardContainer) {
+        // Check if generateCardHTML is available from card-template.js
+        if (typeof window.generateCardHTML === 'function') {
+            // Use the template from card-template.js
+            cardContainer.innerHTML = window.generateCardHTML(data);
+            console.log('✅ Card displayed using card-template.js');
+        } else {
+            // Fallback: use local generateCardHTML
+            console.warn('⚠️ generateCardHTML not found in window, using fallback');
+            cardContainer.innerHTML = generateCardHTMLFallback(data);
+        }
     }
-    return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
-                <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                </svg>
-            </div>`;
 }
 
-function generateCardHTML(data) {
+/**
+ * Fallback card generation if card-template.js is not loaded
+ */
+function generateCardHTMLFallback(data) {
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-    const photoHTML = getPhotoHTML(data.photo);
+    const photoHTML = getPhotoHTMLFallback(data.photo);
     
     return `
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-2xl overflow-hidden" style="width: 380px; font-family: 'Khmer', Arial, sans-serif;">
@@ -557,6 +570,17 @@ function generateCardHTML(data) {
     `;
 }
 
+function getPhotoHTMLFallback(photoData) {
+    if (photoData && photoData !== 'null' && photoData !== '') {
+        return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
+    }
+    return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
+                <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+            </div>`;
+}
+
 // Helper function to escape HTML
 function escapeHtml(str) {
     if (!str) return '';
@@ -566,13 +590,6 @@ function escapeHtml(str) {
         if (m === '>') return '&gt;';
         return m;
     });
-}
-
-function displayCard(data) {
-    const cardContainer = document.getElementById('studentCard');
-    if (cardContainer) {
-        cardContainer.innerHTML = generateCardHTML(data);
-    }
 }
 
 // ============ SAVE STUDENT ============
@@ -745,6 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('TABLE_NAME:', TABLE_NAME);
     console.log('Supabase URL:', SUPABASE_URL);
     console.log('Supabase client available:', !!supabaseClient);
+    console.log('generateCardHTML available:', typeof window.generateCardHTML === 'function');
     
     // Save button
     const saveBtn = document.getElementById('saveBtn');
@@ -902,3 +920,4 @@ window.confirmPhoto = confirmPhoto;
 window.retakePhoto = retakePhoto;
 window.supabaseClient = supabaseClient;
 window.checkTableAccess = checkTableAccess;
+window.displayCard = displayCard;
