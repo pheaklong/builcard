@@ -1,33 +1,294 @@
 // ============ SUPABASE CONFIGURATION ============
 // សូមប្តូរតម្លៃខាងក្រោមតាមគណនី Supabase របស់អ្នក!!!
-const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';  // ឬ URL Project ទីពីរ
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';  // Key ដែលត្រូវគ្នាះ
+const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb2R0d2xpZG53bnhya3JyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5OTQyNzAsImV4cCI6MjA4MjU3MDI3MH0.8GmfjB2g5Kc5yK5c5yK5c5yK5c5yK5c5yK5c5yK5c5';
 
 // Initialize Supabase client
 const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const TABLE_NAME = 'table_student'; // កំណត់ TABLE_NAME នៅទីនេះ!!!
+const TABLE_NAME = 'table_student';
 
 // Global variables
 let currentPhotoBase64 = null;
+let capturedPhotoData = null;
+
+// ============ IMAGE PROCESSING FUNCTIONS ============
+
+/**
+ * Resize image to fit 4x6 ratio (width:height = 4:6 = 2:3)
+ * and compress to under 50KB
+ * @param {string} imageDataUrl - Base64 image data
+ * @param {number} maxWidth - Maximum width in pixels (default: 400)
+ * @param {number} maxHeight - Maximum height in pixels (default: 600)
+ * @param {number} maxSizeKB - Maximum file size in KB (default: 50)
+ * @returns {Promise<string>} - Resized image as Base64
+ */
+async function resizeAndCompressImage(imageDataUrl, maxWidth = 400, maxHeight = 600, maxSizeKB = 50) {
+    return new Promise((resolve, reject) => {
+        try {
+            const img = new Image();
+            img.onload = function() {
+                // Calculate aspect ratio (4:6 = 2:3)
+                const targetRatio = 2 / 3;
+                let width = img.width;
+                let height = img.height;
+                let cropX = 0, cropY = 0, cropWidth = width, cropHeight = height;
+                
+                // Crop to 4:6 ratio (2:3) from center
+                const currentRatio = width / height;
+                if (currentRatio > targetRatio) {
+                    // Image is wider than target, crop width
+                    cropWidth = height * targetRatio;
+                    cropX = (width - cropWidth) / 2;
+                } else if (currentRatio < targetRatio) {
+                    // Image is taller than target, crop height
+                    cropHeight = width / targetRatio;
+                    cropY = (height - cropHeight) / 2;
+                }
+                
+                // Create canvas for cropping
+                const cropCanvas = document.createElement('canvas');
+                cropCanvas.width = cropWidth;
+                cropCanvas.height = cropHeight;
+                const cropCtx = cropCanvas.getContext('2d');
+                cropCtx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+                
+                // Now resize to target size (maxWidth x maxHeight)
+                let resizedWidth = cropWidth;
+                let resizedHeight = cropHeight;
+                
+                if (resizedWidth > maxWidth) {
+                    resizedHeight = (maxWidth / resizedWidth) * resizedHeight;
+                    resizedWidth = maxWidth;
+                }
+                if (resizedHeight > maxHeight) {
+                    resizedWidth = (maxHeight / resizedHeight) * resizedWidth;
+                    resizedHeight = maxHeight;
+                }
+                
+                // Ensure 4:6 ratio
+                if (resizedWidth / resizedHeight > targetRatio) {
+                    resizedWidth = resizedHeight * targetRatio;
+                } else {
+                    resizedHeight = resizedWidth / targetRatio;
+                }
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(resizedWidth);
+                canvas.height = Math.round(resizedHeight);
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(cropCanvas, 0, 0, canvas.width, canvas.height);
+                
+                // Compress with quality adjustment to meet size limit
+                let quality = 0.9;
+                let result = canvas.toDataURL('image/jpeg', quality);
+                
+                // Reduce quality until size is under limit
+                while (result.length > maxSizeKB * 1024 && quality > 0.1) {
+                    quality -= 0.05;
+                    result = canvas.toDataURL('image/jpeg', quality);
+                }
+                
+                // If still too large, reduce dimensions further
+                if (result.length > maxSizeKB * 1024) {
+                    let scale = Math.sqrt((maxSizeKB * 1024) / result.length);
+                    const smallCanvas = document.createElement('canvas');
+                    smallCanvas.width = Math.round(canvas.width * scale);
+                    smallCanvas.height = Math.round(canvas.height * scale);
+                    const smallCtx = smallCanvas.getContext('2d');
+                    smallCtx.imageSmoothingEnabled = true;
+                    smallCtx.imageSmoothingQuality = 'high';
+                    smallCtx.drawImage(canvas, 0, 0, smallCanvas.width, smallCanvas.height);
+                    result = smallCanvas.toDataURL('image/jpeg', 0.7);
+                }
+                
+                // Show size info
+                const sizeKB = (result.length / 1024).toFixed(1);
+                const sizeInfo = document.getElementById('photoSizeInfo');
+                if (sizeInfo) {
+                    sizeInfo.classList.remove('hidden');
+                    sizeInfo.innerHTML = `📊 ទំហំ: ${sizeKB} KB | វិមាត្រ: ${Math.round(resizedWidth)}x${Math.round(resizedHeight)} px (4:6)`;
+                    if (parseFloat(sizeKB) > maxSizeKB) {
+                        sizeInfo.style.color = 'red';
+                    } else {
+                        sizeInfo.style.color = 'green';
+                    }
+                }
+                
+                resolve(result);
+            };
+            img.onerror = function() {
+                reject(new Error('មិនអាចផ្ទុករូបភាពបាន'));
+            };
+            img.src = imageDataUrl;
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
+
+// ============ CAMERA FUNCTIONS ============
+
+let cameraStream = null;
+let isCameraOpen = false;
+
+async function openCamera() {
+    try {
+        // Check if browser supports getUserMedia
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('❌ កម្មវិធីរុករករបស់អ្នកមិនគាំទ្រការប្រើប្រាស់កាមេរ៉ាទេ');
+            return;
+        }
+        
+        // Request camera
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'user',
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            },
+            audio: false
+        });
+        
+        const video = document.getElementById('video');
+        video.srcObject = cameraStream;
+        await video.play();
+        
+        // Show modal
+        const modal = document.getElementById('cameraModal');
+        modal.classList.add('active');
+        isCameraOpen = true;
+        
+        // Hide captured preview if showing
+        document.getElementById('capturedPhotoContainer').classList.add('hidden');
+        document.getElementById('captureBtn').style.display = 'inline-block';
+        
+    } catch (error) {
+        console.error('Camera error:', error);
+        if (error.name === 'NotAllowedError') {
+            alert('❌ សូមអនុញ្ញាតឲ្យប្រើប្រាស់កាមេរ៉ា បន្ទាប់មកព្យាយាមម្តងទៀត');
+        } else if (error.name === 'NotFoundError') {
+            alert('❌ រកមិនឃើញកាមេរ៉ានៅលើឧបករណ៍របស់អ្នក');
+        } else {
+            alert('❌ កំហុស: ' + error.message);
+        }
+    }
+}
+
+function closeCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    isCameraOpen = false;
+    document.getElementById('cameraModal').classList.remove('active');
+    document.getElementById('video').srcObject = null;
+}
+
+function capturePhoto() {
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    
+    // Capture at video resolution
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Get image data
+    const imageData = canvas.toDataURL('image/jpeg', 0.95);
+    capturedPhotoData = imageData;
+    
+    // Show preview
+    const previewImg = document.getElementById('capturedPhotoPreview');
+    previewImg.src = imageData;
+    document.getElementById('capturedPhotoContainer').classList.remove('hidden');
+    document.getElementById('captureBtn').style.display = 'none';
+}
+
+async function confirmPhoto() {
+    if (!capturedPhotoData) {
+        alert('សូមថតរូបជាមុនសិន');
+        return;
+    }
+    
+    try {
+        // Show loading state
+        const confirmBtn = document.getElementById('confirmPhotoBtn');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '⏳ កំពុងដំណើរការ...';
+        confirmBtn.disabled = true;
+        
+        // Resize and compress image
+        const resizedImage = await resizeAndCompressImage(capturedPhotoData);
+        
+        // Set to form
+        currentPhotoBase64 = resizedImage;
+        const preview = document.getElementById('photoPreview');
+        const defaultIcon = document.getElementById('defaultPhotoIcon');
+        if (preview) {
+            preview.src = resizedImage;
+            preview.classList.remove('hidden');
+        }
+        if (defaultIcon) {
+            defaultIcon.classList.add('hidden');
+        }
+        
+        // Close camera
+        closeCamera();
+        
+        // Clear captured data
+        capturedPhotoData = null;
+        
+        alert('✅ រូបភាពត្រូវបានថត និងបង្រួមទំហំដោយជោគជ័យ!');
+        
+    } catch (error) {
+        console.error('Photo processing error:', error);
+        alert('❌ កំហុសក្នុងការដំណើរការរូបភាព: ' + error.message);
+    } finally {
+        const confirmBtn = document.getElementById('confirmPhotoBtn');
+        confirmBtn.innerHTML = '✅ យល់ព្រម';
+        confirmBtn.disabled = false;
+    }
+}
+
+function retakePhoto() {
+    capturedPhotoData = null;
+    document.getElementById('capturedPhotoContainer').classList.add('hidden');
+    document.getElementById('captureBtn').style.display = 'inline-block';
+}
 
 // ============ PHOTO HANDLING ============
-document.getElementById('photo')?.addEventListener('change', (e) => {
+document.getElementById('photo')?.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            currentPhotoBase64 = event.target.result;
-            const preview = document.getElementById('photoPreview');
-            const defaultIcon = document.getElementById('defaultPhotoIcon');
-            if (preview) {
-                preview.src = currentPhotoBase64;
-                preview.classList.remove('hidden');
-            }
-            if (defaultIcon) {
-                defaultIcon.classList.add('hidden');
-            }
-        };
-        reader.readAsDataURL(file);
+        try {
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                try {
+                    // Resize and compress the uploaded image
+                    const resizedImage = await resizeAndCompressImage(event.target.result);
+                    currentPhotoBase64 = resizedImage;
+                    const preview = document.getElementById('photoPreview');
+                    const defaultIcon = document.getElementById('defaultPhotoIcon');
+                    if (preview) {
+                        preview.src = resizedImage;
+                        preview.classList.remove('hidden');
+                    }
+                    if (defaultIcon) {
+                        defaultIcon.classList.add('hidden');
+                    }
+                } catch (error) {
+                    console.error('Image processing error:', error);
+                    alert('❌ កំហុសក្នុងការដំណើរការរូបភាព: ' + error.message);
+                }
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('File read error:', error);
+            alert('❌ កំហុស: ' + error.message);
+        }
     } else {
         resetPhotoPreview();
     }
@@ -43,6 +304,10 @@ function resetPhotoPreview() {
     }
     if (defaultIcon) {
         defaultIcon.classList.remove('hidden');
+    }
+    const sizeInfo = document.getElementById('photoSizeInfo');
+    if (sizeInfo) {
+        sizeInfo.classList.add('hidden');
     }
 }
 
@@ -383,6 +648,42 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadCard();
         });
     }
+    
+    // Camera buttons
+    const openCameraBtn = document.getElementById('openCameraBtn');
+    if (openCameraBtn) {
+        openCameraBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            openCamera();
+        });
+    }
+    
+    const closeCameraBtn = document.getElementById('closeCameraBtn');
+    if (closeCameraBtn) {
+        closeCameraBtn.addEventListener('click', closeCamera);
+    }
+    
+    const captureBtn = document.getElementById('captureBtn');
+    if (captureBtn) {
+        captureBtn.addEventListener('click', capturePhoto);
+    }
+    
+    const confirmPhotoBtn = document.getElementById('confirmPhotoBtn');
+    if (confirmPhotoBtn) {
+        confirmPhotoBtn.addEventListener('click', confirmPhoto);
+    }
+    
+    const retakePhotoBtn = document.getElementById('retakePhotoBtn');
+    if (retakePhotoBtn) {
+        retakePhotoBtn.addEventListener('click', retakePhoto);
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isCameraOpen) {
+            closeCamera();
+        }
+    });
 });
 
 // ============ TEST CONNECTION ============
