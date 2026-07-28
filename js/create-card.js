@@ -1,42 +1,30 @@
 // ============ SUPABASE CONFIGURATION ============
-// សូមប្តូរតម្លៃខាងក្រោមតាមគណនី Supabase របស់អ្នក!!!
 const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
 
-// ============ FIX: Use existing supabase client or create new one ============
+// Initialize Supabase client
 let supabaseClient;
 
-// Try to use existing supabase client from window
-if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
-    supabaseClient = window.supabaseClient;
-    console.log('✅ Using existing supabase client from window');
-} else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true
-        }
-    });
-    console.log('✅ Supabase client created from window.supabase');
-} else if (typeof supabase !== 'undefined' && supabase.createClient) {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true
-        }
-    });
-    console.log('✅ Supabase client created from global supabase');
-} else {
-    // Create a dummy client that shows error messages
-    console.error('❌ Supabase library not found');
+try {
+    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
+        supabaseClient = window.supabaseClient;
+        console.log('✅ Using existing supabase client');
+    } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client created from window.supabase');
+    } else if (typeof supabase !== 'undefined' && supabase.createClient) {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase client created from global supabase');
+    } else {
+        throw new Error('Supabase library not found');
+    }
+} catch (error) {
+    console.error('❌ Failed to initialize Supabase client:', error);
     supabaseClient = {
-        from: () => {
-            throw new Error('Supabase client not initialized. Please refresh the page.');
-        }
+        from: () => { throw new Error('Supabase client not initialized'); }
     };
 }
 
-// Make sure supabaseClient is available globally
 window.supabaseClient = supabaseClient;
 
 const TABLE_NAME = 'table_student';
@@ -48,11 +36,9 @@ let capturedPhotoData = null;
 // ============ PIC_link FUNCTIONS ============
 
 /**
- * Convert Google Drive link to direct image URL
- * @param {string} picLink - Google Drive link
- * @returns {string} - Direct image URL or original link
+ * Extract Google Drive File ID from various URL formats
  */
-function getDirectImageUrl(picLink) {
+function extractFileId(picLink) {
     if (!picLink || picLink.trim() === '') {
         return null;
     }
@@ -81,7 +67,7 @@ function getDirectImageUrl(picLink) {
         }
     }
     
-    // Format 4: drive.google.com/thumbnail?id=FILE_ID
+    // Format 4: /thumbnail?id=FILE_ID
     if (!fileId) {
         const thumbnailMatch = picLink.match(/thumbnail\?id=([^&]+)/);
         if (thumbnailMatch) {
@@ -89,79 +75,49 @@ function getDirectImageUrl(picLink) {
         }
     }
     
-    if (fileId) {
-        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    return fileId;
+}
+
+/**
+ * Get direct image URL from Google Drive (thumbnail - best for CORS)
+ */
+function getDirectImageUrl(picLink) {
+    if (!picLink || picLink.trim() === '') {
+        return null;
     }
     
-    // If no file ID found, return original link
+    const fileId = extractFileId(picLink);
+    
+    if (fileId) {
+        // Use Google Drive thumbnail URL (works better with CORS)
+        // Options: w=400-h400, w=200-h200, w=100-h100
+        return `https://lh3.googleusercontent.com/d/${fileId}=w400-h400`;
+    }
+    
+    // If no file ID, return original link
     return picLink;
 }
 
 /**
- * Load photo from PIC_link (Google Drive)
- * @param {string} picLink - Google Drive link
- * @param {string} imgElementId - Image element ID
- * @returns {Promise<boolean>}
+ * Get multiple image URLs for fallback
  */
-async function loadPhotoFromPICLink(picLink, imgElementId = 'photoPreview') {
+function getImageUrls(picLink) {
     if (!picLink || picLink.trim() === '') {
-        return false;
+        return [];
     }
     
-    const imgElement = document.getElementById(imgElementId);
-    const defaultIcon = document.getElementById('defaultPhotoIcon');
+    const fileId = extractFileId(picLink);
     
-    if (!imgElement) {
-        console.warn('Image element not found:', imgElementId);
-        return false;
+    if (fileId) {
+        return [
+            `https://lh3.googleusercontent.com/d/${fileId}=w400-h400`,
+            `https://lh3.googleusercontent.com/d/${fileId}=w200-h200`,
+            `https://drive.google.com/uc?export=view&id=${fileId}`,
+            `https://drive.google.com/thumbnail?id=${fileId}&sz=w400-h400`
+        ];
     }
     
-    try {
-        const directUrl = getDirectImageUrl(picLink);
-        console.log('🖼️ Loading image from PIC_link:', directUrl);
-        
-        return new Promise((resolve) => {
-            const testImg = new Image();
-            testImg.crossOrigin = "anonymous";
-            
-            testImg.onload = function() {
-                console.log('✅ Image loaded successfully from PIC_link');
-                imgElement.src = directUrl;
-                imgElement.classList.remove('hidden');
-                if (defaultIcon) {
-                    defaultIcon.classList.add('hidden');
-                }
-                resolve(true);
-            };
-            
-            testImg.onerror = function() {
-                console.warn('⚠️ Failed to load image from PIC_link');
-                // Show default icon
-                imgElement.classList.add('hidden');
-                if (defaultIcon) {
-                    defaultIcon.classList.remove('hidden');
-                }
-                resolve(false);
-            };
-            
-            // Set timeout in case of hanging
-            setTimeout(() => {
-                if (!testImg.complete) {
-                    console.warn('⚠️ Image loading timeout');
-                    imgElement.classList.add('hidden');
-                    if (defaultIcon) {
-                        defaultIcon.classList.remove('hidden');
-                    }
-                    resolve(false);
-                }
-            }, 8000);
-            
-            testImg.src = directUrl;
-        });
-    } catch (error) {
-        console.error('Error loading photo from PIC_link:', error);
-        return false;
-    }
+    return [picLink];
 }
 
 // ============ GET URL PARAMETERS ============
@@ -177,17 +133,13 @@ async function loadStudentFromUrl() {
         console.log('📥 Loading student from URL:', studentID);
         document.getElementById('searchStudentID').value = studentID;
         await searchStudentById(studentID);
-    } else {
-        console.log('ℹ️ No studentID parameter found in URL');
     }
 }
 
 // ============ SEARCH STUDENT BY ID ============
 async function searchStudentById(studentID) {
     try {
-        // Check if supabaseClient is initialized
         if (!supabaseClient || typeof supabaseClient.from !== 'function') {
-            console.error('❌ Supabase client not available');
             alert('❌ Supabase client not initialized. Please refresh the page.');
             return false;
         }
@@ -202,12 +154,7 @@ async function searchStudentById(studentID) {
         
         if (error) {
             console.error('❌ Search error:', error);
-            
-            if (error.code === '401' || error.message.includes('Unauthorized')) {
-                alert('❌ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized) ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
-            } else {
-                alert('❌ កំហុសក្នុងការស្វែងរក: ' + error.message);
-            }
+            alert('❌ កំហុសក្នុងការស្វែងរក: ' + error.message);
             return false;
         }
         
@@ -233,22 +180,17 @@ async function searchStudentById(studentID) {
         document.getElementById('motherjob').value = data.motherjob || '';
         document.getElementById('class').value = data.class || '';
         
-        // ============ Handle PIC_link ============
+        // Handle PIC_link
+        const picLinkInput = document.getElementById('picLinkInput');
         if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
-            console.log('📸 Loading photo from PIC_link:', data.PIC_link);
-            // Set PIC_link input value
-            const picLinkInput = document.getElementById('picLinkInput');
+            console.log('📸 Found PIC_link:', data.PIC_link);
             if (picLinkInput) {
                 picLinkInput.value = data.PIC_link;
             }
-            // Load image from PIC_link
+            // Load photo from PIC_link
             await loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
-            // Clear other photo sources
-            currentPhotoBase64 = null;
-            capturedPhotoData = null;
-            document.getElementById('photo').value = '';
         } else {
-            // No PIC_link, check if there's a photo in database
+            // No PIC_link, check for stored photo
             if (data.photo && data.photo !== 'null' && data.photo !== '') {
                 currentPhotoBase64 = data.photo;
                 const preview = document.getElementById('photoPreview');
@@ -261,20 +203,15 @@ async function searchStudentById(studentID) {
                     defaultIcon.classList.add('hidden');
                 }
                 console.log('📸 Photo loaded from database');
-                
-                // Clear PIC_link input
-                const picLinkInput = document.getElementById('picLinkInput');
+            } else {
+                resetPhotoPreview();
                 if (picLinkInput) {
                     picLinkInput.value = '';
                 }
-            } else {
-                // No photo at all
-                resetPhotoPreview();
-                console.log('ℹ️ No photo found for this student');
             }
         }
         
-        // Display card using card-template.js
+        // Display card
         displayCard(data);
         return true;
         
@@ -285,12 +222,100 @@ async function searchStudentById(studentID) {
     }
 }
 
+// ============ LOAD PHOTO FROM PIC_LINK ============
+
+/**
+ * Load photo from PIC_link with multiple fallback URLs
+ */
+async function loadPhotoFromPICLink(picLink, imgElementId = 'photoPreview') {
+    if (!picLink || picLink.trim() === '') {
+        return false;
+    }
+    
+    const imgElement = document.getElementById(imgElementId);
+    const defaultIcon = document.getElementById('defaultPhotoIcon');
+    
+    if (!imgElement) {
+        console.warn('Image element not found:', imgElementId);
+        return false;
+    }
+    
+    // Get all possible URLs
+    const urls = getImageUrls(picLink);
+    console.log('🖼️ Trying to load from PIC_link, URLs:', urls);
+    
+    return new Promise((resolve) => {
+        let urlIndex = 0;
+        let loaded = false;
+        
+        function tryNextUrl() {
+            if (urlIndex >= urls.length || loaded) {
+                if (!loaded) {
+                    console.warn('⚠️ All URLs failed to load image');
+                    imgElement.classList.add('hidden');
+                    if (defaultIcon) {
+                        defaultIcon.classList.remove('hidden');
+                    }
+                    resolve(false);
+                }
+                return;
+            }
+            
+            const url = urls[urlIndex];
+            console.log(`🔄 Trying URL ${urlIndex + 1}/${urls.length}:`, url);
+            
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            
+            img.onload = function() {
+                console.log('✅ Image loaded successfully from:', url);
+                imgElement.src = url;
+                imgElement.classList.remove('hidden');
+                if (defaultIcon) {
+                    defaultIcon.classList.add('hidden');
+                }
+                loaded = true;
+                resolve(true);
+            };
+            
+            img.onerror = function() {
+                console.warn('❌ Failed to load from:', url);
+                urlIndex++;
+                tryNextUrl();
+            };
+            
+            // Set timeout for each URL
+            const timeoutId = setTimeout(() => {
+                console.warn('⏰ Timeout for URL:', url);
+                urlIndex++;
+                tryNextUrl();
+            }, 5000);
+            
+            img.src = url;
+            
+            // Store timeoutId to clear it if image loads
+            img.__timeoutId = timeoutId;
+            img.onload = function() {
+                clearTimeout(timeoutId);
+                console.log('✅ Image loaded successfully from:', url);
+                imgElement.src = url;
+                imgElement.classList.remove('hidden');
+                if (defaultIcon) {
+                    defaultIcon.classList.add('hidden');
+                }
+                loaded = true;
+                resolve(true);
+            };
+        }
+        
+        tryNextUrl();
+    });
+}
+
 // ============ CHECK TABLE ACCESS ============
 async function checkTableAccess() {
     try {
         console.log('Checking table access for:', TABLE_NAME);
-        
-        // Try to get a single record to check access
         const { data, error, count } = await supabaseClient
             .from(TABLE_NAME)
             .select('*', { count: 'exact', head: true })
@@ -298,16 +323,8 @@ async function checkTableAccess() {
         
         if (error) {
             console.error('❌ Table access error:', error);
-            
-            if (error.code === 'PGRST301' || error.message.includes('permission denied')) {
-                console.error('🔒 Permission denied. Please check Row Level Security (RLS) policies.');
-                alert('⚠️ គ្មានសិទ្ធិចូលប្រើតារាង ' + TABLE_NAME + ' ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
-            } else if (error.code === '42P01' || error.message.includes('does not exist')) {
-                console.error('📋 Table does not exist. Please create the table first.');
-                alert('⚠️ តារាង ' + TABLE_NAME + ' មិនមានទេ។ សូមបង្កើតតារាងនៅលើ Supabase Dashboard ។');
-            } else if (error.code === '401' || error.message.includes('Unauthorized')) {
-                console.error('🔑 Unauthorized. Please check your ANON_KEY.');
-                alert('⚠️ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized)។ សូមពិនិត្យ ANON_KEY និងការកំណត់ RLS ។');
+            if (error.code === '401' || error.message.includes('Unauthorized')) {
+                alert('⚠️ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized)។ សូមពិនិត្យការកំណត់ RLS ។');
             } else {
                 alert('⚠️ កំហុស: ' + error.message);
             }
@@ -327,46 +344,31 @@ async function checkTableAccess() {
 
 // ============ IMAGE PROCESSING FUNCTIONS ============
 
-/**
- * Resize image to fit 4x6 ratio (width:height = 4:6 = 2:3)
- * and compress to under 50KB
- * @param {string} imageDataUrl - Base64 image data
- * @param {number} maxWidth - Maximum width in pixels (default: 400)
- * @param {number} maxHeight - Maximum height in pixels (default: 600)
- * @param {number} maxSizeKB - Maximum file size in KB (default: 50)
- * @returns {Promise<string>} - Resized image as Base64
- */
 async function resizeAndCompressImage(imageDataUrl, maxWidth = 400, maxHeight = 600, maxSizeKB = 50) {
     return new Promise((resolve, reject) => {
         try {
             const img = new Image();
             img.onload = function() {
-                // Calculate aspect ratio (4:6 = 2:3)
                 const targetRatio = 2 / 3;
                 let width = img.width;
                 let height = img.height;
                 let cropX = 0, cropY = 0, cropWidth = width, cropHeight = height;
                 
-                // Crop to 4:6 ratio (2:3) from center
                 const currentRatio = width / height;
                 if (currentRatio > targetRatio) {
-                    // Image is wider than target, crop width
                     cropWidth = height * targetRatio;
                     cropX = (width - cropWidth) / 2;
                 } else if (currentRatio < targetRatio) {
-                    // Image is taller than target, crop height
                     cropHeight = width / targetRatio;
                     cropY = (height - cropHeight) / 2;
                 }
                 
-                // Create canvas for cropping
                 const cropCanvas = document.createElement('canvas');
                 cropCanvas.width = cropWidth;
                 cropCanvas.height = cropHeight;
                 const cropCtx = cropCanvas.getContext('2d');
                 cropCtx.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
                 
-                // Now resize to target size (maxWidth x maxHeight)
                 let resizedWidth = cropWidth;
                 let resizedHeight = cropHeight;
                 
@@ -379,7 +381,6 @@ async function resizeAndCompressImage(imageDataUrl, maxWidth = 400, maxHeight = 
                     resizedHeight = maxHeight;
                 }
                 
-                // Ensure 4:6 ratio
                 if (resizedWidth / resizedHeight > targetRatio) {
                     resizedWidth = resizedHeight * targetRatio;
                 } else {
@@ -394,17 +395,14 @@ async function resizeAndCompressImage(imageDataUrl, maxWidth = 400, maxHeight = 
                 ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(cropCanvas, 0, 0, canvas.width, canvas.height);
                 
-                // Compress with quality adjustment to meet size limit
                 let quality = 0.9;
                 let result = canvas.toDataURL('image/jpeg', quality);
                 
-                // Reduce quality until size is under limit
                 while (result.length > maxSizeKB * 1024 && quality > 0.1) {
                     quality -= 0.05;
                     result = canvas.toDataURL('image/jpeg', quality);
                 }
                 
-                // If still too large, reduce dimensions further
                 if (result.length > maxSizeKB * 1024) {
                     let scale = Math.sqrt((maxSizeKB * 1024) / result.length);
                     const smallCanvas = document.createElement('canvas');
@@ -417,7 +415,6 @@ async function resizeAndCompressImage(imageDataUrl, maxWidth = 400, maxHeight = 
                     result = smallCanvas.toDataURL('image/jpeg', 0.7);
                 }
                 
-                // Show size info
                 const sizeKB = (result.length / 1024).toFixed(1);
                 const sizeInfo = document.getElementById('photoSizeInfo');
                 if (sizeInfo) {
@@ -449,13 +446,11 @@ let isCameraOpen = false;
 
 async function openCamera() {
     try {
-        // Check if browser supports getUserMedia
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             alert('❌ កម្មវិធីរុករករបស់អ្នកមិនគាំទ្រការប្រើប្រាស់កាមេរ៉ាទេ');
             return;
         }
         
-        // Request camera
         cameraStream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'user',
@@ -469,21 +464,19 @@ async function openCamera() {
         video.srcObject = cameraStream;
         await video.play();
         
-        // Show modal
         const modal = document.getElementById('cameraModal');
         modal.classList.add('active');
         isCameraOpen = true;
         
-        // Hide captured preview if showing
         document.getElementById('capturedPhotoContainer').classList.add('hidden');
         document.getElementById('captureBtn').style.display = 'inline-block';
         
     } catch (error) {
         console.error('Camera error:', error);
         if (error.name === 'NotAllowedError') {
-            alert('❌ សូមអនុញ្ញាតឲ្យប្រើប្រាស់កាមេរ៉ា បន្ទាប់មកព្យាយាមម្តងទៀត');
+            alert('❌ សូមអនុញ្ញាតឲ្យប្រើប្រាស់កាមេរ៉ា');
         } else if (error.name === 'NotFoundError') {
-            alert('❌ រកមិនឃើញកាមេរ៉ានៅលើឧបករណ៍របស់អ្នក');
+            alert('❌ រកមិនឃើញកាមេរ៉ា');
         } else {
             alert('❌ កំហុស: ' + error.message);
         }
@@ -505,16 +498,13 @@ function capturePhoto() {
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     
-    // Capture at video resolution
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Get image data
     const imageData = canvas.toDataURL('image/jpeg', 0.95);
     capturedPhotoData = imageData;
     
-    // Show preview
     const previewImg = document.getElementById('capturedPhotoPreview');
     previewImg.src = imageData;
     document.getElementById('capturedPhotoContainer').classList.remove('hidden');
@@ -528,16 +518,12 @@ async function confirmPhoto() {
     }
     
     try {
-        // Show loading state
         const confirmBtn = document.getElementById('confirmPhotoBtn');
-        const originalText = confirmBtn.innerHTML;
         confirmBtn.innerHTML = '⏳ កំពុងដំណើរការ...';
         confirmBtn.disabled = true;
         
-        // Resize and compress image
         const resizedImage = await resizeAndCompressImage(capturedPhotoData);
         
-        // Set to form
         currentPhotoBase64 = resizedImage;
         const preview = document.getElementById('photoPreview');
         const defaultIcon = document.getElementById('defaultPhotoIcon');
@@ -555,17 +541,14 @@ async function confirmPhoto() {
             picLinkInput.value = '';
         }
         
-        // Close camera
         closeCamera();
-        
-        // Clear captured data
         capturedPhotoData = null;
         
-        alert('✅ រូបភាពត្រូវបានថត និងបង្រួមទំហំដោយជោគជ័យ!');
+        alert('✅ រូបភាពត្រូវបានថតដោយជោគជ័យ!');
         
     } catch (error) {
         console.error('Photo processing error:', error);
-        alert('❌ កំហុសក្នុងការដំណើរការរូបភាព: ' + error.message);
+        alert('❌ កំហុស: ' + error.message);
     } finally {
         const confirmBtn = document.getElementById('confirmPhotoBtn');
         confirmBtn.innerHTML = '✅ យល់ព្រម';
@@ -587,7 +570,6 @@ document.getElementById('photo')?.addEventListener('change', async (e) => {
             const reader = new FileReader();
             reader.onload = async function(event) {
                 try {
-                    // Resize and compress the uploaded image
                     const resizedImage = await resizeAndCompressImage(event.target.result);
                     currentPhotoBase64 = resizedImage;
                     const preview = document.getElementById('photoPreview');
@@ -600,14 +582,13 @@ document.getElementById('photo')?.addEventListener('change', async (e) => {
                         defaultIcon.classList.add('hidden');
                     }
                     
-                    // Clear PIC_link when file is uploaded
                     const picLinkInput = document.getElementById('picLinkInput');
                     if (picLinkInput) {
                         picLinkInput.value = '';
                     }
                 } catch (error) {
                     console.error('Image processing error:', error);
-                    alert('❌ កំហុសក្នុងការដំណើរការរូបភាព: ' + error.message);
+                    alert('❌ កំហុស: ' + error.message);
                 }
             };
             reader.readAsDataURL(file);
@@ -637,64 +618,58 @@ function resetPhotoPreview() {
     }
 }
 
-// ============ CARD DISPLAY FUNCTIONS (using card-template.js) ============
+// ============ CARD DISPLAY FUNCTIONS ============
 
 /**
- * Display card using the template from card-template.js
- * This function calls the global generateCardHTML function
+ * Display card using PIC_link directly from Google Drive
+ * This avoids storing images in database
  */
 function displayCard(data) {
     const cardContainer = document.getElementById('studentCard');
-    if (cardContainer) {
-        // Check if generateCardHTML is available from card-template.js
-        if (typeof window.generateCardHTML === 'function') {
-            // Make sure PIC_link is included in the data
-            const cardData = {
-                ...data,
-                PIC_link: data.PIC_link || null
-            };
-            cardContainer.innerHTML = window.generateCardHTML(cardData);
-            console.log('✅ Card displayed using card-template.js');
-            
-            // Load photo from PIC_link if available
-            if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
-                console.log('📸 Loading photo from PIC_link in card:', data.PIC_link);
-                loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
-            }
-        } else {
-            // Fallback: use local generateCardHTML
-            console.warn('⚠️ generateCardHTML not found in window, using fallback');
-            cardContainer.innerHTML = generateCardHTMLFallback(data);
-        }
-    }
-}
-
-/**
- * Get photo HTML for card - FIXED to use PIC_link
- */
-function getPhotoHTMLFallback(photoData, picLink) {
-    // Check PIC_link first
-    if (picLink && picLink !== 'null' && picLink !== '') {
-        const directUrl = getDirectImageUrl(picLink);
-        return `<img src="${directUrl}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400" crossOrigin="anonymous">`;
+    if (!cardContainer) return;
+    
+    // Get photo URL from PIC_link
+    let photoUrl = null;
+    
+    // Priority 1: Use PIC_link if available
+    if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
+        photoUrl = getDirectImageUrl(data.PIC_link);
+        console.log('📸 Using PIC_link:', photoUrl);
+    } 
+    // Priority 2: Use stored photo (if any)
+    else if (data.photo && data.photo !== 'null' && data.photo !== '') {
+        photoUrl = data.photo;
+        console.log('📸 Using stored photo');
     }
     
-    if (photoData && photoData !== 'null' && photoData !== '') {
-        return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
+    // Generate card HTML with photo
+    const cardHTML = generateCardHTML(data, photoUrl);
+    cardContainer.innerHTML = cardHTML;
+    
+    // Load photo from PIC_link if available (for preview)
+    if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
+        loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
     }
-    return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
-                <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                </svg>
-            </div>`;
 }
 
 /**
- * Fallback card generation if card-template.js is not loaded
+ * Generate card HTML with photo from PIC_link
  */
-function generateCardHTMLFallback(data) {
+function generateCardHTML(data, photoUrl) {
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-    const photoHTML = getPhotoHTMLFallback(data.photo, data.PIC_link);
+    
+    // Create photo HTML with fallback
+    let photoHTML = '';
+    if (photoUrl) {
+        photoHTML = `<img src="${photoUrl}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400" 
+                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500\\'><svg class=\\'w-10 h-10\\' fill=\\'currentColor\\' viewBox=\\'0 0 20 20\\'><path fill-rule=\\'evenodd\\' d=\\'M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z\\' clip-rule=\\'evenodd\\'/></svg></div>'">`;
+    } else {
+        photoHTML = `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>`;
+    }
     
     return `
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-2xl overflow-hidden" style="width: 380px; font-family: 'Khmer', Arial, sans-serif;">
@@ -730,7 +705,7 @@ function generateCardHTMLFallback(data) {
                     <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.fatherphone) || 'N/A'}</p>
                     <p><span class="opacity-90">ម្តាយ៖</span> ${escapeHtml(data.mothername) || 'N/A'} (${escapeHtml(data.motherjob) || ''})</p>
                     <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.motherphone) || 'N/A'}</p>
-                    ${data.PIC_link ? `<p class="text-xs opacity-70">📎 ${escapeHtml(data.PIC_link.substring(0, 30))}...</p>` : ''}
+                    ${data.PIC_link ? `<p class="text-xs opacity-70">📎 Google Drive</p>` : ''}
                 </div>
             </div>
             
@@ -755,10 +730,8 @@ function escapeHtml(str) {
 // ============ SAVE STUDENT ============
 async function saveStudent() {
     try {
-        // Check if supabaseClient is initialized
         if (!supabaseClient || typeof supabaseClient.from !== 'function') {
             alert('❌ Supabase client not initialized. Please refresh the page.');
-            console.error('Supabase client not available:', supabaseClient);
             return false;
         }
 
@@ -776,17 +749,25 @@ async function saveStudent() {
             mothername: document.getElementById('mothername').value.trim(),
             motherphone: document.getElementById('motherphone').value.trim(),
             motherjob: document.getElementById('motherjob').value.trim(),
-            class: document.getElementById('class').value.trim(),
-            photo: currentPhotoBase64 || null
+            class: document.getElementById('class').value.trim()
         };
         
-        // Get PIC_link from input
+        // Get PIC_link from input (save only the link, not the image)
         const picLinkInput = document.getElementById('picLinkInput');
         if (picLinkInput && picLinkInput.value.trim() !== '') {
             studentData.PIC_link = picLinkInput.value.trim();
             console.log('📎 Saving PIC_link:', studentData.PIC_link);
         } else {
             studentData.PIC_link = null;
+        }
+        
+        // Only save photo if it's from camera or file upload (not from PIC_link)
+        if (currentPhotoBase64 && currentPhotoBase64 !== '') {
+            studentData.photo = currentPhotoBase64;
+            console.log('📸 Saving photo from camera/file');
+        } else {
+            // Don't overwrite existing photo if only PIC_link is used
+            // We'll keep the existing photo in database
         }
         
         // Validate required fields
@@ -810,18 +791,17 @@ async function saveStudent() {
         
         if (findError && findError.code !== 'PGRST116') {
             console.error('Find error:', findError);
-            
-            if (findError.code === '401' || findError.message.includes('Unauthorized')) {
-                alert('❌ គ្មានសិទ្ធិចូលប្រើ (401 Unauthorized) ។ សូមពិនិត្យការកំណត់ RLS នៅលើ Supabase Dashboard ។');
-            } else {
-                alert('❌ កំហុសក្នុងការស្វែងរក: ' + findError.message);
-            }
+            alert('❌ កំហុស: ' + findError.message);
             return false;
         }
         
         let result;
         if (existing) {
-            // Update
+            // Update - keep existing photo if not overwritten
+            if (!studentData.photo && existing.photo) {
+                studentData.photo = existing.photo;
+            }
+            
             result = await supabaseClient
                 .from(TABLE_NAME)
                 .update(studentData)
@@ -832,7 +812,7 @@ async function saveStudent() {
                 displayCard(studentData);
                 return true;
             } else {
-                alert('❌ កំហុសក្នុងការកែប្រែ: ' + result.error.message);
+                alert('❌ កំហុស: ' + result.error.message);
                 return false;
             }
         } else {
@@ -846,7 +826,7 @@ async function saveStudent() {
                 displayCard(studentData);
                 return true;
             } else {
-                alert('❌ កំហុសក្នុងការរក្សាទុក: ' + result.error.message);
+                alert('❌ កំហុស: ' + result.error.message);
                 return false;
             }
         }
@@ -882,14 +862,7 @@ function printCard() {
                 <title>បោះពុម្ពកាតសិស្ស</title>
                 <meta charset="UTF-8">
                 <style>
-                    body {
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        min-height: 100vh;
-                        margin: 0;
-                        background: white;
-                    }
+                    body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: white; }
                 </style>
             </head>
             <body>${cardContent}</body>
@@ -920,92 +893,55 @@ async function downloadCard() {
         alert('✅ បានទាញយករូបភាពដោយជោគជ័យ!');
     } catch (error) {
         console.error('Download error:', error);
-        alert('កើតមានបញ្ហាក្នុងការទាញយករូបភាព: ' + error.message);
+        alert('កើតមានបញ្ហា: ' + error.message);
     }
 }
 
 // ============ EVENT LISTENERS ============
-// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, setting up event listeners...');
     console.log('TABLE_NAME:', TABLE_NAME);
-    console.log('Supabase URL:', SUPABASE_URL);
-    console.log('Supabase client available:', !!supabaseClient);
-    console.log('generateCardHTML available:', typeof window.generateCardHTML === 'function');
     
     // Save button
-    const saveBtn = document.getElementById('saveBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            saveStudent();
-        });
-    }
+    document.getElementById('saveBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        saveStudent();
+    });
     
     // Form submit
-    const studentForm = document.getElementById('studentForm');
-    if (studentForm) {
-        studentForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            saveStudent();
-        });
-    }
+    document.getElementById('studentForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveStudent();
+    });
     
     // Search button
-    const fetchBtn = document.getElementById('fetchStudentBtn');
-    if (fetchBtn) {
-        fetchBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            searchStudent();
-        });
-    }
+    document.getElementById('fetchStudentBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        searchStudent();
+    });
     
     // Print button
-    const printBtn = document.getElementById('printCard');
-    if (printBtn) {
-        printBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            printCard();
-        });
-    }
+    document.getElementById('printCard')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        printCard();
+    });
     
     // Download button
-    const downloadBtn = document.getElementById('downloadCard');
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            downloadCard();
-        });
-    }
+    document.getElementById('downloadCard')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        downloadCard();
+    });
     
     // Camera buttons
-    const openCameraBtn = document.getElementById('openCameraBtn');
-    if (openCameraBtn) {
-        openCameraBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openCamera();
-        });
-    }
+    document.getElementById('openCameraBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        openCamera();
+    });
     
-    const closeCameraBtn = document.getElementById('closeCameraBtn');
-    if (closeCameraBtn) {
-        closeCameraBtn.addEventListener('click', closeCamera);
-    }
-    
-    const captureBtn = document.getElementById('captureBtn');
-    if (captureBtn) {
-        captureBtn.addEventListener('click', capturePhoto);
-    }
-    
-    const confirmPhotoBtn = document.getElementById('confirmPhotoBtn');
-    if (confirmPhotoBtn) {
-        confirmPhotoBtn.addEventListener('click', confirmPhoto);
-    }
-    
-    const retakePhotoBtn = document.getElementById('retakePhotoBtn');
-    if (retakePhotoBtn) {
-        retakePhotoBtn.addEventListener('click', retakePhoto);
-    }
+    document.getElementById('closeCameraBtn')?.addEventListener('click', closeCamera);
+    document.getElementById('captureBtn')?.addEventListener('click', capturePhoto);
+    document.getElementById('confirmPhotoBtn')?.addEventListener('click', confirmPhoto);
+    document.getElementById('retakePhotoBtn')?.addEventListener('click', retakePhoto);
     
     // Close modal on escape key
     document.addEventListener('keydown', (e) => {
@@ -1014,28 +950,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // PIC_link input event listener
+    // PIC_link input event listener - load photo when pasted
     const picLinkInput = document.getElementById('picLinkInput');
     if (picLinkInput) {
         picLinkInput.addEventListener('change', function() {
             if (this.value.trim() !== '') {
                 console.log('📎 PIC_link changed:', this.value);
-                // Load photo from PIC_link
                 loadPhotoFromPICLink(this.value.trim(), 'photoPreview');
-                // Clear other photo sources
+                // Clear camera/file photo when using PIC_link
                 currentPhotoBase64 = null;
-                capturedPhotoData = null;
                 document.getElementById('photo').value = '';
             } else {
-                // If PIC_link is cleared, show default icon
-                const preview = document.getElementById('photoPreview');
-                const defaultIcon = document.getElementById('defaultPhotoIcon');
-                if (preview) preview.classList.add('hidden');
-                if (defaultIcon) defaultIcon.classList.remove('hidden');
+                resetPhotoPreview();
             }
         });
         
-        // Also load when typing (with debounce)
+        // Load when typing (with debounce)
         let timeoutId = null;
         picLinkInput.addEventListener('input', function() {
             clearTimeout(timeoutId);
@@ -1047,68 +977,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // ⭐ IMPORTANT: Load student from URL parameter when page loads
+    // Load student from URL parameter
     setTimeout(() => {
         loadStudentFromUrl();
     }, 500);
     
-    // Check table access after a short delay
+    // Check table access
     setTimeout(() => {
         checkTableAccess();
     }, 1500);
 });
 
-// ============ TEST CONNECTION ============
-async function testConnection() {
-    try {
-        console.log('Testing Supabase connection...');
-        
-        // Check if supabaseClient is available
-        if (!supabaseClient || typeof supabaseClient.from !== 'function') {
-            console.error('❌ Supabase client not available or not a function');
-            console.log('supabaseClient:', supabaseClient);
-            return;
-        }
-        
-        // Test with a simple query
-        const { data, error, count } = await supabaseClient
-            .from(TABLE_NAME)
-            .select('*', { count: 'exact', head: true })
-            .limit(1);
-        
-        if (error) {
-            console.warn('⚠️ Connection test warning:', error);
-            
-            if (error.code === '401' || error.message.includes('Unauthorized')) {
-                console.error('🔑 401 Unauthorized - Please check:');
-                console.error('  1. ANON_KEY is correct');
-                console.error('  2. Table "' + TABLE_NAME + '" exists');
-                console.error('  3. RLS policies allow ANON access');
-                console.error('  4. Table is exposed via API');
-            } else if (error.code === '42P01' || error.message.includes('does not exist')) {
-                console.error('📋 Table "' + TABLE_NAME + '" does not exist. Please create it first.');
-            } else {
-                console.warn('Please check your SUPABASE_URL and SUPABASE_ANON_KEY');
-                console.warn('Make sure the table "' + TABLE_NAME + '" exists');
-            }
-        } else {
-            console.log('✅ Supabase connected successfully!');
-            console.log('Table:', TABLE_NAME);
-            console.log('Total records:', count || 0);
-        }
-    } catch (error) {
-        console.error('❌ Connection test failed:', error);
-        console.error('Error details:', error.message);
-        console.error('Stack:', error.stack);
-    }
-}
-
-// Run connection test after a short delay to ensure everything is loaded
-setTimeout(() => {
-    testConnection();
-}, 2000);
-
-// Export functions for use in HTML if needed
+// Export functions for use in HTML
 window.saveStudent = saveStudent;
 window.searchStudent = searchStudent;
 window.searchStudentById = searchStudentById;
