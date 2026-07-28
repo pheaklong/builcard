@@ -89,12 +89,9 @@ function getDirectImageUrl(picLink) {
     const fileId = extractFileId(picLink);
     
     if (fileId) {
-        // Use Google Drive thumbnail URL (works better with CORS)
-        // Options: w=400-h400, w=200-h200, w=100-h100
         return `https://lh3.googleusercontent.com/d/${fileId}=w400-h400`;
     }
     
-    // If no file ID, return original link
     return picLink;
 }
 
@@ -618,47 +615,83 @@ function resetPhotoPreview() {
     }
 }
 
-// ============ CARD DISPLAY FUNCTIONS ============
+// ============ CARD DISPLAY FUNCTIONS (UPDATED to use card-template.js) ============
 
 /**
- * Display card using PIC_link directly from Google Drive
- * This avoids storing images in database
+ * Display card using card-template.js
+ * This uses the template from card-template.js file
  */
 function displayCard(data) {
     const cardContainer = document.getElementById('studentCard');
     if (!cardContainer) return;
     
-    // Get photo URL from PIC_link
-    let photoUrl = null;
+    console.log('📇 Displaying card for student:', data.studentID);
+    console.log('📸 PIC_link:', data.PIC_link);
+    console.log('📸 Photo stored:', data.photo ? 'Yes' : 'No');
     
-    // Priority 1: Use PIC_link if available
-    if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
-        photoUrl = getDirectImageUrl(data.PIC_link);
-        console.log('📸 Using PIC_link:', photoUrl);
-    } 
-    // Priority 2: Use stored photo (if any)
-    else if (data.photo && data.photo !== 'null' && data.photo !== '') {
-        photoUrl = data.photo;
-        console.log('📸 Using stored photo');
-    }
-    
-    // Generate card HTML with photo
-    const cardHTML = generateCardHTML(data, photoUrl);
-    cardContainer.innerHTML = cardHTML;
-    
-    // Load photo from PIC_link if available (for preview)
-    if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
-        loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
+    // Check if card-template.js is loaded and has generateCardHTML function
+    if (typeof window.generateCardHTML === 'function') {
+        console.log('✅ Using card-template.js template');
+        
+        // Prepare data for the template
+        // Make sure we pass all required fields including PIC_link
+        const cardData = {
+            ...data,
+            // Ensure PIC_link is included
+            PIC_link: data.PIC_link || null,
+            // Map fields if needed by the template
+            studentID: data.studentID,
+            name: data.name,
+            sex: data.sex,
+            date_of_birth: data.date_of_birth,
+            phonenumber: data.phonenumber,
+            address: data.address,
+            fathername: data.fathername,
+            fatherphone: data.fatherphone,
+            fatherjob: data.fatherjob,
+            mothername: data.mothername,
+            motherphone: data.motherphone,
+            motherjob: data.motherjob,
+            class: data.class,
+            photo: data.photo || null
+        };
+        
+        // Generate card HTML using the template
+        const cardHTML = window.generateCardHTML(cardData);
+        cardContainer.innerHTML = cardHTML;
+        console.log('✅ Card displayed using card-template.js');
+        
+        // Load photo from PIC_link if available (for preview)
+        if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
+            console.log('📸 Loading photo from PIC_link for preview:', data.PIC_link);
+            loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
+        }
+        
+    } else {
+        // Fallback: if card-template.js is not loaded, use local template
+        console.warn('⚠️ generateCardHTML not found, using fallback');
+        console.log('window.generateCardHTML:', window.generateCardHTML);
+        const fallbackHTML = generateFallbackCardHTML(data);
+        cardContainer.innerHTML = fallbackHTML;
     }
 }
 
 /**
- * Generate card HTML with photo from PIC_link
+ * Fallback card generation if card-template.js is not loaded
+ * This is the same template structure as your existing code
  */
-function generateCardHTML(data, photoUrl) {
+function generateFallbackCardHTML(data) {
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
     
-    // Create photo HTML with fallback
+    // Get photo URL
+    let photoUrl = null;
+    if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
+        photoUrl = getDirectImageUrl(data.PIC_link);
+    } else if (data.photo && data.photo !== 'null' && data.photo !== '') {
+        photoUrl = data.photo;
+    }
+    
+    // Create photo HTML
     let photoHTML = '';
     if (photoUrl) {
         photoHTML = `<img src="${photoUrl}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400" 
@@ -902,6 +935,10 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, setting up event listeners...');
     console.log('TABLE_NAME:', TABLE_NAME);
     
+    // Check if card-template.js is loaded
+    console.log('card-template.js loaded:', typeof window.generateCardHTML === 'function');
+    console.log('window.generateCardHTML:', window.generateCardHTML);
+    
     // Save button
     document.getElementById('saveBtn')?.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1004,3 +1041,5 @@ window.supabaseClient = supabaseClient;
 window.checkTableAccess = checkTableAccess;
 window.displayCard = displayCard;
 window.loadPhotoFromPICLink = loadPhotoFromPICLink;
+window.extractFileId = extractFileId;
+window.getDirectImageUrl = getDirectImageUrl;
