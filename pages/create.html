@@ -74,6 +74,14 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+        /* PIC_link input style */
+        #picLinkInput {
+            transition: all 0.3s ease;
+        }
+        #picLinkInput:focus {
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+        }
     </style>
 
     <script src="../js/auth.js"></script>
@@ -158,6 +166,13 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div><label class="block text-sm font-medium text-gray-700">លេខទូរស័ព្ទ</label><input type="tel" id="motherphone" class="mt-1 block w-full rounded-md border p-2"></div>
                         <div><label class="block text-sm font-medium text-gray-700">មុខរបរ</label><input type="text" id="motherjob" class="mt-1 block w-full rounded-md border p-2"></div>
+                    </div>
+                    
+                    <!-- PIC_link Input - NEW -->
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700">🔗 Google Drive Link (PIC_link)</label>
+                        <input type="url" id="picLinkInput" class="mt-1 block w-full rounded-md border p-2" placeholder="https://drive.google.com/file/d/...">
+                        <p class="text-xs text-gray-500 mt-1">បិទភ្ជាប់តំណ Google Drive នៃរូបភាពសិស្ស</p>
                     </div>
                     
                     <div class="flex space-x-4 mt-6">
