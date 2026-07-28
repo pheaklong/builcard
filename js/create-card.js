@@ -208,7 +208,7 @@ async function searchStudentById(studentID) {
             }
         }
         
-        // Display card using card-template.js
+        // Display card
         displayCard(data);
         return true;
         
@@ -615,10 +615,10 @@ function resetPhotoPreview() {
     }
 }
 
-// ============ CARD DISPLAY FUNCTIONS (UPDATED to use card-template.js ONLY) ============
+// ============ CARD DISPLAY FUNCTIONS (UPDATED to use card-template.js) ============
 
 /**
- * Display card using card-template.js ONLY
+ * Display card using card-template.js
  * This uses the template from card-template.js file
  */
 function displayCard(data) {
@@ -632,45 +632,29 @@ function displayCard(data) {
     console.log('📸 PIC_link:', data.PIC_link || 'None');
     console.log('📸 Photo stored:', data.photo ? 'Yes' : 'No');
     
-    // Check if card-template.js is loaded
-    if (typeof window.generateCardHTML !== 'function') {
-        console.error('❌ card-template.js is not loaded! Please check the script order.');
-        cardContainer.innerHTML = `
-            <div class="text-red-500 text-center py-10">
-                <p class="text-lg font-bold">⚠️ កំហុស៖ card-template.js មិនត្រូវបានផ្ទុក</p>
-                <p class="text-sm">សូមពិនិត្យមើលការផ្ទុក script ក្នុង HTML</p>
-                <p class="text-xs mt-2">ពិនិត្យ Console (F12) សម្រាប់ព័ត៌មានបន្ថែម</p>
-            </div>
-        `;
-        return;
-    }
-    
-    console.log('✅ Using card-template.js template');
-    
-    // Prepare data for the template
-    // The template expects fields like: studentID, name, sex, date_of_birth, 
-    // phonenumber, address, fathername, mothername, class, photo, etc.
-    const cardData = {
-        studentID: data.studentID || '',
-        name: data.name || '',
-        sex: data.sex || '',
-        date_of_birth: data.date_of_birth || '',
-        phonenumber: data.phonenumber || '',
-        address: data.address || '',
-        fathername: data.fathername || '',
-        fatherphone: data.fatherphone || '',
-        fatherjob: data.fatherjob || '',
-        mothername: data.mothername || '',
-        motherphone: data.motherphone || '',
-        motherjob: data.motherjob || '',
-        class: data.class || '',
-        // Important: Pass photo data (Base64 or URL)
-        photo: data.photo || null,
-        // Keep PIC_link for reference (template may use it)
-        PIC_link: data.PIC_link || null
-    };
-    
-    try {
+    // Check if card-template.js is loaded and has generateCardHTML function
+    if (typeof window.generateCardHTML === 'function') {
+        console.log('✅ Using card-template.js template');
+        
+        // Prepare data for the template
+        const cardData = {
+            studentID: data.studentID || '',
+            name: data.name || '',
+            sex: data.sex || '',
+            date_of_birth: data.date_of_birth || '',
+            phonenumber: data.phonenumber || '',
+            address: data.address || '',
+            fathername: data.fathername || '',
+            fatherphone: data.fatherphone || '',
+            fatherjob: data.fatherjob || '',
+            mothername: data.mothername || '',
+            motherphone: data.motherphone || '',
+            motherjob: data.motherjob || '',
+            class: data.class || '',
+            photo: data.photo || null,
+            PIC_link: data.PIC_link || null
+        };
+        
         // Generate card HTML using the template
         const cardHTML = window.generateCardHTML(cardData);
         cardContainer.innerHTML = cardHTML;
@@ -681,15 +665,97 @@ function displayCard(data) {
             console.log('📸 Loading photo from PIC_link for preview:', data.PIC_link);
             loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
         }
-    } catch (error) {
-        console.error('❌ Error generating card:', error);
-        cardContainer.innerHTML = `
-            <div class="text-red-500 text-center py-10">
-                <p class="text-lg font-bold">⚠️ កំហុសក្នុងការបង្កើតកាត</p>
-                <p class="text-sm">${error.message}</p>
-            </div>
-        `;
+        
+    } else {
+        // Fallback: if card-template.js is not loaded, use local template
+        console.warn('⚠️ generateCardHTML not found, using fallback');
+        const fallbackHTML = generateFallbackCardHTML(data);
+        cardContainer.innerHTML = fallbackHTML;
     }
+}
+
+/**
+ * Fallback card generation if card-template.js is not loaded
+ * This is the same template structure as your existing code
+ */
+function generateFallbackCardHTML(data) {
+    const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
+    
+    // Get photo URL
+    let photoUrl = null;
+    if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
+        photoUrl = getDirectImageUrl(data.PIC_link);
+    } else if (data.photo && data.photo !== 'null' && data.photo !== '') {
+        photoUrl = data.photo;
+    }
+    
+    // Create photo HTML
+    let photoHTML = '';
+    if (photoUrl) {
+        photoHTML = `<img src="${photoUrl}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400" 
+                         onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500\\'><svg class=\\'w-10 h-10\\' fill=\\'currentColor\\' viewBox=\\'0 0 20 20\\'><path fill-rule=\\'evenodd\\' d=\\'M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z\\' clip-rule=\\'evenodd\\'/></svg></div>'">`;
+    } else {
+        photoHTML = `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>`;
+    }
+    
+    return `
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-2xl overflow-hidden" style="width: 380px; font-family: 'Khmer', Arial, sans-serif;">
+            <div class="bg-white p-4 text-center border-b-4 border-yellow-400">
+                <h3 class="text-xl font-bold text-blue-800">កាតសម្គាល់សិស្ស</h3>
+                <p class="text-sm text-gray-600">សាលារៀន​ ឌីជីថល</p>
+            </div>
+            
+            <div class="p-4 text-white">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <p class="text-sm opacity-90">លេខសម្គាល់៖</p>
+                        <p class="font-bold text-lg">${escapeHtml(data.studentID) || 'N/A'}</p>
+                    </div>
+                    ${photoHTML}
+                </div>
+                
+                <div class="space-y-2 text-sm">
+                    <div><p class="opacity-90">ឈ្មោះ៖</p><p class="font-semibold text-base">${escapeHtml(data.name) || 'N/A'}</p></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><p class="opacity-90">ភេទ៖</p><p>${escapeHtml(data.sex) || 'N/A'}</p></div>
+                        <div><p class="opacity-90">ថ្ងៃខែកំណើត៖</p><p>${birthDate}</p></div>
+                    </div>
+                    <div><p class="opacity-90">ថ្នាក់៖</p><p class="font-medium">${escapeHtml(data.class) || 'N/A'}</p></div>
+                    <div><p class="opacity-90">ទូរស័ព្ទ៖</p><p>${escapeHtml(data.phonenumber) || 'N/A'}</p></div>
+                    <div><p class="opacity-90">អាសយដ្ឋាន៖</p><p class="text-xs">${escapeHtml(data.address) || 'N/A'}</p></div>
+                </div>
+                
+                <hr class="my-3 border-white/30">
+                
+                <div class="text-xs space-y-1">
+                    <p><span class="opacity-90">ឪពុក៖</span> ${escapeHtml(data.fathername) || 'N/A'} (${escapeHtml(data.fatherjob) || ''})</p>
+                    <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.fatherphone) || 'N/A'}</p>
+                    <p><span class="opacity-90">ម្តាយ៖</span> ${escapeHtml(data.mothername) || 'N/A'} (${escapeHtml(data.motherjob) || ''})</p>
+                    <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.motherphone) || 'N/A'}</p>
+                    ${data.PIC_link ? `<p class="text-xs opacity-70">📎 Google Drive</p>` : ''}
+                </div>
+            </div>
+            
+            <div class="bg-yellow-400 p-2 text-center text-xs font-bold text-blue-900">
+                ចេញថ្ងៃទី: ${new Date().toLocaleDateString('km-KH')}
+            </div>
+        </div>
+    `;
+}
+
+// Helper function to escape HTML
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 // ============ SAVE STUDENT ============
@@ -730,9 +796,6 @@ async function saveStudent() {
         if (currentPhotoBase64 && currentPhotoBase64 !== '') {
             studentData.photo = currentPhotoBase64;
             console.log('📸 Saving photo from camera/file');
-        } else {
-            // Don't overwrite existing photo if only PIC_link is used
-            // We'll keep the existing photo in database
         }
         
         // Validate required fields
@@ -870,10 +933,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if card-template.js is loaded
     console.log('card-template.js loaded:', typeof window.generateCardHTML === 'function');
     console.log('window.generateCardHTML:', window.generateCardHTML);
-    
-    if (typeof window.generateCardHTML !== 'function') {
-        console.warn('⚠️ card-template.js is not loaded! Cards may not display correctly.');
-    }
     
     // Save button
     document.getElementById('saveBtn')?.addEventListener('click', (e) => {
