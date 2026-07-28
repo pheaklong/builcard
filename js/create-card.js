@@ -3,46 +3,32 @@
 const SUPABASE_URL = 'https://xmowdtwlidnwnxrkrysj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhtb3dkdHdsaWRud254cmtyeXNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0MzI2MDAsImV4cCI6MjA5NjAwODYwMH0.p22ZAL4oRIMVd9xYotVhRcWDICLqVp_LTj_AszA9JAA';
 
-// Initialize Supabase client - fixed version
+// ============ FIX: Use existing supabase client or create new one ============
 let supabaseClient;
 
-try {
-    // Check if supabase is available globally
-    if (typeof supabase !== 'undefined' && supabase.createClient) {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true
-            }
-        });
-        console.log('✅ Supabase client initialized from global supabase');
-    } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true
-            }
-        });
-        console.log('✅ Supabase client initialized from window.supabase');
-    } else {
-        // Try to use the supabase-js library directly
-        console.warn('⚠️ supabase not found globally, attempting to use from window');
-        const supabaseLib = window.supabase || window.__SUPABASE__ || supabase;
-        if (supabaseLib && supabaseLib.createClient) {
-            supabaseClient = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true
-                }
-            });
-            console.log('✅ Supabase client initialized from fallback');
-        } else {
-            throw new Error('Supabase library not found. Please ensure supabase-js is loaded.');
+// Try to use existing supabase client from window
+if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient) {
+    supabaseClient = window.supabaseClient;
+    console.log('✅ Using existing supabase client from window');
+} else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true
         }
-    }
-} catch (error) {
-    console.error('❌ Failed to initialize Supabase client:', error);
+    });
+    console.log('✅ Supabase client created from window.supabase');
+} else if (typeof supabase !== 'undefined' && supabase.createClient) {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true
+        }
+    });
+    console.log('✅ Supabase client created from global supabase');
+} else {
     // Create a dummy client that shows error messages
+    console.error('❌ Supabase library not found');
     supabaseClient = {
         from: () => {
             throw new Error('Supabase client not initialized. Please refresh the page.');
