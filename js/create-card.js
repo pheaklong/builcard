@@ -59,7 +59,7 @@ const TABLE_NAME = 'table_student';
 let currentPhotoBase64 = null;
 let capturedPhotoData = null;
 
-// ============ NEW: PIC_link FUNCTIONS ============
+// ============ PIC_link FUNCTIONS ============
 
 /**
  * Convert Google Drive link to direct image URL
@@ -247,7 +247,7 @@ async function searchStudentById(studentID) {
         document.getElementById('motherjob').value = data.motherjob || '';
         document.getElementById('class').value = data.class || '';
         
-        // ============ NEW: Handle PIC_link ============
+        // ============ Handle PIC_link ============
         if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
             console.log('📸 Loading photo from PIC_link:', data.PIC_link);
             // Set PIC_link input value
@@ -275,6 +275,12 @@ async function searchStudentById(studentID) {
                     defaultIcon.classList.add('hidden');
                 }
                 console.log('📸 Photo loaded from database');
+                
+                // Clear PIC_link input
+                const picLinkInput = document.getElementById('picLinkInput');
+                if (picLinkInput) {
+                    picLinkInput.value = '';
+                }
             } else {
                 // No photo at all
                 resetPhotoPreview();
@@ -557,7 +563,7 @@ async function confirmPhoto() {
             defaultIcon.classList.add('hidden');
         }
         
-        // ============ NEW: Clear PIC_link when using camera ============
+        // Clear PIC_link when using camera
         const picLinkInput = document.getElementById('picLinkInput');
         if (picLinkInput) {
             picLinkInput.value = '';
@@ -608,7 +614,7 @@ document.getElementById('photo')?.addEventListener('change', async (e) => {
                         defaultIcon.classList.add('hidden');
                     }
                     
-                    // ============ NEW: Clear PIC_link when file is uploaded ============
+                    // Clear PIC_link when file is uploaded
                     const picLinkInput = document.getElementById('picLinkInput');
                     if (picLinkInput) {
                         picLinkInput.value = '';
@@ -656,9 +662,19 @@ function displayCard(data) {
     if (cardContainer) {
         // Check if generateCardHTML is available from card-template.js
         if (typeof window.generateCardHTML === 'function') {
-            // Use the template from card-template.js
-            cardContainer.innerHTML = window.generateCardHTML(data);
+            // Make sure PIC_link is included in the data
+            const cardData = {
+                ...data,
+                PIC_link: data.PIC_link || null
+            };
+            cardContainer.innerHTML = window.generateCardHTML(cardData);
             console.log('✅ Card displayed using card-template.js');
+            
+            // Load photo from PIC_link if available
+            if (data.PIC_link && data.PIC_link !== 'null' && data.PIC_link !== '') {
+                console.log('📸 Loading photo from PIC_link in card:', data.PIC_link);
+                loadPhotoFromPICLink(data.PIC_link, 'photoPreview');
+            }
         } else {
             // Fallback: use local generateCardHTML
             console.warn('⚠️ generateCardHTML not found in window, using fallback');
@@ -668,11 +684,31 @@ function displayCard(data) {
 }
 
 /**
+ * Get photo HTML for card - FIXED to use PIC_link
+ */
+function getPhotoHTMLFallback(photoData, picLink) {
+    // Check PIC_link first
+    if (picLink && picLink !== 'null' && picLink !== '') {
+        const directUrl = getDirectImageUrl(picLink);
+        return `<img src="${directUrl}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400" crossOrigin="anonymous">`;
+    }
+    
+    if (photoData && photoData !== 'null' && photoData !== '') {
+        return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
+    }
+    return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
+                <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+            </div>`;
+}
+
+/**
  * Fallback card generation if card-template.js is not loaded
  */
 function generateCardHTMLFallback(data) {
     const birthDate = data.date_of_birth ? new Date(data.date_of_birth).toLocaleDateString('km-KH') : 'N/A';
-    const photoHTML = getPhotoHTMLFallback(data.photo);
+    const photoHTML = getPhotoHTMLFallback(data.photo, data.PIC_link);
     
     return `
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl shadow-2xl overflow-hidden" style="width: 380px; font-family: 'Khmer', Arial, sans-serif;">
@@ -708,6 +744,7 @@ function generateCardHTMLFallback(data) {
                     <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.fatherphone) || 'N/A'}</p>
                     <p><span class="opacity-90">ម្តាយ៖</span> ${escapeHtml(data.mothername) || 'N/A'} (${escapeHtml(data.motherjob) || ''})</p>
                     <p><span class="opacity-90">ទូរស័ព្ទ៖</span> ${escapeHtml(data.motherphone) || 'N/A'}</p>
+                    ${data.PIC_link ? `<p class="text-xs opacity-70">📎 ${escapeHtml(data.PIC_link.substring(0, 30))}...</p>` : ''}
                 </div>
             </div>
             
@@ -716,17 +753,6 @@ function generateCardHTMLFallback(data) {
             </div>
         </div>
     `;
-}
-
-function getPhotoHTMLFallback(photoData) {
-    if (photoData && photoData !== 'null' && photoData !== '') {
-        return `<img src="${photoData}" alt="Student Photo" class="w-16 h-16 rounded-full object-cover border-2 border-yellow-400">`;
-    }
-    return `<div class="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center text-gray-500">
-                <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                </svg>
-            </div>`;
 }
 
 // Helper function to escape HTML
@@ -768,7 +794,7 @@ async function saveStudent() {
             photo: currentPhotoBase64 || null
         };
         
-        // ============ NEW: Get PIC_link from input ============
+        // Get PIC_link from input
         const picLinkInput = document.getElementById('picLinkInput');
         if (picLinkInput && picLinkInput.value.trim() !== '') {
             studentData.PIC_link = picLinkInput.value.trim();
@@ -1002,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // ============ NEW: PIC_link input event listener ============
+    // PIC_link input event listener
     const picLinkInput = document.getElementById('picLinkInput');
     if (picLinkInput) {
         picLinkInput.addEventListener('change', function() {
